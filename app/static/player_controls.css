@@ -1,0 +1,95 @@
+/* Coaching playback controls layered onto the analysis video player. */
+.video-stage .transport.coach-transport{
+  gap:7px;
+}
+.coach-control-group{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding-right:7px;
+  margin-right:2px;
+  border-right:1px solid #33415e;
+}
+.coach-control-group:last-of-type{border-right:0}
+.coach-control-label{
+  color:#aeb9cf;
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  white-space:nowrap;
+}
+.transport button.coach-btn{
+  min-width:42px;
+  transition:background .15s,border-color .15s,transform .1s;
+}
+.transport button.coach-btn:hover{
+  background:#223250;
+  border-color:#526589;
+}
+.transport button.coach-btn:active{transform:translateY(1px)}
+.transport button.coach-btn.active{
+  background:#6655f7;
+  border-color:#7d70ff;
+  color:#fff;
+}
+.transport button.coach-primary{
+  background:#234b85;
+  border-color:#3567a8;
+}
+.transport .fullscreen-hint{
+  width:100%;
+  color:#9eabc3;
+  font-size:9px;
+  padding-top:1px;
+}
+
+/* Fullscreen the entire stage, not only the video, so coaching controls remain visible. */
+.video-stage:fullscreen,
+.video-stage:-webkit-full-screen{
+  width:100vw;
+  height:100vh;
+  max-width:none;
+  max-height:none;
+  border-radius:0;
+  background:#000;
+  display:flex;
+  flex-direction:column;
+}
+.video-stage:fullscreen video,
+.video-stage:-webkit-full-screen video{
+  flex:1 1 auto;
+  width:100%;
+  height:auto;
+  min-height:0;
+  max-height:calc(100vh - 104px);
+  object-fit:contain;
+  background:#000;
+}
+.video-stage:fullscreen .transport,
+.video-stage:-webkit-full-screen .transport{
+  flex:0 0 auto;
+  width:100%;
+  padding:12px 16px 14px;
+  background:rgba(9,18,38,.98);
+  border-top:1px solid #263552;
+  position:relative;
+  z-index:5;
+}
+.video-stage:fullscreen .transport button,
+.video-stage:-webkit-full-screen .transport button{
+  padding:8px 10px;
+  font-size:11px;
+}
+.video-stage:fullscreen .transport .time,
+.video-stage:-webkit-full-screen .transport .time{
+  font-size:11px;
+}
+.video-stage:fullscreen .fullscreen-hint,
+.video-stage:-webkit-full-screen .fullscreen-hint{
+  display:none;
+}
+
+@media(max-width:780px){
+  .coach-control-group{border-right:0;padding-right:0;margin-right:0}
+  .transport .fullscreen-hint{display:none}
+}
