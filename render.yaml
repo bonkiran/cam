@@ -2,17 +2,13 @@ services:
   - type: web
     name: crickanalysis
     runtime: docker
-    plan: starter
+    plan: free
     region: virginia
     healthCheckPath: /api/health
     envVars:
       - key: CRICKANALYSIS_DATA_DIR
-        value: /var/data
+        value: /tmp/crickanalysis
       - key: MAX_UPLOAD_BYTES
-        value: "1073741824"
+        value: "262144000"
       - key: PYTHONUNBUFFERED
         value: "1"
-    disk:
-      name: crickanalysis-data
-      mountPath: /var/data
-      sizeGB: 5
