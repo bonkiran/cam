@@ -9,6 +9,6 @@ services:
       - key: CRICKANALYSIS_DATA_DIR
         value: /tmp/crickanalysis
       - key: MAX_UPLOAD_BYTES
-        value: "262144000"
+        value: "536870912"
       - key: PYTHONUNBUFFERED
         value: "1"
