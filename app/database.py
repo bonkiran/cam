@@ -8,8 +8,6 @@ from pathlib import Path
 from typing import Any, Iterable
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-# Local development defaults to ./data. On Render, set CRICKANALYSIS_DATA_DIR
-# to the persistent disk mount (for example /var/data).
 DATA_DIR = Path(os.environ.get("CRICKANALYSIS_DATA_DIR", str(BASE_DIR / "data"))).expanduser().resolve()
 DB_PATH = DATA_DIR / "crickanalysis.db"
 UPLOAD_DIR = DATA_DIR / "uploads"
@@ -31,6 +29,18 @@ def connection():
         conn.close()
 
 
+def _ensure_video_columns(conn: sqlite3.Connection) -> None:
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(videos)").fetchall()}
+    additions = {
+        "analysis_mode": "TEXT NOT NULL DEFAULT 'quick'",
+        "progress_percent": "INTEGER NOT NULL DEFAULT 0",
+        "progress_stage": "TEXT NOT NULL DEFAULT 'Uploaded'",
+    }
+    for name, definition in additions.items():
+        if name not in columns:
+            conn.execute(f"ALTER TABLE videos ADD COLUMN {name} {definition}")
+
+
 def init_db() -> None:
     with connection() as conn:
         conn.executescript(
@@ -50,6 +60,9 @@ def init_db() -> None:
                 stored_name TEXT NOT NULL UNIQUE,
                 file_size INTEGER NOT NULL,
                 status TEXT NOT NULL DEFAULT 'uploaded',
+                analysis_mode TEXT NOT NULL DEFAULT 'quick',
+                progress_percent INTEGER NOT NULL DEFAULT 0,
+                progress_stage TEXT NOT NULL DEFAULT 'Uploaded',
                 error TEXT,
                 fps REAL,
                 duration REAL,
@@ -94,6 +107,7 @@ def init_db() -> None:
             ON events(video_id, timestamp);
             """
         )
+        _ensure_video_columns(conn)
 
 
 def row_dict(row: sqlite3.Row | None) -> dict[str, Any] | None:
