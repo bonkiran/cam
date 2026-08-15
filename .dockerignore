@@ -1,0 +1,7 @@
+.venv
+__pycache__
+*.pyc
+data/crickanalysis.db
+data/uploads/*
+data/frames/*
+tests/sample.mp4

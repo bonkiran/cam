@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.venv/
+data/crickanalysis.db
+data/uploads/*
+data/frames/*
+!data/uploads/.gitkeep
+!data/frames/.gitkeep
