@@ -34,6 +34,7 @@ export type VideoRecord = {
   analysis_mode?: 'quick' | 'shot' | 'full';
   progress_percent?: number;
   progress_stage?: string;
+  error?: string;
 };
 
 export type FrameRecord = {
@@ -43,6 +44,15 @@ export type FrameRecord = {
   image_path: string;
   is_candidate: number;
   kind: string;
+};
+
+export type EventRecord = {
+  id: number;
+  video_id: number;
+  timestamp: number;
+  event_type: 'four' | 'six' | 'dot' | 'single' | 'two' | 'three' | 'wicket' | 'other';
+  label?: string | null;
+  notes?: string | null;
 };
 
 export type Dashboard = {
