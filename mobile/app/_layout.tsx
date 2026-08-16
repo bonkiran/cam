@@ -15,7 +15,13 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="analysis/[id]" options={{ title: 'Video Review' }} />
+        <Stack.Screen
+          name="analysis/[id]"
+          options={{
+            title: 'Video Review',
+            headerBackTitle: 'Back',
+          }}
+        />
         <Stack.Screen name="ai" options={{ title: 'Crick AI', presentation: 'modal' }} />
       </Stack>
     </>
