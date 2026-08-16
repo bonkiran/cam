@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "CrickAnalysis",
+    "slug": "crickanalysis-mobile",
+    "version": "0.1.0",
+    "scheme": "crickanalysis",
+    "orientation": "default",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.crickanalysis.app",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.crickanalysis.app",
+      "predictiveBackGestureEnabled": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-dev-client",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "CrickAnalysis needs access to your video library so you can select cricket footage for review.",
+          "cameraPermission": "CrickAnalysis can use the camera to capture cricket footage.",
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
