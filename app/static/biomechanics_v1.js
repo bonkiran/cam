@@ -72,8 +72,8 @@
         </div>
         <label>Window
           <select id="biomechWindow">
-            <option value="4">4 sec</option>
-            <option value="6" selected>6 sec</option>
+            <option value="4" selected>4 sec</option>
+            <option value="6">6 sec</option>
             <option value="8">8 sec</option>
           </select>
         </label>
@@ -303,7 +303,7 @@
     const heightRaw = qs("#biomechHeight", panel)?.value.trim();
     const payload = {
       center_timestamp: Number(video.currentTime) || 0,
-      window_seconds: Number(qs("#biomechWindow", panel)?.value || 6),
+      window_seconds: Number(qs("#biomechWindow", panel)?.value || 4),
       handedness: qs("#biomechHandedness", panel)?.value || "right",
       camera_view: qs("#biomechView", panel)?.value || "other",
       height_cm: heightRaw ? Number(heightRaw) : null,
@@ -328,8 +328,12 @@
   }
 
   async function enhance() {
-    clearTimeout(enhanceTimer);
+    // Other CrickAnalysis UI enhancers mutate the page frequently. Do not keep
+    // resetting this timer on every mutation or the biomechanics panel can be
+    // starved indefinitely before it gets a chance to mount.
+    if (enhanceTimer) return;
     enhanceTimer = setTimeout(async () => {
+      enhanceTimer = null;
       const videoId = currentVideoId();
       const video = qs("#player");
       if (!videoId || !video) return;
@@ -367,5 +371,6 @@
   window.addEventListener("hashchange", enhance);
   const observer = new MutationObserver(enhance);
   observer.observe(document.documentElement, { childList: true, subtree: true });
+  setInterval(enhance, 500);
   enhance();
 })();
