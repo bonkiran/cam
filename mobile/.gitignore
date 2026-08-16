@@ -1,0 +1,18 @@
+# Expo local machine state
+.expo/
+
+# Node dependencies
+node_modules/
+
+# Local environment overrides
+.env
+.env.local
+
+# Generated native folders (Expo prebuild)
+ios/
+android/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
