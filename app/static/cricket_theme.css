@@ -1,0 +1,212 @@
+/* CrickAnalysis cricket-ground visual theme.
+   Background photograph: Zoshua Colah / Unsplash, Arun Jaitley Stadium.
+   Source page: https://unsplash.com/photos/a-wide-view-of-a-cricket-stadium-with-green-field-bbrEFf5UlCE
+   Unsplash marks the photograph free to use under the Unsplash License. */
+:root{
+  --cricket-deep:#06291b;
+  --cricket-deep-2:#0b3a27;
+  --cricket-green:#177a46;
+  --cricket-bright:#2fb765;
+  --cricket-mint:#e9f6ee;
+  --cricket-pitch:#d7b474;
+  --cricket-sky:#b9ddf2;
+  --cricket-surface:rgba(255,255,255,.955);
+  --cricket-line:rgba(18,74,49,.14);
+  --cricket-shadow:0 16px 38px rgba(8,45,29,.11);
+  --ground-photo:url('https://images.unsplash.com/photo-1774167534143-e041411b78a9?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=72&w=2400');
+}
+
+html,body{background:#eaf1ec}
+body{min-height:100vh}
+.app{background:#eaf1ec}
+
+/* Left rail now feels like a cricket pavilion rather than a generic SaaS rail. */
+.sidebar{
+  background:
+    radial-gradient(circle at 20% 5%,rgba(48,183,101,.20),transparent 28%),
+    linear-gradient(180deg,#0b3427 0%,#071f1b 48%,#08182a 100%);
+  border-right:1px solid rgba(255,255,255,.07);
+}
+.brand span{color:#45c77b}
+.brand .mark{filter:drop-shadow(0 4px 8px rgba(0,0,0,.18))}
+.nav button.active{
+  background:linear-gradient(90deg,#1c8d50,#2f9e61);
+  box-shadow:0 9px 22px rgba(20,126,72,.30);
+}
+.nav button:hover{background:rgba(70,199,123,.09)}
+.profile{background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.10)}
+.avatar{background:linear-gradient(135deg,#1c8d50,#2b6ee7)}
+.profile small{color:#8ee2ad}
+.sidebar-collapse{background:#0b3427;border-color:#30604d}
+
+/* Main area: a real ground photograph forms a shallow hero, then fades into the workspace. */
+.main{
+  position:relative;
+  isolation:isolate;
+  min-height:100vh;
+  background:linear-gradient(180deg,#e7efe9 0,#f4f7f5 430px,#f7f9f8 100%);
+  overflow:hidden;
+}
+.main::before{
+  content:"";
+  position:absolute;
+  z-index:-2;
+  left:0;right:0;top:0;
+  height:365px;
+  background-image:
+    linear-gradient(90deg,rgba(3,27,18,.78),rgba(4,39,24,.50) 52%,rgba(5,34,24,.63)),
+    linear-gradient(180deg,rgba(0,0,0,.12),rgba(3,31,20,.12)),
+    var(--ground-photo);
+  background-size:cover;
+  background-position:center 58%;
+  filter:saturate(.93) contrast(1.03);
+}
+.main::after{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  left:0;right:0;top:235px;height:205px;
+  background:linear-gradient(180deg,rgba(235,242,237,0),#eef4f0 66%,#f4f7f5 100%);
+  pointer-events:none;
+}
+body[data-crick-page="analysis"] .main::before{height:285px;background-position:center 61%;filter:saturate(.75) brightness(.76)}
+body[data-crick-page="analysis"] .main::after{top:170px}
+body[data-crick-page="upload"] .main::before{background-position:center 64%}
+body[data-crick-page="players"] .main::before{background-position:center 54%}
+
+.topbar{height:86px}
+.search,.top-chip,.mobile-menu{
+  border-color:rgba(255,255,255,.28);
+  background:rgba(255,255,255,.91);
+  backdrop-filter:blur(15px);
+  -webkit-backdrop-filter:blur(15px);
+  box-shadow:0 10px 24px rgba(0,32,21,.14);
+}
+.search input{background:transparent}
+.top-chip.ai-active{background:rgba(247,245,255,.94)}
+
+.page-head{
+  position:relative;
+  min-height:112px;
+  margin-bottom:20px;
+  padding:10px 0 24px;
+  color:#fff;
+}
+.page-head h1{color:#fff;text-shadow:0 2px 14px rgba(0,20,12,.28);font-size:32px}
+.page-head p{color:rgba(255,255,255,.82);max-width:760px;font-size:13px;line-height:1.55}
+.page-head .primary,.page-head .secondary{margin-top:22px}
+.page-kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-bottom:8px;
+  padding:5px 8px;
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:999px;
+  background:rgba(5,47,30,.38);
+  color:#d7f5e3;
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.11em;
+  text-transform:uppercase;
+  backdrop-filter:blur(8px);
+}
+.page-kicker::before{content:"";width:6px;height:6px;border-radius:50%;background:#55db87;box-shadow:0 0 0 4px rgba(85,219,135,.14)}
+.ground-credit{
+  position:absolute;
+  right:0;
+  bottom:5px;
+  color:rgba(255,255,255,.72);
+  font-size:7.5px;
+  text-decoration:none;
+}
+.ground-credit:hover{color:#fff;text-decoration:underline}
+
+.primary{
+  background:linear-gradient(90deg,#147a43,#27a85d);
+  box-shadow:0 9px 20px rgba(16,107,61,.24);
+}
+.primary:hover{filter:brightness(1.04)}
+.link{color:#187c49}
+
+/* Glass-like cards keep the photograph present without sacrificing readability. */
+.stat,.panel,.player-card,.upload-preview-panel,.reference-card,.cricclubs-panel{
+  background:var(--cricket-surface);
+  border-color:var(--cricket-line);
+  box-shadow:var(--cricket-shadow);
+  backdrop-filter:blur(9px);
+  -webkit-backdrop-filter:blur(9px);
+}
+.stat{border-radius:14px}
+.stat strong{color:#0b2b20}
+.stat small{color:#188249}
+.stat-icon.purple{background:#e8f6ed;color:#167745}
+.stat-icon.blue{background:#e8f2fb;color:#246eac}
+.stat-icon.green{background:#e8f7ee;color:#14804a}
+.stat-icon.amber{background:#fbf2df;color:#9c701c}
+.panel{border-radius:14px}
+.panel-head h2{color:#102b21}
+.metric{background:#f5f9f6;border-color:#dbe8df}
+.metric span{color:#65766e}
+.metric strong{color:#17382b}
+.empty{background:rgba(249,252,250,.82);border-color:#bed2c5}
+
+/* Dashboard emphasis: cards overlap the visual hero slightly for a sports-broadcast feel. */
+body[data-crick-page="dashboard"] .stats{margin-top:-12px}
+body[data-crick-page="dashboard"] .stat{min-height:92px}
+body[data-crick-page="dashboard"] .grid{align-items:start}
+
+/* Upload/workbench */
+.workflow-modes,.mode-card,.upload-preview-panel{border-color:#d5e5da}
+.mode-card:has(input:checked){border-color:#248e53;background:#f3fbf6;box-shadow:0 0 0 2px rgba(36,142,83,.10)}
+.mode-name b{color:#157643;background:#e5f6eb}
+.dropzone{background:#f6faf7;border-color:#a9c7b4}
+.upload-preview-head{background:linear-gradient(90deg,#f8fbf9,#eef7f1)}
+.local-video-wrap{background:#06160f}
+.upload-live-status{background:#09271c;border-top-color:#174a35}
+.upload-live-status .mini-track{background:#244d3c}
+.upload-live-status .mini-track i{background:linear-gradient(90deg,#35c36f,#55a4ff)}
+.progress div,.workflow-progress-track div{background:linear-gradient(90deg,#1d8f50,#34ba6b)}
+
+/* Analysis page should feel like a dark review bay framed by the ground. */
+.video-stage{background:#04140e;box-shadow:0 16px 36px rgba(0,25,16,.22)}
+.transport{background:#09251b}
+.transport button{background:#113c2b;border-color:#2b624a}
+.transport button:hover{background:#174b35}
+.frame-card.candidate{border-color:var(--cricket-pitch)}
+.tag-grid button.four{background:#247cce}
+.tag-grid button.six{background:#178a4c}
+.event-type.six{background:#e4f5ea;color:#167944}
+
+/* Players / integrations */
+.player-card{transition:transform .15s,box-shadow .15s}
+.player-card:hover{transform:translateY(-2px);box-shadow:0 18px 38px rgba(8,45,29,.15)}
+.reference-card:hover{border-color:#72b98f;box-shadow:0 16px 34px rgba(8,65,39,.14)}
+.reference-icon{background:#e5f5eb;color:#147946}
+.cricclubs-panel{background:linear-gradient(135deg,rgba(247,253,249,.97),rgba(239,248,243,.97));border-color:#c4dfce}
+.cricclubs-form button{background:#177b46}
+
+/* Crick AI remains a distinct assistant, with a light cricket tint around it. */
+.ai-drawer{border-left-color:#cfdfd5;box-shadow:-12px 0 28px rgba(7,50,31,.07)}
+.ai-header{background:linear-gradient(180deg,#fff,#f7fbf8)}
+.ai-context{background:#f2f8f4;border-bottom-color:#dbe8df}
+.ai-context:before{background:#24ad61}
+.ai-message.assistant{background:#f0f6f2;color:#294038}
+.ai-form{background:#fbfdfb}
+
+@media(max-width:1100px){
+  .main::before{height:335px}
+  .ground-credit{display:none}
+}
+@media(max-width:900px){
+  .main::before{height:300px;background-position:center 56%}
+  .page-head{min-height:100px}
+}
+@media(max-width:780px){
+  .main{padding-top:0}
+  .main::before{height:255px}
+  .main::after{top:150px}
+  .page-head{padding-top:6px;min-height:110px}
+  .page-head h1{font-size:28px}
+  .page-head p{font-size:12px}
+}
