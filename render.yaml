@@ -5,6 +5,9 @@ services:
     plan: free
     region: virginia
     healthCheckPath: /api/health
+    buildFilter:
+      ignoredPaths:
+        - mobile/**
     envVars:
       - key: CRICKANALYSIS_DATA_DIR
         value: /tmp/crickanalysis
