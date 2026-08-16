@@ -1,0 +1,47 @@
+/* Experimental short-shot biomechanics workspace. */
+.biomech-panel{overflow:hidden}
+.biomech-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:10px}
+.biomech-title-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.biomech-title-row h2{margin:0;font-size:15px}
+.biomech-head p{margin:4px 0 0;color:var(--muted);font-size:9px;line-height:1.5}
+.biomech-experimental{font-size:7px;font-weight:800;letter-spacing:.08em;padding:4px 7px;border-radius:999px;background:#fff4d7;color:#956300;border:1px solid #edd59b}
+.biomech-engine{font-size:7px;font-weight:800;letter-spacing:.04em;border-radius:999px;padding:6px 8px;white-space:nowrap}
+.biomech-engine.connected{background:#eaf8ef;color:#137947;border:1px solid #bfe8cf}
+.biomech-engine.offline{background:#f3f5f7;color:#697386;border:1px solid #dfe4e8}
+.biomech-truth{border:1px solid #cfe5d6;background:#f4fbf6;border-radius:9px;padding:9px 11px;color:#3d5c49;font-size:8.5px;line-height:1.5;margin-bottom:12px}
+.biomech-controls{display:grid;grid-template-columns:minmax(145px,1.15fr) repeat(4,minmax(105px,.8fr)) auto;gap:8px;align-items:end}
+.biomech-controls label,.biomech-playhead{display:flex;flex-direction:column;gap:5px;font-size:8px;font-weight:700;color:#566276}
+.biomech-controls label span{font-weight:500;color:#8791a2}
+.biomech-controls select,.biomech-controls input{height:38px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:0 9px;color:var(--ink);font-size:9px;outline:none}
+.biomech-controls select:focus,.biomech-controls input:focus{border-color:#8cb89a;box-shadow:0 0 0 2px rgba(45,125,75,.08)}
+.biomech-playhead{border:1px solid var(--line);background:#f8fbf9;border-radius:9px;padding:8px 10px;min-height:59px}
+.biomech-playhead strong{color:#17482c;font-size:14px}
+.biomech-playhead small{font-size:7px;color:#889389;font-weight:500}
+.biomech-run{height:38px;white-space:nowrap;background:linear-gradient(90deg,#1e6d3c,#2e8a50)!important;box-shadow:0 8px 18px rgba(32,116,65,.16)!important}
+.biomech-run:disabled{cursor:not-allowed;filter:grayscale(.25);opacity:.55}
+.biomech-engine-note{margin:8px 0 0;color:#7b8494;font-size:8px;line-height:1.45}
+.biomech-status{margin-top:13px;border:1px solid #dce4df;background:#fbfdfb;border-radius:10px;padding:10px 11px}
+.biomech-status>div:first-child{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:8px}
+.biomech-status strong{font-size:9px;color:#284b36}
+.biomech-status span{font-size:7.5px;color:#7b8690;text-align:right}
+.biomech-status.failed{border-color:#efc6c6;background:#fff8f8}
+.biomech-progress{height:6px;border-radius:999px;background:#e9efeb;overflow:hidden}
+.biomech-progress i{display:block;width:0;height:100%;background:linear-gradient(90deg,#277747,#5db876);transition:width .2s}
+.biomech-result{margin-top:14px;display:grid;grid-template-columns:minmax(360px,1.25fr) minmax(260px,.75fr);gap:12px}
+.biomech-skeleton-card{border-radius:11px;background:linear-gradient(160deg,#0c2618,#153b26);padding:12px;color:#fff;min-width:0}
+.biomech-subhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+.biomech-subhead strong{display:block;font-size:10px}
+.biomech-subhead span{display:block;margin-top:3px;font-size:7.5px;color:#b9d2c1}
+.biomech-subhead>span{margin:0;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:5px 7px;white-space:nowrap}
+.biomech-skeleton-card canvas{display:block;width:100%;height:auto;aspect-ratio:720/520;border-radius:9px;background:radial-gradient(circle at 50% 45%,rgba(65,139,88,.22),rgba(3,20,11,.78))}
+.biomech-skeleton-card>small{display:block;margin-top:8px;font-size:7.5px;color:#a9c2b1;line-height:1.45}
+.biomech-metrics{display:grid;grid-template-columns:1fr 1fr;gap:9px;align-content:start}
+.biomech-metric{border:1px solid var(--line);border-radius:10px;background:#fff;padding:11px;min-width:0}
+.biomech-metric span{display:block;color:#6c7688;font-size:8px}
+.biomech-metric strong{display:block;color:#153e2a;font-size:19px;margin:5px 0 3px}
+.biomech-metric small{display:block;color:#8b93a1;font-size:7px;line-height:1.4}
+.biomech-evidence-note{grid-column:1/-1;border:1px dashed #bfd5c5;border-radius:9px;background:#f6fbf7;padding:10px;color:#52685a;font-size:8px;line-height:1.5}
+@media(max-width:1400px){.biomech-controls{grid-template-columns:repeat(3,minmax(120px,1fr))}.biomech-run{width:100%}}
+@media(max-width:1050px){.biomech-result{grid-template-columns:1fr}.biomech-controls{grid-template-columns:1fr 1fr 1fr}}
+@media(max-width:700px){.biomech-head{flex-direction:column}.biomech-controls{grid-template-columns:1fr 1fr}.biomech-run{grid-column:1/-1}.biomech-metrics{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.biomech-controls,.biomech-metrics{grid-template-columns:1fr}.biomech-run,.biomech-evidence-note{grid-column:auto}}
