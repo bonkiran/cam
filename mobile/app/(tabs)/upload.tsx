@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { VideoView, useVideoPlayer } from 'expo-video';
@@ -19,9 +19,14 @@ export default function UploadScreen() {
   const [uploadPct, setUploadPct] = useState(0);
   const [status, setStatus] = useState('');
   const [busy, setBusy] = useState(false);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
 
   useEffect(() => {
     api<Config>('/api/config').then(setConfig).catch(() => {});
+    return () => {
+      xhrRef.current?.abort();
+      xhrRef.current = null;
+    };
   }, []);
 
   const previewSource = useMemo(() => asset?.uri || null, [asset]);
@@ -45,6 +50,11 @@ export default function UploadScreen() {
     }
   }
 
+  function cancelUpload() {
+    if (!xhrRef.current) return;
+    xhrRef.current.abort();
+  }
+
   function upload() {
     const cleanName = playerName.trim();
     if (!cleanName) {
@@ -61,7 +71,8 @@ export default function UploadScreen() {
     }
 
     setBusy(true);
-    setStatus('Starting upload…');
+    setUploadPct(0);
+    setStatus('Preparing upload…');
     const form = new FormData();
     form.append('player_name', cleanName);
     form.append('analysis_mode', mode);
@@ -72,21 +83,31 @@ export default function UploadScreen() {
     } as any);
 
     const xhr = new XMLHttpRequest();
+    xhrRef.current = xhr;
     xhr.open('POST', apiUrl('/api/videos'));
     xhr.upload.onprogress = event => {
-      if (!event.lengthComputable) return;
-      const pct = Math.round((event.loaded / event.total) * 100);
+      if (!event.lengthComputable || !event.total) return;
+      const pct = Math.min(100, Math.round((event.loaded / event.total) * 100));
       setUploadPct(pct);
-      setStatus(`Uploading… ${pct}%`);
+      setStatus(`Uploading video… ${pct}%`);
     };
     xhr.onerror = () => {
+      xhrRef.current = null;
       setBusy(false);
       setStatus('Upload failed. Check your connection and try again.');
     };
+    xhr.onabort = () => {
+      xhrRef.current = null;
+      setBusy(false);
+      setUploadPct(0);
+      setStatus('Upload cancelled.');
+    };
     xhr.onload = () => {
+      xhrRef.current = null;
       setBusy(false);
       if (xhr.status >= 200 && xhr.status < 300) {
         const video = JSON.parse(xhr.responseText);
+        setUploadPct(100);
         setStatus('Upload accepted. Opening review…');
         router.push(`/analysis/${video.id}`);
         return;
@@ -113,13 +134,14 @@ export default function UploadScreen() {
           placeholderTextColor="#9AA3B4"
           style={styles.input}
           autoCapitalize="words"
+          editable={!busy}
         />
 
         <Text style={styles.label}>What do you want to do?</Text>
         <View style={styles.modeRow}>
-          <SecondaryButton label="Quick Review" active={mode === 'quick'} onPress={() => setMode('quick')} />
-          <SecondaryButton label="Specific Shot" active={mode === 'shot'} onPress={() => setMode('shot')} />
-          <SecondaryButton label="Full Scan" active={mode === 'full'} onPress={() => setMode('full')} />
+          <SecondaryButton label="Quick Review" active={mode === 'quick'} onPress={() => setMode('quick')} disabled={busy} />
+          <SecondaryButton label="Specific Shot" active={mode === 'shot'} onPress={() => setMode('shot')} disabled={busy} />
+          <SecondaryButton label="Full Scan" active={mode === 'full'} onPress={() => setMode('full')} disabled={busy} />
         </View>
         <Subtitle>
           {mode === 'quick' ? 'Metadata + a small preview set. Recommended.' :
@@ -150,12 +172,17 @@ export default function UploadScreen() {
 
       {busy || status ? (
         <Card>
+          <View style={styles.progressHeader}>
+            <Text style={styles.progressTitle}>{busy ? 'Uploading to CrickAnalysis' : 'Upload status'}</Text>
+            <Text style={styles.progressPct}>{uploadPct}%</Text>
+          </View>
           <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${uploadPct}%` }]} /></View>
           <Text style={styles.status}>{status}</Text>
+          {busy ? <SecondaryButton label="Cancel upload" onPress={cancelUpload} /> : null}
         </Card>
       ) : null}
 
-      <PrimaryButton label={busy ? 'Uploading…' : 'Upload & Open Review'} onPress={upload} disabled={busy} />
+      <PrimaryButton label={busy ? `Uploading ${uploadPct}%` : 'Upload & Open Review'} onPress={upload} disabled={busy} />
     </Screen>
   );
 }
@@ -169,7 +196,10 @@ const styles = StyleSheet.create({
   placeholderIcon: { fontSize: 28 },
   placeholderTitle: { fontWeight: '800', color: colors.ink },
   fileName: { fontWeight: '800', color: colors.ink },
-  progressTrack: { height: 9, borderRadius: 999, backgroundColor: '#E9EDF4', overflow: 'hidden' },
+  progressHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  progressTitle: { color: colors.ink, fontWeight: '800', fontSize: 13 },
+  progressPct: { color: colors.purple, fontWeight: '900', fontSize: 22 },
+  progressTrack: { height: 10, borderRadius: 999, backgroundColor: '#E9EDF4', overflow: 'hidden' },
   progressFill: { height: '100%', backgroundColor: colors.blue },
   status: { color: colors.muted, fontSize: 12 },
 });
