@@ -19,7 +19,7 @@ export default function RootLayout() {
           name="analysis/[id]"
           options={{
             title: 'Video Review',
-            headerBackTitle: 'Back',
+            headerBackButtonDisplayMode: 'minimal',
           }}
         />
         <Stack.Screen name="ai" options={{ title: 'Crick AI', presentation: 'modal' }} />
