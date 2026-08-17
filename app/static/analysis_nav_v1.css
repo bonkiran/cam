@@ -1,0 +1,14 @@
+.analysis-nav-group{display:flex;flex-direction:column;gap:3px}
+.analysis-nav-parent{width:100%}
+.analysis-nav-parent .analysis-nav-caret{margin-left:auto;font-size:12px;opacity:.75;transition:transform .18s ease}
+.analysis-nav-group.open .analysis-nav-caret{transform:rotate(180deg)}
+.analysis-nav-submenu{display:none;flex-direction:column;gap:2px;margin:0 0 3px 24px;padding-left:9px;border-left:1px solid rgba(255,255,255,.12)}
+.analysis-nav-group.open .analysis-nav-submenu{display:flex}
+.nav .analysis-nav-submenu .analysis-nav-child{padding:9px 10px;border-radius:8px;gap:9px;color:#bdc9d8}
+.nav .analysis-nav-submenu .analysis-nav-child i{width:18px;font-size:14px}
+.nav .analysis-nav-submenu .analysis-nav-child b{font-size:12px}
+.nav .analysis-nav-submenu .analysis-nav-child.active{background:rgba(41,160,94,.22);box-shadow:none;color:#fff;border:1px solid rgba(89,210,139,.16)}
+.analysis-nav-group.active>.analysis-nav-parent{background:rgba(255,255,255,.075);color:#fff;box-shadow:none}
+.app.nav-collapsed .analysis-nav-submenu{display:none!important}
+.app.nav-collapsed .analysis-nav-parent .analysis-nav-caret{display:none}
+@media(max-width:780px){.analysis-nav-submenu{margin-left:18px}}
