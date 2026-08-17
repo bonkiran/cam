@@ -50,6 +50,8 @@ def _ensure_player_columns(conn: sqlite3.Connection) -> None:
     columns = _table_columns(conn, "players")
     additions = {
         "academy_id": "INTEGER REFERENCES academies(id) ON DELETE SET NULL",
+        "first_name": "TEXT",
+        "last_name": "TEXT",
         "preferred_name": "TEXT",
         "date_of_birth": "TEXT",
         "gender": "TEXT",
