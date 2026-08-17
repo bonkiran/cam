@@ -1,0 +1,35 @@
+name: Academy Slice 1 CI
+
+on:
+  push:
+    branches:
+      - academy-slice1-player-guardian
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'tests/test_academy_slice1.py'
+      - 'run.py'
+      - 'requirements.txt'
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest httpx
+
+      - name: Compile Python
+        run: python -m compileall -q app run.py
+
+      - name: Run academy Slice 1 smoke test
+        run: pytest -q tests/test_academy_slice1.py
