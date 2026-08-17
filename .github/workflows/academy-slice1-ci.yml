@@ -31,5 +31,10 @@ jobs:
       - name: Compile Python
         run: python -m compileall -q app run.py
 
+      - name: Check academy JavaScript syntax
+        run: |
+          node --check app/static/academy_v3.js
+          node --check app/static/nav_structure_v3.js
+
       - name: Run academy Slice 1 smoke test
         run: pytest -q tests/test_academy_slice1.py
