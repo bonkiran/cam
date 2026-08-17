@@ -9,7 +9,7 @@
 
   const GROUPS = [
     {
-      key:'analysis', label:'Analysis', icon:'◈', parentRoute:null,
+      key:'analysis', label:'Analysis', icon:'◈',
       children:[
         ['upload','⇧','Upload Video'],
         ['analyses','▣','My Analyses'],
@@ -18,20 +18,29 @@
       ]
     },
     {
-      key:'academy', label:'Academy', icon:'▦', parentRoute:'academy',
+      key:'academy', label:'Academy', icon:'▦',
       children:[
+        ['academy','⌂','Overview'],
         ['players','♙','Players'],
         ['reports','▤','Reports']
       ]
     },
     {
-      key:'insights', label:'Insights', icon:'⌁', parentRoute:'insights',
-      children:[['shot-library','◫','Shot Library']]
+      key:'insights', label:'Insights', icon:'⌁',
+      children:[
+        ['insights','⌂','Overview'],
+        ['shot-library','◫','Shot Library']
+      ]
     }
   ];
 
-  function groupActive(group, page){
-    return page === group.parentRoute || group.children.some(([route]) => route === page);
+  function reportsContext(){
+    return localStorage.getItem('crick-reports-context') || 'analysis';
+  }
+
+  function groupOwnsPage(group, page){
+    if(page === 'reports') return group.key === reportsContext();
+    return group.children.some(([route]) => route === page);
   }
 
   function setOpen(wrapper, parent, group, open){
@@ -40,12 +49,12 @@
     localStorage.setItem(`crick-nav-group-${group.key}`, open ? '1' : '0');
   }
 
-  function makeChild(route, icon, label){
+  function childButton(route, icon, label){
     const btn = document.createElement('button');
+    btn.type = 'button';
     btn.dataset.route = route;
     btn.className = 'nav-group-child';
     btn.innerHTML = `<i>${icon}</i><b>${label}</b>`;
-    btn.onclick = () => { location.hash = route; };
     return btn;
   }
 
@@ -62,12 +71,9 @@
         <div class="nav-group-submenu"></div>`;
 
       let anchor = null;
-      if(group.parentRoute) anchor = qs(`:scope > button[data-route="${group.parentRoute}"]`, nav);
-      if(!anchor){
-        for(const [route] of group.children){
-          anchor = qs(`:scope > button[data-route="${route}"]`, nav);
-          if(anchor) break;
-        }
+      for(const [route] of group.children){
+        anchor = qs(`:scope > button[data-route="${route}"]`, nav);
+        if(anchor) break;
       }
       if(anchor) nav.insertBefore(wrapper, anchor); else nav.appendChild(wrapper);
     }
@@ -76,80 +82,64 @@
     const submenu = qs('.nav-group-submenu', wrapper);
     if(!parent || !submenu) return;
 
-    // Keep Dashboard completely standalone: no wrapper/group is created for it.
-    // Academy and Insights are both route targets and expandable accordion parents.
+    // Parent is a true accordion control: every click toggles open/closed.
     parent.onclick = (event) => {
-      const isOpen = wrapper.classList.contains('open');
-      const clickedCaret = event.target?.classList?.contains('nav-group-caret');
-
-      // For grouped route parents (Academy / Insights):
-      // - clicking the caret only toggles
-      // - clicking the label/icon navigates when collapsed, and collapses when already open
-      if(group.parentRoute){
-        if(clickedCaret || isOpen){
-          event.preventDefault();
-          event.stopPropagation();
-          setOpen(wrapper, parent, group, !isOpen);
-          return;
-        }
-        setOpen(wrapper, parent, group, true);
-        location.hash = group.parentRoute;
-        return;
-      }
-
-      // Analysis is a pure accordion parent.
-      setOpen(wrapper, parent, group, !isOpen);
+      event.preventDefault();
+      event.stopPropagation();
+      setOpen(wrapper, parent, group, !wrapper.classList.contains('open'));
     };
 
-    // Build child buttons. Reports intentionally appears under both Analysis and Academy.
     for(const [route, icon, label] of group.children){
       let child = qs(`button[data-route="${route}"]`, submenu);
       if(!child){
-        // Reuse the original direct button only once. For duplicate placements (Reports), clone/create.
+        // Reuse a direct menu button if available; otherwise create one.
+        // Reports is intentionally represented in both Analysis and Academy.
         const direct = qs(`:scope > button[data-route="${route}"]`, nav);
-        const alreadyGrouped = qs(`.nav-group-submenu button[data-route="${route}"]`, nav);
-        if(direct && !alreadyGrouped){
+        const alreadyUsed = qs(`.nav-group-submenu button[data-route="${route}"]`, nav);
+        if(direct && !alreadyUsed){
           child = direct;
           submenu.appendChild(child);
         } else {
-          child = makeChild(route, icon, label);
+          child = childButton(route, icon, label);
           submenu.appendChild(child);
         }
       }
+
       child.classList.add('nav-group-child');
-      child.classList.toggle('active', currentPage() === route);
-      child.onclick = () => { location.hash = route; };
+      child.classList.toggle('active', groupOwnsPage(group, currentPage()) && currentPage() === route);
+      child.onclick = () => {
+        if(route === 'reports') localStorage.setItem('crick-reports-context', group.key);
+        setOpen(wrapper, parent, group, true);
+        location.hash = route;
+      };
     }
 
     const page = currentPage();
-    const active = groupActive(group, page);
+    const active = groupOwnsPage(group, page);
     const stored = localStorage.getItem(`crick-nav-group-${group.key}`);
-    // Active child/group opens automatically only if the user has not explicitly collapsed it.
     const open = stored === '1' ? true : stored === '0' ? false : active;
+
     wrapper.classList.toggle('active', active);
     parent.classList.toggle('active', active);
     wrapper.classList.toggle('open', open);
     parent.setAttribute('aria-expanded', open ? 'true' : 'false');
   }
 
+  function unwrap(wrapper, nav){
+    if(!wrapper) return;
+    const submenu = qs('.nav-group-submenu, .analysis-nav-submenu', wrapper);
+    if(submenu){
+      qsa('button[data-route]', submenu).forEach(btn => nav.insertBefore(btn, wrapper));
+    }
+    wrapper.remove();
+  }
+
   function cleanup(nav){
-    // Remove legacy wrappers/scripts' DOM output before applying the canonical structure.
-    const legacyAnalysis = qs('.analysis-nav-group', nav);
-    if(legacyAnalysis){
-      const oldSub = qs('.analysis-nav-submenu', legacyAnalysis);
-      if(oldSub) qsa('button[data-route]', oldSub).forEach(btn => nav.insertBefore(btn, legacyAnalysis));
-      legacyAnalysis.remove();
-    }
+    // Remove old versions of the generated navigation structure.
+    unwrap(qs('.analysis-nav-group', nav), nav);
+    unwrap(qs('.nav-group[data-nav-group="dashboard"]', nav), nav);
 
-    // Remove any obsolete Dashboard accordion created by v2, but preserve its child Report button.
-    const oldDashboard = qs('.nav-group[data-nav-group="dashboard"]', nav);
-    if(oldDashboard){
-      const oldSub = qs('.nav-group-submenu', oldDashboard);
-      if(oldSub) qsa('button[data-route]', oldSub).forEach(btn => nav.insertBefore(btn, oldDashboard));
-      oldDashboard.remove();
-    }
-
-    // Sessions is no longer part of navigation.
+    // Sessions is intentionally removed from navigation.
     qsa('button[data-route="sessions"]', nav).forEach(btn => btn.remove());
   }
 
@@ -162,7 +152,7 @@
 
       cleanup(nav);
 
-      // Ensure Dashboard remains a plain, direct menu item.
+      // Dashboard is deliberately standalone with NO submenu.
       let dashboard = qs(':scope > button[data-route="dashboard"]', nav);
       if(!dashboard){
         dashboard = document.createElement('button');
@@ -175,8 +165,11 @@
 
       GROUPS.forEach(group => ensureGroup(nav, group));
 
-      // Remove original direct entries once grouped. Dashboard stays standalone.
-      const groupedRoutes = new Set(['upload','analyses','comparisons','reports','players','shot-library']);
+      // Remove top-level copies after their grouped versions have been created.
+      const groupedRoutes = new Set([
+        'upload','analyses','comparisons','reports',
+        'academy','players','insights','shot-library'
+      ]);
       qsa(':scope > button[data-route]', nav).forEach(btn => {
         if(groupedRoutes.has(btn.dataset.route)) btn.remove();
       });
