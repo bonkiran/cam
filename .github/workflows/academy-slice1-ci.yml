@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - academy-slice1-player-guardian
+      - academy-fix-website-validation
   pull_request:
     paths:
       - 'app/**'
@@ -35,7 +36,23 @@ jobs:
       - name: Check academy JavaScript syntax
         run: |
           node --check app/static/academy_v3.js
+          node --check app/static/academy_validation_v1.js
           node --check app/static/nav_structure_v3.js
+
+      - name: Test academy website normalization
+        run: |
+          node - <<'NODE'
+          const assert = require('assert');
+          const { normalizeWebsite, isValidWebsite } = require('./app/static/academy_validation_v1.js');
+          assert.equal(normalizeWebsite('www.ssrj.com'), 'https://www.ssrj.com');
+          assert.equal(normalizeWebsite('ssrj.com'), 'https://ssrj.com');
+          assert.equal(normalizeWebsite('https://ssrj.com'), 'https://ssrj.com');
+          assert.equal(isValidWebsite('www.ssrj.com'), true);
+          assert.equal(isValidWebsite('ssrj.com'), true);
+          assert.equal(isValidWebsite('https://ssrj.com/path'), true);
+          assert.equal(isValidWebsite('not a website'), false);
+          assert.equal(isValidWebsite(''), true);
+          NODE
 
       - name: Run academy Slice 1 smoke test
         run: pytest -q tests/test_academy_slice1.py
