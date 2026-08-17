@@ -29,8 +29,12 @@ def connection():
         conn.close()
 
 
+def _table_columns(conn: sqlite3.Connection, table: str) -> set[str]:
+    return {row["name"] for row in conn.execute(f"PRAGMA table_info({table})").fetchall()}
+
+
 def _ensure_video_columns(conn: sqlite3.Connection) -> None:
-    columns = {row["name"] for row in conn.execute("PRAGMA table_info(videos)").fetchall()}
+    columns = _table_columns(conn, "videos")
     additions = {
         "analysis_mode": "TEXT NOT NULL DEFAULT 'quick'",
         "progress_percent": "INTEGER NOT NULL DEFAULT 0",
@@ -41,10 +45,58 @@ def _ensure_video_columns(conn: sqlite3.Connection) -> None:
             conn.execute(f"ALTER TABLE videos ADD COLUMN {name} {definition}")
 
 
+def _ensure_player_columns(conn: sqlite3.Connection) -> None:
+    """Extend legacy video-analysis players into the academy master player record."""
+    columns = _table_columns(conn, "players")
+    additions = {
+        "academy_id": "INTEGER REFERENCES academies(id) ON DELETE SET NULL",
+        "preferred_name": "TEXT",
+        "date_of_birth": "TEXT",
+        "gender": "TEXT",
+        "batting_style": "TEXT",
+        "bowling_style": "TEXT",
+        "skill_level": "TEXT",
+        "email": "TEXT",
+        "phone": "TEXT",
+        "address_line1": "TEXT",
+        "address_line2": "TEXT",
+        "city": "TEXT",
+        "state": "TEXT",
+        "postal_code": "TEXT",
+        "country": "TEXT",
+        "emergency_contact_name": "TEXT",
+        "emergency_contact_phone": "TEXT",
+        "joined_on": "TEXT",
+        "status": "TEXT NOT NULL DEFAULT 'active'",
+        "updated_at": "TEXT",
+    }
+    for name, definition in additions.items():
+        if name not in columns:
+            conn.execute(f"ALTER TABLE players ADD COLUMN {name} {definition}")
+
+
 def init_db() -> None:
     with connection() as conn:
         conn.executescript(
             """
+            CREATE TABLE IF NOT EXISTS academies (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT,
+                phone TEXT,
+                website TEXT,
+                address_line1 TEXT,
+                address_line2 TEXT,
+                city TEXT,
+                state TEXT,
+                postal_code TEXT,
+                country TEXT NOT NULL DEFAULT 'United States',
+                timezone TEXT NOT NULL DEFAULT 'America/New_York',
+                status TEXT NOT NULL DEFAULT 'active',
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT
+            );
+
             CREATE TABLE IF NOT EXISTS players (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL UNIQUE COLLATE NOCASE,
@@ -52,6 +104,43 @@ def init_db() -> None:
                 notes TEXT,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS guardians (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                academy_id INTEGER,
+                first_name TEXT NOT NULL,
+                last_name TEXT NOT NULL,
+                relationship TEXT,
+                email TEXT,
+                phone TEXT,
+                address_line1 TEXT,
+                address_line2 TEXT,
+                city TEXT,
+                state TEXT,
+                postal_code TEXT,
+                country TEXT,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT,
+                FOREIGN KEY(academy_id) REFERENCES academies(id) ON DELETE SET NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS player_guardians (
+                player_id INTEGER NOT NULL,
+                guardian_id INTEGER NOT NULL,
+                is_primary INTEGER NOT NULL DEFAULT 0,
+                billing_contact INTEGER NOT NULL DEFAULT 0,
+                pickup_authorized INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY(player_id, guardian_id),
+                FOREIGN KEY(player_id) REFERENCES players(id) ON DELETE CASCADE,
+                FOREIGN KEY(guardian_id) REFERENCES guardians(id) ON DELETE CASCADE
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_player_guardians_player
+            ON player_guardians(player_id);
+
+            CREATE INDEX IF NOT EXISTS idx_guardians_academy
+            ON guardians(academy_id);
 
             CREATE TABLE IF NOT EXISTS videos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -107,6 +196,7 @@ def init_db() -> None:
             ON events(video_id, timestamp);
             """
         )
+        _ensure_player_columns(conn)
         _ensure_video_columns(conn)
 
 
