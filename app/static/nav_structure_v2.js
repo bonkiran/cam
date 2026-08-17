@@ -41,6 +41,7 @@
     button.type='button';
     button.className='nav-group-parent';
     button.dataset.navGroupParent=group.key;
+    if(group.parentRoute) button.dataset.route=group.parentRoute;
     button.innerHTML=`<i>${group.icon}</i><b>${group.label}</b><span class="nav-group-caret">⌄</span>`;
     button.title=group.label;
     return button;
@@ -69,8 +70,10 @@
     const parent=qs('.nav-group-parent',wrapper);
     const submenu=qs('.nav-group-submenu',wrapper);
     if(!parent || !submenu) return;
+    if(group.parentRoute) parent.dataset.route=group.parentRoute;
 
-    // A grouped top-level route such as Dashboard/Academy/Insights remains directly reachable.
+    // Dashboard, Academy and Insights remain clickable top-level destinations.
+    // Clicking the caret only expands/collapses their children.
     if(group.parentRoute){
       parent.onclick=(event)=>{
         const caretHit=event.target?.classList?.contains('nav-group-caret');
@@ -107,7 +110,6 @@
         child=document.createElement('button');
         child.dataset.route=route;
         child.innerHTML=`<i>${icon}</i><b>${label}</b>`;
-        child.onclick=()=>{location.hash=route};
         submenu.appendChild(child);
       }
       child.classList.add('nav-group-child');
@@ -131,10 +133,10 @@
       const nav=qs('.sidebar .nav');
       if(!nav) return;
 
-      // Remove the obsolete Sessions navigation entry entirely.
+      // Remove Sessions entirely from the left navigation.
       qsa(':scope > button[data-route="sessions"], .nav-group button[data-route="sessions"]',nav).forEach(x=>x.remove());
 
-      // Remove the prior Analysis wrapper if the new structure has not absorbed it yet.
+      // Remove the old one-off Analysis wrapper before applying the unified hierarchy.
       const legacy=qs('.analysis-nav-group',nav);
       if(legacy){
         const sub=qs('.analysis-nav-submenu',legacy);
