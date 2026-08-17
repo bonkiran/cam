@@ -3,6 +3,7 @@ name: Academy Slice 1 CI
 on:
   push:
     branches:
+      - main
       - academy-slice1-player-guardian
   pull_request:
     paths:
