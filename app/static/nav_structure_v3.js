@@ -3,9 +3,13 @@
   const qsa = (s, r=document) => [...r.querySelectorAll(s)];
   let applying = false;
 
-  function currentPage(){
-    return (location.hash.replace(/^#/, '').split('?')[0] || 'dashboard');
+  function routeInfo(){
+    const raw=location.hash.replace(/^#/,'');
+    const [page,query='']=raw.split('?');
+    const params=new URLSearchParams(query);
+    return {page:page||'dashboard',tab:params.get('tab')||'overview'};
   }
+  function currentPage(){ return routeInfo().page; }
 
   const GROUPS = [
     {
@@ -38,9 +42,24 @@
     return localStorage.getItem('crick-reports-context') || 'analysis';
   }
 
-  function groupOwnsPage(group, page){
-    if(page === 'reports') return group.key === reportsContext();
-    return group.children.some(([route]) => route === page);
+  function childTarget(group, route){
+    if(group.key==='academy' && route==='players') return 'academy?tab=players';
+    return route;
+  }
+
+  function childIsActive(group, route){
+    const info=routeInfo();
+    if(route==='reports') return info.page==='reports' && group.key===reportsContext();
+    if(group.key==='academy' && route==='academy') return info.page==='academy' && info.tab==='overview';
+    if(group.key==='academy' && route==='players') return info.page==='academy' && info.tab==='players';
+    return info.page===route;
+  }
+
+  function groupOwnsPage(group){
+    const info=routeInfo();
+    if(info.page==='reports') return group.key===reportsContext();
+    if(group.key==='academy' && info.page==='academy') return true;
+    return group.children.some(([route])=>route===info.page);
   }
 
   function setOpen(wrapper, parent, group, open){
@@ -82,7 +101,6 @@
     const submenu = qs('.nav-group-submenu', wrapper);
     if(!parent || !submenu) return;
 
-    // Parent is a true accordion control: every click toggles open/closed.
     parent.onclick = (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -92,8 +110,6 @@
     for(const [route, icon, label] of group.children){
       let child = qs(`button[data-route="${route}"]`, submenu);
       if(!child){
-        // Reuse a direct menu button if available; otherwise create one.
-        // Reports is intentionally represented in both Analysis and Academy.
         const direct = qs(`:scope > button[data-route="${route}"]`, nav);
         const alreadyUsed = qs(`.nav-group-submenu button[data-route="${route}"]`, nav);
         if(direct && !alreadyUsed){
@@ -106,16 +122,15 @@
       }
 
       child.classList.add('nav-group-child');
-      child.classList.toggle('active', groupOwnsPage(group, currentPage()) && currentPage() === route);
+      child.classList.toggle('active', childIsActive(group,route));
       child.onclick = () => {
         if(route === 'reports') localStorage.setItem('crick-reports-context', group.key);
         setOpen(wrapper, parent, group, true);
-        location.hash = route;
+        location.hash = childTarget(group,route);
       };
     }
 
-    const page = currentPage();
-    const active = groupOwnsPage(group, page);
+    const active = groupOwnsPage(group);
     const stored = localStorage.getItem(`crick-nav-group-${group.key}`);
     const open = stored === '1' ? true : stored === '0' ? false : active;
 
@@ -135,11 +150,8 @@
   }
 
   function cleanup(nav){
-    // Remove old versions of the generated navigation structure.
     unwrap(qs('.analysis-nav-group', nav), nav);
     unwrap(qs('.nav-group[data-nav-group="dashboard"]', nav), nav);
-
-    // Sessions is intentionally removed from navigation.
     qsa('button[data-route="sessions"]', nav).forEach(btn => btn.remove());
   }
 
@@ -152,7 +164,6 @@
 
       cleanup(nav);
 
-      // Dashboard is deliberately standalone with NO submenu.
       let dashboard = qs(':scope > button[data-route="dashboard"]', nav);
       if(!dashboard){
         dashboard = document.createElement('button');
@@ -165,7 +176,6 @@
 
       GROUPS.forEach(group => ensureGroup(nav, group));
 
-      // Remove top-level copies after their grouped versions have been created.
       const groupedRoutes = new Set([
         'upload','analyses','comparisons','reports',
         'academy','players','insights','shot-library'
