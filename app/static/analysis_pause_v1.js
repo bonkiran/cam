@@ -2,7 +2,6 @@
   const PAUSED = true;
   const ANALYSIS_ROUTES = new Set(['dashboard', 'upload', 'analyses', 'analysis', 'comparisons']);
   const BLOCKED_API_PREFIXES = ['/api/videos', '/api/biomechanics', '/api/events'];
-  const BLOCKED_API_EXACT = new Set(['/api/dashboard', '/api/players']);
 
   window.CAM_ANALYSIS_PAUSED = PAUSED;
 
@@ -15,15 +14,16 @@
     try {
       const url = new URL(typeof value === 'string' ? value : value.url, location.origin);
       const path = url.pathname;
-      return BLOCKED_API_EXACT.has(path) || BLOCKED_API_PREFIXES.some(prefix => path === prefix || path.startsWith(`${prefix}/`));
+      return BLOCKED_API_PREFIXES.some(prefix => path === prefix || path.startsWith(`${prefix}/`));
     } catch (_) {
       return false;
     }
   }
 
   // Safety belt: while Analysis is parked, do not allow browser code to send
-  // video/biomechanics requests to the server at all. Return a local response
-  // instead so accidental legacy callers cannot create Render log noise or work.
+  // video/biomechanics/event requests to the server at all. Return a local
+  // response instead so accidental legacy callers cannot create Render log noise.
+  // Shared Academy dependencies such as /api/dashboard remain available.
   const nativeFetch = window.fetch.bind(window);
   window.fetch = (input, init) => {
     if (PAUSED && isBlockedPath(input)) {
