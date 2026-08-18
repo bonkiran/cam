@@ -1,0 +1,44 @@
+name: Production Storage Check
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/system_api.py'
+      - 'run.py'
+      - '.github/workflows/production-storage-check.yml'
+  workflow_dispatch:
+
+jobs:
+  verify-live-storage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Render deployment and verify PostgreSQL
+        run: |
+          python - <<'PY'
+          import json
+          import time
+          import urllib.error
+          import urllib.request
+
+          url = "https://crickanalysis.onrender.com/api/system/storage"
+          last = None
+          for attempt in range(1, 91):
+              try:
+                  req = urllib.request.Request(url, headers={"User-Agent": "CrickAnalysis-CI/1.0"})
+                  with urllib.request.urlopen(req, timeout=20) as response:
+                      body = response.read().decode("utf-8")
+                      data = json.loads(body)
+                  last = data
+                  print(f"attempt {attempt}: {data}")
+                  if data.get("ok") is True and data.get("database") == "postgresql":
+                      print("LIVE STORAGE CHECK PASS: Render is using PostgreSQL")
+                      raise SystemExit(0)
+              except Exception as exc:
+                  last = repr(exc)
+                  print(f"attempt {attempt}: {exc}")
+              time.sleep(10)
+
+          raise SystemExit(f"LIVE STORAGE CHECK FAIL after 15 minutes; last response={last}")
+          PY
