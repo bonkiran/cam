@@ -26,7 +26,29 @@ def _post(path: str, payload: dict, token: str | None = None, expected=(200, 201
     return response.json() if response.content else None
 
 
+def _reset_shared_postgres_auth_state() -> None:
+    """Make this auth regression independent of earlier tests in one PG service."""
+    database_url = os.environ.get("DATABASE_URL", "").strip()
+    if not database_url:
+        return
+    import psycopg
+
+    candidates = ["academy_auth_sessions", "academy_access_audit", "academy_users"]
+    with psycopg.connect(database_url) as conn:
+        with conn.cursor() as cursor:
+            existing = []
+            for table in candidates:
+                cursor.execute("SELECT to_regclass(%s)", (f"public.{table}",))
+                if cursor.fetchone()[0] is not None:
+                    existing.append(table)
+            if existing:
+                cursor.execute(f"TRUNCATE TABLE {', '.join(existing)} RESTART IDENTITY CASCADE")
+        conn.commit()
+
+
 def test_academy_roles_security_end_to_end():
+    _reset_shared_postgres_auth_state()
+
     status_response = client.get("/api/auth/bootstrap-status")
     assert status_response.status_code == 200
     status_json = status_response.json()
@@ -69,12 +91,18 @@ def test_academy_roles_security_end_to_end():
     no_auth_users = client.get("/api/academy/access/users")
     assert no_auth_users.status_code == 401
 
-    # Create real Academy identities that can be linked to role accounts.
-    profile = client.put("/api/academy/profile", json={"name": "Security Test Academy"})
+    # Once Access is bootstrapped, generic Academy management operations require
+    # the Owner/Admin session. Access endpoints retain their own role checks.
+    profile = client.put(
+        "/api/academy/profile",
+        json={"name": "Security Test Academy"},
+        headers=_auth(owner_token),
+    )
     assert profile.status_code == 200, profile.text
     coach = _post(
         "/api/academy/coaches",
         {"first_name": "Anita", "last_name": "Coach", "email": "anita@example.test", "status": "active"},
+        owner_token,
     )
     player = _post(
         "/api/academy/players",
@@ -93,6 +121,7 @@ def test_academy_roles_security_end_to_end():
                 }
             ],
         },
+        owner_token,
     )
     guardian_id = int(player["guardians"][0]["id"])
 

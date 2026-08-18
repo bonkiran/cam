@@ -67,7 +67,11 @@ def _reset_shared_postgres_state() -> None:
 
 
 def _set_session(page, token: str) -> None:
+    # The root Dashboard renders asynchronously after DOMContentLoaded. Wait for
+    # it to settle before switching to Academy so a slower PostgreSQL response
+    # cannot overwrite the requested Reviews workspace afterward.
     page.goto(BASE_URL, wait_until="domcontentloaded")
+    expect(page.get_by_role("heading", name="Dashboard")).to_be_visible(timeout=15000)
     page.evaluate("([key,value]) => sessionStorage.setItem(key,value)", [SESSION_KEY, token])
 
 

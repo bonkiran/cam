@@ -8,6 +8,7 @@ on:
   pull_request:
     paths:
       - 'app/academy_auth_api.py'
+      - 'app/academy_rbac_middleware.py'
       - 'app/static/academy_access_v1.js'
       - 'app/static/academy_access_v1.css'
       - 'app/static/index.html'
@@ -69,6 +70,25 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
         run: pytest -q tests/test_academy_auth_ui.py
+      - name: Reset Access auth state before prior PostgreSQL regressions
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        run: |
+          python - <<'PY'
+          import os
+          import psycopg
+
+          with psycopg.connect(os.environ['DATABASE_URL']) as conn:
+              with conn.cursor() as cur:
+                  tables = []
+                  for table in ('academy_auth_sessions', 'academy_access_audit', 'academy_users'):
+                      cur.execute('SELECT to_regclass(%s)', (f'public.{table}',))
+                      if cur.fetchone()[0] is not None:
+                          tables.append(table)
+                  if tables:
+                      cur.execute(f"TRUNCATE TABLE {', '.join(tables)} RESTART IDENTITY CASCADE")
+              conn.commit()
+          PY
       - name: Prior Academy API regressions on PostgreSQL
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
