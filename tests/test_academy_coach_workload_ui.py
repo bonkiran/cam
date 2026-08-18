@@ -70,6 +70,15 @@ def test_coach_workload_is_visible_on_coaches_page():
         )
         assert generated["created_count"] == 2
 
+        # The page's workload KPI is academy-wide, so on persistent PostgreSQL it
+        # must include sessions created by earlier regression steps rather than
+        # assuming this test owns the entire database.
+        all_coaches = _json_request("GET", "/api/academy/coaches")
+        expected_total_sessions = sum(
+            int(_json_request("GET", f"/api/academy/coaches/{c['id']}/workload")["session_count"])
+            for c in all_coaches
+        )
+
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True)
             page = browser.new_page(viewport={"width": 1500, "height": 1000})
@@ -78,9 +87,10 @@ def test_coach_workload_is_visible_on_coaches_page():
                 coach_row = page.locator(".academy-coach-row", has_text="Workload Coach")
                 expect(coach_row).to_be_visible(timeout=15000)
                 expect(coach_row).to_contain_text("2 sessions · 2h", timeout=10000)
+
                 workload_stat = page.locator(".academy-stat", has_text="Session workload")
-                expect(workload_stat.locator("strong")).to_have_text("2", timeout=10000)
-                expect(workload_stat.locator("small")).to_contain_text("2h scheduled coaching time")
+                expect(workload_stat.locator("strong")).to_have_text(str(expected_total_sessions), timeout=10000)
+                expect(workload_stat.locator("small")).to_contain_text("scheduled coaching time")
             except Exception:
                 Path("test-results").mkdir(exist_ok=True)
                 page.screenshot(path="test-results/academy-coach-workload-ui-failure.png", full_page=True)
