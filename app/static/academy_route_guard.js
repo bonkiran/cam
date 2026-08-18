@@ -1,22 +1,26 @@
 (() => {
   const CLASS_NAME = 'academy-route-pending';
   const STYLE_ID = 'academyRouteGuardStyle';
+  const VERSION = '2';
 
   function isAcademyRoute() {
     return location.hash.replace(/^#/, '').split('?')[0] === 'academy';
   }
 
   function ensureStyle() {
-    if (document.getElementById(STYLE_ID)) return;
+    if (document.getElementById(STYLE_ID)) {
+      document.documentElement.dataset.academyRouteGuard = VERSION;
+      return;
+    }
     const style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = `
-      html.${CLASS_NAME} #app .main > .page-head,
-      html.${CLASS_NAME} #app .main > .panel {
+      html.${CLASS_NAME} #app .main > :not(.topbar) {
         visibility: hidden !important;
       }
       html.${CLASS_NAME} #app .main {
         position: relative;
+        min-height: 280px;
       }
       html.${CLASS_NAME} #app .main::after {
         content: 'Loading Academy…';
@@ -30,16 +34,17 @@
         justify-content: center;
         border: 1px solid rgba(31, 111, 75, 0.18);
         border-radius: 16px;
-        background: rgba(255, 255, 255, 0.92);
+        background: rgba(255, 255, 255, 0.96);
         color: #315b49;
         font-weight: 700;
-        z-index: 2;
+        z-index: 9999;
       }
       html.${CLASS_NAME} #academyWorkspace {
         visibility: hidden !important;
       }
     `;
     document.head.appendChild(style);
+    document.documentElement.dataset.academyRouteGuard = VERSION;
   }
 
   function markPending() {
@@ -56,27 +61,36 @@
       document.documentElement.classList.remove(CLASS_NAME);
       return;
     }
+    if (!document.documentElement.classList.contains(CLASS_NAME)) return;
     const workspace = document.getElementById('academyWorkspace');
-    if (workspace && workspace.querySelector('.academy-content')) {
+    const content = workspace && workspace.querySelector('.academy-content');
+    if (workspace && content) {
       requestAnimationFrame(() => {
-        if (isAcademyRoute()) document.documentElement.classList.remove(CLASS_NAME);
+        if (isAcademyRoute() && document.getElementById('academyWorkspace')) {
+          document.documentElement.classList.remove(CLASS_NAME);
+        }
       });
     }
   }
 
-  // This listener is registered before app.js, so the generic router's Academy
-  // placeholder is hidden before the browser has a chance to paint it.
+  // The guard becomes active only when entering/changing an Academy route.
+  // It must not be re-activated by ordinary Academy DOM updates after the page
+  // has already mounted (forms, attendance rows, coach workload, etc.).
   window.addEventListener('hashchange', () => {
     markPending();
     queueMicrotask(releaseWhenAcademyMounted);
   });
 
-  const observer = new MutationObserver(releaseWhenAcademyMounted);
+  // The observer has one job only: detect when the real Academy workspace has
+  // mounted and release the temporary loading guard. It never calls markPending.
+  const observer = new MutationObserver(() => {
+    releaseWhenAcademyMounted();
+  });
   observer.observe(document.documentElement, { childList: true, subtree: true });
 
+  ensureStyle();
   markPending();
   document.addEventListener('DOMContentLoaded', () => {
-    markPending();
     releaseWhenAcademyMounted();
   });
 })();
