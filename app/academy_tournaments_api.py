@@ -6,13 +6,14 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from .database import connection, fetch_all, fetch_one
+from .database import _table_columns, connection, fetch_all, fetch_one
 
 router = APIRouter(prefix="/api/academy", tags=["academy-tournaments"])
 
 
 class TournamentPayload(BaseModel):
     name: str = Field(min_length=2, max_length=180)
+    tournament_type: Literal["internal", "external"] = "external"
     organizer: str | None = Field(default=None, max_length=180)
     start_date: str = Field(min_length=8, max_length=20)
     end_date: str = Field(min_length=8, max_length=20)
@@ -52,6 +53,7 @@ def _ensure_tables() -> None:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             academy_id BIGINT,
             name TEXT NOT NULL,
+            tournament_type TEXT NOT NULL DEFAULT 'external',
             organizer TEXT,
             start_date TEXT NOT NULL,
             end_date TEXT NOT NULL,
@@ -64,6 +66,7 @@ def _ensure_tables() -> None:
         );
         CREATE INDEX IF NOT EXISTS idx_academy_tournaments_dates ON academy_tournaments(start_date,end_date);
         CREATE INDEX IF NOT EXISTS idx_academy_tournaments_status ON academy_tournaments(status);
+        CREATE INDEX IF NOT EXISTS idx_academy_tournaments_type ON academy_tournaments(tournament_type);
 
         CREATE TABLE IF NOT EXISTS academy_tournament_entries (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,6 +85,14 @@ def _ensure_tables() -> None:
     """
     with connection() as conn:
         conn.executescript(schema)
+        # Existing pilot/dev databases predate tournament classification. Add the
+        # field in-place with a backward-compatible external default so no record
+        # is lost and old API payloads remain valid.
+        if "tournament_type" not in _table_columns(conn, "academy_tournaments"):
+            conn.execute("ALTER TABLE academy_tournaments ADD COLUMN tournament_type TEXT NOT NULL DEFAULT 'external'")
+        # The CREATE INDEX in the schema cannot reference a column absent from an
+        # older table before the ALTER above, so ensure it once migration is done.
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_academy_tournaments_type ON academy_tournaments(tournament_type)")
 
 
 def _academy_id(conn) -> int | None:
@@ -144,10 +155,10 @@ def create_tournament(payload: TournamentPayload):
             raise HTTPException(409, "A tournament with this name and start date already exists")
         row = conn.execute(
             """
-            INSERT INTO academy_tournaments(academy_id,name,organizer,start_date,end_date,location,status,notes)
-            VALUES(?,?,?,?,?,?,?,?) RETURNING id
+            INSERT INTO academy_tournaments(academy_id,name,tournament_type,organizer,start_date,end_date,location,status,notes)
+            VALUES(?,?,?,?,?,?,?,?,?) RETURNING id
             """,
-            (_academy_id(conn), name, _clean(payload.organizer), payload.start_date, payload.end_date,
+            (_academy_id(conn), name, payload.tournament_type, _clean(payload.organizer), payload.start_date, payload.end_date,
              _clean(payload.location), payload.status, _clean(payload.notes)),
         ).fetchone()
         tournament_id = int(row["id"])
@@ -168,10 +179,10 @@ def update_tournament(tournament_id: int, payload: TournamentPayload):
             raise HTTPException(409, "A tournament with this name and start date already exists")
         conn.execute(
             """
-            UPDATE academy_tournaments SET name=?,organizer=?,start_date=?,end_date=?,location=?,status=?,notes=?,updated_at=CURRENT_TIMESTAMP
+            UPDATE academy_tournaments SET name=?,tournament_type=?,organizer=?,start_date=?,end_date=?,location=?,status=?,notes=?,updated_at=CURRENT_TIMESTAMP
             WHERE id=?
             """,
-            (name, _clean(payload.organizer), payload.start_date, payload.end_date, _clean(payload.location),
+            (name, payload.tournament_type, _clean(payload.organizer), payload.start_date, payload.end_date, _clean(payload.location),
              payload.status, _clean(payload.notes), tournament_id),
         )
     return _tournament(tournament_id)
