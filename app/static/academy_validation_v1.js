@@ -17,6 +17,25 @@
     }
   }
 
+  function enhanceNameField(formSelector, label) {
+    const form = document.querySelector(formSelector);
+    const input = form?.querySelector('input[name="name"]');
+    if (!input || input.dataset.nameValidationEnhanced === '1') return;
+    input.dataset.nameValidationEnhanced = '1';
+    input.minLength = 2;
+    input.maxLength = 160;
+    input.addEventListener('input', () => input.setCustomValidity(''));
+    input.addEventListener('invalid', () => {
+      if (input.validity.valueMissing) input.setCustomValidity(`${label} is required.`);
+      else if (input.validity.tooShort) input.setCustomValidity(`${label} must be at least 2 characters.`);
+    });
+  }
+
+  function enhanceNameFields() {
+    enhanceNameField('#academyProfileForm', 'Academy Name');
+    enhanceNameField('#academyPlayerForm', 'Player name');
+  }
+
   function enhanceWebsiteField(root = document) {
     const form = root.querySelector?.('#academyProfileForm');
     const input = form?.querySelector('input[name="website"]');
@@ -63,9 +82,14 @@
     }, true);
   }
 
-  function install() {
+  function enhanceAll() {
     enhanceWebsiteField(document);
-    const observer = new MutationObserver(() => enhanceWebsiteField(document));
+    enhanceNameFields();
+  }
+
+  function install() {
+    enhanceAll();
+    const observer = new MutationObserver(enhanceAll);
     observer.observe(document.documentElement, { childList: true, subtree: true });
   }
 
