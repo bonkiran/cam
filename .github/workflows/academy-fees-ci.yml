@@ -1,0 +1,77 @@
+name: Academy Fees Foundation CI
+
+on:
+  push:
+    branches:
+      - main
+      - academy-fees-foundation
+  pull_request:
+    paths:
+      - 'app/academy_fees_api.py'
+      - 'app/static/academy_fees_v1.js'
+      - 'app/static/academy_fees_v1.css'
+      - 'app/static/index.html'
+      - 'tests/test_academy_fees_api.py'
+      - 'tests/test_academy_fees_ui.py'
+      - 'run.py'
+      - '.github/workflows/academy-fees-ci.yml'
+
+jobs:
+  fees-regression:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: crickanalysis_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d crickanalysis_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest httpx playwright
+          python -m playwright install chromium
+      - name: Compile and JavaScript syntax check
+        run: |
+          python -m compileall -q app run.py tests/test_academy_fees_api.py tests/test_academy_fees_ui.py
+          node --check app/static/academy_fees_v1.js
+      - name: Fees API on SQLite
+        run: pytest -q tests/test_academy_fees_api.py
+      - name: Fees Chromium UI on SQLite
+        run: pytest -q tests/test_academy_fees_ui.py
+      - name: Prior Academy API regressions on SQLite
+        run: pytest -q tests/test_academy_slice1.py tests/test_academy_programs_api.py tests/test_academy_coaches_api.py tests/test_academy_batches_api.py tests/test_academy_attendance_api.py tests/test_academy_matches_api.py tests/test_academy_tournaments_api.py
+      - name: Fees API on PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        run: pytest -q tests/test_academy_fees_api.py
+      - name: Fees Chromium UI on PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        run: pytest -q tests/test_academy_fees_ui.py
+      - name: Prior Academy API regressions on PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        run: pytest -q tests/test_academy_slice1.py tests/test_academy_programs_api.py tests/test_academy_coaches_api.py tests/test_academy_batches_api.py tests/test_academy_attendance_api.py tests/test_academy_matches_api.py tests/test_academy_tournaments_api.py
+      - name: Upload browser failure screenshot
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-fees-ui-failure
+          path: test-results/
+          if-no-files-found: ignore
