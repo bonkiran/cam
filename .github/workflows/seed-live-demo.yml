@@ -9,6 +9,10 @@ on:
       - '.github/workflows/seed-live-demo.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   seed-live-demo:
     runs-on: ubuntu-latest
@@ -21,5 +25,33 @@ jobs:
           python-version: '3.12'
       - name: Validate seeder syntax
         run: python -m py_compile scripts/seed_live_demo.py
-      - name: Seed persistent DEMO data into live Render PostgreSQL
-        run: python scripts/seed_live_demo.py
+      - name: Seed persistent DEMO data and report status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set +e
+          python scripts/seed_live_demo.py > seed.log 2>&1
+          rc=$?
+          cat seed.log
+          if [ "$rc" -eq 0 ]; then
+            {
+              echo "## Live demo seed: PASS"
+              echo
+              echo '```text'
+              tail -c 55000 seed.log
+              echo
+              echo '```'
+            } > issue-comment.md
+          else
+            {
+              echo "## Live demo seed: FAIL"
+              echo
+              echo '```text'
+              tail -c 55000 seed.log
+              echo
+              echo '```'
+            } > issue-comment.md
+          fi
+          gh issue comment 6 --repo bonkiran/crickanalysis --body-file issue-comment.md
+          exit "$rc"
