@@ -55,26 +55,34 @@ def test_fee_plan_family_account_enrollment_discount_and_unique_invoices():
         {"player_id": player["id"], "program_id": program["id"], "enrollment_type": "regular", "start_date": "2026-09-01"},
     )
 
-    # AM-FEE-001: create a program-linked fee plan using integer cents.
+    # AM-FEE-001: $200 monthly tuition, due on the 1st, stored in integer cents.
     fee_plan = _post(
         "/api/academy/fee-plans",
         {
-            "name": "U15 Monthly 150",
-            "amount_cents": 15000,
+            "name": "U15 Monthly 200",
+            "amount_cents": 20000,
             "currency": "USD",
             "billing_frequency": "monthly",
+            "due_day_of_month": 1,
             "program_id": program["id"],
             "status": "active",
         },
     )
-    assert int(fee_plan["amount_cents"]) == 15000
+    assert int(fee_plan["amount_cents"]) == 20000
+    assert int(fee_plan["due_day_of_month"]) == 1
     assert int(fee_plan["program_id"]) == int(program["id"])
 
     duplicate = client.post(
         "/api/academy/fee-plans",
-        json={"name": "U15 Monthly 150", "amount_cents": 15000, "billing_frequency": "monthly"},
+        json={"name": "U15 Monthly 200", "amount_cents": 20000, "billing_frequency": "monthly", "due_day_of_month": 1},
     )
     assert duplicate.status_code == 409
+
+    invalid_due_day = client.post(
+        "/api/academy/fee-plans",
+        json={"name": "Invalid Due Day", "amount_cents": 20000, "billing_frequency": "monthly", "due_day_of_month": 31},
+    )
+    assert invalid_due_day.status_code == 422
 
     # AM-FEE-002: create a family billing account linked to the real player/guardian.
     account = _post(
@@ -92,16 +100,17 @@ def test_fee_plan_family_account_enrollment_discount_and_unique_invoices():
     assert [int(p["player_id"]) for p in account["players"]] == [int(player["id"])]
     assert int(account["balance_cents"]) == 0
 
-    # AM-ENR-003 + AM-ENR-009 + AM-FEE-005: link fee plan and 10% discount (1000 bps).
+    # AM-ENR-003 + AM-ENR-009 + AM-FEE-005: $200 less 10% = $180.
     billing = client.put(
         f"/api/academy/enrollments/{enrollment['id']}/billing",
         json={"fee_plan_id": fee_plan["id"], "discount_type": "percent", "discount_value": 1000, "notes": "Sibling-style test discount"},
     )
     assert billing.status_code == 200, billing.text
     billing_json = billing.json()
-    assert billing_json["fee_plan_name"] == "U15 Monthly 150"
+    assert billing_json["fee_plan_name"] == "U15 Monthly 200"
     assert billing_json["discount_type"] == "percent"
     assert int(billing_json["discount_value"]) == 1000
+    assert int(billing_json["due_day_of_month"]) == 1
 
     invalid_percent = client.put(
         f"/api/academy/enrollments/{enrollment['id']}/billing",
@@ -127,12 +136,12 @@ def test_fee_plan_family_account_enrollment_discount_and_unique_invoices():
         },
     )
     assert invoice1["invoice_number"].startswith("INV-")
-    assert int(invoice1["subtotal_cents"]) == 15000
-    assert int(invoice1["discount_cents"]) == 1500
-    assert int(invoice1["total_cents"]) == 13500
-    assert int(invoice1["balance_due_cents"]) == 13500
+    assert int(invoice1["subtotal_cents"]) == 20000
+    assert int(invoice1["discount_cents"]) == 2000
+    assert int(invoice1["total_cents"]) == 18000
+    assert int(invoice1["balance_due_cents"]) == 18000
     assert len(invoice1["items"]) == 1
-    assert int(invoice1["items"][0]["line_total_cents"]) == 13500
+    assert int(invoice1["items"][0]["line_total_cents"]) == 18000
 
     invoice2 = _post(
         "/api/academy/invoices/from-enrollment",
@@ -151,8 +160,8 @@ def test_fee_plan_family_account_enrollment_discount_and_unique_invoices():
 
     account_after = client.get(f"/api/academy/billing-accounts/{account_id}")
     assert account_after.status_code == 200
-    assert int(account_after.json()["invoiced_cents"]) == 27000
-    assert int(account_after.json()["balance_cents"]) == 27000
+    assert int(account_after.json()["invoiced_cents"]) == 36000
+    assert int(account_after.json()["balance_cents"]) == 36000
 
     # Wrong family account cannot invoice a different player's enrollment.
     other_account = _post(
