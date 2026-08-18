@@ -26,6 +26,10 @@ def _wait_for_server(url: str, timeout: float = 25.0) -> None:
     raise RuntimeError(f"CrickAnalysis navigation cleanup server did not become ready: {last_error}")
 
 
+def _is_analysis_network(url: str) -> bool:
+    return "/api/videos" in url or "/api/biomechanics" in url or "/api/events" in url
+
+
 def test_analysis_is_paused_without_video_api_traffic_and_academy_stays_operational():
     data_dir = tempfile.mkdtemp(prefix="crickanalysis-ui-nav-cleanup-")
     env = os.environ.copy()
@@ -50,18 +54,13 @@ def test_analysis_is_paused_without_video_api_traffic_and_academy_stays_operatio
             page.on("request", lambda request: requests.append(request.url))
             try:
                 # A stale Analysis URL must be neutralized before app.js can call
-                # /api/videos/{id}, /api/dashboard or biomechanics endpoints.
+                # /api/videos/{id}, event or biomechanics endpoints. Academy may still
+                # call the shared /api/dashboard aggregate for its Overview metrics.
                 page.goto(f"{BASE_URL}/#analysis?id=1", wait_until="domcontentloaded")
                 expect(page).to_have_url(f"{BASE_URL}/#academy", timeout=10000)
                 expect(page.locator('#academyWorkspace .academy-tabs')).to_be_visible(timeout=15000)
 
-                forbidden_network = [
-                    url for url in requests
-                    if "/api/videos" in url
-                    or "/api/biomechanics" in url
-                    or url.endswith("/api/dashboard")
-                    or url.endswith("/api/players")
-                ]
+                forbidden_network = [url for url in requests if _is_analysis_network(url)]
                 assert forbidden_network == [], forbidden_network
 
                 # Analysis remains visible as a parked workspace, but is disabled so
@@ -85,13 +84,7 @@ def test_analysis_is_paused_without_video_api_traffic_and_academy_stays_operatio
                     expect(page).to_have_url(f"{BASE_URL}/#academy", timeout=10000)
                     page.wait_for_timeout(150)
                     new_requests = requests[before:]
-                    assert not any(
-                        "/api/videos" in url
-                        or "/api/biomechanics" in url
-                        or url.endswith("/api/dashboard")
-                        or url.endswith("/api/players")
-                        for url in new_requests
-                    ), new_requests
+                    assert not any(_is_analysis_network(url) for url in new_requests), new_requests
 
                 # Academy keeps its direct sidebar entry and horizontal workspace tabs.
                 academy_button = page.locator('.sidebar .nav > button[data-workspace-nav="academy"]')
