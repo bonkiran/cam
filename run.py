@@ -5,6 +5,7 @@ import uvicorn
 from app.academy_api import router as academy_router
 from app.biomechanics import router as biomechanics_router
 from app.main import app
+from app.system_api import router as system_router
 
 # Register optional API routers after app.main is imported. The SPA catch-all
 # route is temporarily removed and restored last so specific GET API routes
@@ -15,6 +16,7 @@ for route in spa_routes:
 
 app.include_router(biomechanics_router)
 app.include_router(academy_router)
+app.include_router(system_router)
 app.router.routes.extend(spa_routes)
 
 if __name__ == "__main__":
