@@ -46,8 +46,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt pytest httpx playwright
           python -m playwright install chromium
-      - name: Compile backend
-        run: python -m compileall -q app run.py tests/test_academy_attendance_api.py
+      - name: Compile and JavaScript syntax check
+        run: |
+          python -m compileall -q app run.py tests/test_academy_attendance_api.py tests/test_academy_attendance_ui.py
+          node --check app/static/academy_attendance_v1.js
       - name: Attendance API on SQLite
         run: pytest -q tests/test_academy_attendance_api.py
       - name: Attendance API on PostgreSQL
@@ -59,10 +61,8 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
         run: pytest -q tests/test_academy_slice1.py tests/test_academy_programs_api.py tests/test_academy_coaches_api.py tests/test_academy_batches_api.py
       - name: Attendance Chromium UI on SQLite
-        if: ${{ hashFiles('tests/test_academy_attendance_ui.py') != '' }}
         run: pytest -q tests/test_academy_attendance_ui.py
       - name: Attendance Chromium UI on PostgreSQL
-        if: ${{ hashFiles('tests/test_academy_attendance_ui.py') != '' }}
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
         run: pytest -q tests/test_academy_attendance_ui.py
