@@ -39,6 +39,7 @@ class EnrollmentBillingPayload(BaseModel):
 
 class EnrollmentInvoicePayload(BaseModel):
     account_id: int = Field(gt=0)
+    enrollment_id: int = Field(gt=0)
     issue_date: str
     due_date: str
     description: str | None = Field(default=None, max_length=240)
