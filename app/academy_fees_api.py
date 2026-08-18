@@ -118,7 +118,7 @@ def _ensure_tables() -> None:
             FOREIGN KEY(enrollment_id) REFERENCES enrollments(id) ON DELETE CASCADE,
             FOREIGN KEY(fee_plan_id) REFERENCES academy_fee_plans(id) ON DELETE RESTRICT
         );
-        CREATE INDEX IF NOT EXISTS idx_enrollment_billing_enrollment ON academy_enrollment_billing(enrollment_id);
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_enrollment_billing_unique ON academy_enrollment_billing(enrollment_id);
 
         CREATE TABLE IF NOT EXISTS academy_invoices (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -171,11 +171,9 @@ def _academy_id(conn) -> int | None:
 
 def _fee_plan(fee_plan_id: int) -> dict:
     row = fetch_one(
-        """
-        SELECT fp.*,p.name AS program_name
-        FROM academy_fee_plans fp LEFT JOIN programs p ON p.id=fp.program_id
-        WHERE fp.id=?
-        """,
+        """SELECT fp.*,p.name AS program_name
+           FROM academy_fee_plans fp LEFT JOIN programs p ON p.id=fp.program_id
+           WHERE fp.id=?""",
         (fee_plan_id,),
     )
     if not row:
@@ -185,23 +183,21 @@ def _fee_plan(fee_plan_id: int) -> dict:
 
 def _billing_account(account_id: int) -> dict:
     row = fetch_one(
-        """
-        SELECT a.*,g.first_name AS guardian_first_name,g.last_name AS guardian_last_name,
-               COALESCE((SELECT SUM(i.total_cents-i.amount_paid_cents-i.credit_applied_cents) FROM academy_invoices i WHERE i.account_id=a.id AND i.status<>'void'),0) AS balance_cents,
-               COALESCE((SELECT SUM(i.total_cents) FROM academy_invoices i WHERE i.account_id=a.id AND i.status<>'void'),0) AS invoiced_cents
-        FROM academy_billing_accounts a LEFT JOIN guardians g ON g.id=a.primary_guardian_id
-        WHERE a.id=?
-        """,
+        """SELECT a.*,g.first_name AS guardian_first_name,g.last_name AS guardian_last_name,
+                  COALESCE((SELECT SUM(i.total_cents-i.amount_paid_cents-i.credit_applied_cents)
+                            FROM academy_invoices i WHERE i.account_id=a.id AND i.status<>'void'),0) AS balance_cents,
+                  COALESCE((SELECT SUM(i.total_cents) FROM academy_invoices i
+                            WHERE i.account_id=a.id AND i.status<>'void'),0) AS invoiced_cents
+           FROM academy_billing_accounts a LEFT JOIN guardians g ON g.id=a.primary_guardian_id
+           WHERE a.id=?""",
         (account_id,),
     )
     if not row:
         raise HTTPException(404, "Billing account not found")
     row["players"] = fetch_all(
-        """
-        SELECT bap.*,p.name AS player_name FROM academy_billing_account_players bap
-        JOIN players p ON p.id=bap.player_id WHERE bap.account_id=? AND bap.status='active'
-        ORDER BY p.name COLLATE NOCASE
-        """,
+        """SELECT bap.*,p.name AS player_name FROM academy_billing_account_players bap
+           JOIN players p ON p.id=bap.player_id
+           WHERE bap.account_id=? AND bap.status='active' ORDER BY p.name COLLATE NOCASE""",
         (account_id,),
     )
     row["guardian_name"] = f"{row.get('guardian_first_name') or ''} {row.get('guardian_last_name') or ''}".strip() or None
@@ -210,16 +206,14 @@ def _billing_account(account_id: int) -> dict:
 
 def _enrollment_billing(enrollment_id: int) -> dict:
     row = fetch_one(
-        """
-        SELECT eb.*,fp.name AS fee_plan_name,fp.amount_cents,fp.currency,fp.billing_frequency,fp.program_id AS fee_plan_program_id,
-               e.player_id,e.program_id,p.name AS player_name,pr.name AS program_name
-        FROM academy_enrollment_billing eb
-        JOIN academy_fee_plans fp ON fp.id=eb.fee_plan_id
-        JOIN enrollments e ON e.id=eb.enrollment_id
-        JOIN players p ON p.id=e.player_id
-        JOIN programs pr ON pr.id=e.program_id
-        WHERE eb.enrollment_id=?
-        """,
+        """SELECT eb.*,fp.name AS fee_plan_name,fp.amount_cents,fp.currency,fp.billing_frequency,
+                  fp.program_id AS fee_plan_program_id,e.player_id,e.program_id,p.name AS player_name,pr.name AS program_name
+           FROM academy_enrollment_billing eb
+           JOIN academy_fee_plans fp ON fp.id=eb.fee_plan_id
+           JOIN enrollments e ON e.id=eb.enrollment_id
+           JOIN players p ON p.id=e.player_id
+           JOIN programs pr ON pr.id=e.program_id
+           WHERE eb.enrollment_id=?""",
         (enrollment_id,),
     )
     if not row:
@@ -229,10 +223,8 @@ def _enrollment_billing(enrollment_id: int) -> dict:
 
 def _invoice(invoice_id: int) -> dict:
     row = fetch_one(
-        """
-        SELECT i.*,a.account_name FROM academy_invoices i
-        JOIN academy_billing_accounts a ON a.id=i.account_id WHERE i.id=?
-        """,
+        """SELECT i.*,a.account_name FROM academy_invoices i
+           JOIN academy_billing_accounts a ON a.id=i.account_id WHERE i.id=?""",
         (invoice_id,),
     )
     if not row:
@@ -258,7 +250,7 @@ def _discount_cents(amount_cents: int, discount_type: str, discount_value: int) 
 
 def _validate_account_player(conn, account_id: int, player_id: int) -> None:
     row = conn.execute(
-        "SELECT id FROM academy_billing_account_players WHERE account_id=? AND player_id=? AND status='active'",
+        "SELECT 1 FROM academy_billing_account_players WHERE account_id=? AND player_id=? AND status='active'",
         (account_id, player_id),
     ).fetchone()
     if not row:
@@ -271,11 +263,9 @@ _ensure_tables()
 @router.get("/fee-plans")
 def fee_plans():
     return fetch_all(
-        """
-        SELECT fp.*,p.name AS program_name FROM academy_fee_plans fp
-        LEFT JOIN programs p ON p.id=fp.program_id
-        ORDER BY CASE WHEN fp.status='active' THEN 0 ELSE 1 END,fp.name COLLATE NOCASE
-        """
+        """SELECT fp.*,p.name AS program_name FROM academy_fee_plans fp
+           LEFT JOIN programs p ON p.id=fp.program_id
+           ORDER BY CASE WHEN fp.status='active' THEN 0 ELSE 1 END,fp.name COLLATE NOCASE"""
     )
 
 
@@ -284,19 +274,14 @@ def create_fee_plan(payload: FeePlanPayload):
     name = _clean(payload.name) or ""
     currency = payload.currency.upper()
     with connection() as conn:
-        if payload.program_id is not None:
-            program = conn.execute("SELECT id FROM programs WHERE id=?", (payload.program_id,)).fetchone()
-            if not program:
-                raise HTTPException(404, "Program not found")
-        duplicate = conn.execute("SELECT id FROM academy_fee_plans WHERE name=? COLLATE NOCASE", (name,)).fetchone()
-        if duplicate:
+        if payload.program_id is not None and not conn.execute("SELECT id FROM programs WHERE id=?", (payload.program_id,)).fetchone():
+            raise HTTPException(404, "Program not found")
+        if conn.execute("SELECT id FROM academy_fee_plans WHERE name=? COLLATE NOCASE", (name,)).fetchone():
             raise HTTPException(409, "A fee plan with this name already exists")
         row = conn.execute(
-            """
-            INSERT INTO academy_fee_plans(academy_id,program_id,name,amount_cents,currency,billing_frequency,status,notes)
-            VALUES(?,?,?,?,?,?,?,?) RETURNING id
-            """,
-            (_academy_id(conn),payload.program_id,name,payload.amount_cents,currency,payload.billing_frequency,payload.status,_clean(payload.notes)),
+            """INSERT INTO academy_fee_plans(academy_id,program_id,name,amount_cents,currency,billing_frequency,status,notes)
+               VALUES(?,?,?,?,?,?,?,?) RETURNING id""",
+            (_academy_id(conn), payload.program_id, name, payload.amount_cents, currency, payload.billing_frequency, payload.status, _clean(payload.notes)),
         ).fetchone()
         fee_plan_id = int(row["id"])
     return _fee_plan(fee_plan_id)
@@ -317,35 +302,26 @@ def billing_account(account_id: int):
 def create_billing_account(payload: BillingAccountPayload):
     player_ids = list(dict.fromkeys(payload.player_ids))
     with connection() as conn:
-        players = conn.execute(
-            f"SELECT id FROM players WHERE id IN ({','.join('?' for _ in player_ids)})",
-            player_ids,
-        ).fetchall()
+        players = conn.execute(f"SELECT id FROM players WHERE id IN ({','.join('?' for _ in player_ids)})", player_ids).fetchall()
         if len(players) != len(player_ids):
             raise HTTPException(404, "One or more billing-account players were not found")
         if payload.primary_guardian_id is not None:
-            guardian = conn.execute("SELECT id FROM guardians WHERE id=?", (payload.primary_guardian_id,)).fetchone()
-            if not guardian:
+            if not conn.execute("SELECT id FROM guardians WHERE id=?", (payload.primary_guardian_id,)).fetchone():
                 raise HTTPException(404, "Guardian not found")
             linked = conn.execute(
-                f"SELECT id FROM player_guardians WHERE guardian_id=? AND player_id IN ({','.join('?' for _ in player_ids)}) LIMIT 1",
-                (payload.primary_guardian_id,*player_ids),
+                f"SELECT 1 FROM player_guardians WHERE guardian_id=? AND player_id IN ({','.join('?' for _ in player_ids)}) LIMIT 1",
+                (payload.primary_guardian_id, *player_ids),
             ).fetchone()
             if not linked:
                 raise HTTPException(409, "Primary guardian must be linked to a player on the billing account")
         row = conn.execute(
-            """
-            INSERT INTO academy_billing_accounts(academy_id,account_name,primary_guardian_id,status,overpayment_allowed,notes)
-            VALUES(?,?,?,?,?,?) RETURNING id
-            """,
-            (_academy_id(conn),_clean(payload.account_name),payload.primary_guardian_id,payload.status,1 if payload.overpayment_allowed else 0,_clean(payload.notes)),
+            """INSERT INTO academy_billing_accounts(academy_id,account_name,primary_guardian_id,status,overpayment_allowed,notes)
+               VALUES(?,?,?,?,?,?) RETURNING id""",
+            (_academy_id(conn), _clean(payload.account_name), payload.primary_guardian_id, payload.status, 1 if payload.overpayment_allowed else 0, _clean(payload.notes)),
         ).fetchone()
         account_id = int(row["id"])
         for player_id in player_ids:
-            conn.execute(
-                "INSERT INTO academy_billing_account_players(account_id,player_id,status) VALUES(?,?,'active')",
-                (account_id,player_id),
-            )
+            conn.execute("INSERT INTO academy_billing_account_players(account_id,player_id,status) VALUES(?,?,'active')", (account_id, player_id))
     return _billing_account(account_id)
 
 
@@ -366,19 +342,14 @@ def configure_enrollment_billing(enrollment_id: int, payload: EnrollmentBillingP
         existing = conn.execute("SELECT id FROM academy_enrollment_billing WHERE enrollment_id=?", (enrollment_id,)).fetchone()
         if existing:
             conn.execute(
-                """
-                UPDATE academy_enrollment_billing SET fee_plan_id=?,discount_type=?,discount_value=?,notes=?,updated_at=CURRENT_TIMESTAMP
-                WHERE enrollment_id=?
-                """,
-                (payload.fee_plan_id,payload.discount_type,payload.discount_value,_clean(payload.notes),enrollment_id),
+                """UPDATE academy_enrollment_billing SET fee_plan_id=?,discount_type=?,discount_value=?,notes=?,updated_at=CURRENT_TIMESTAMP
+                   WHERE enrollment_id=?""",
+                (payload.fee_plan_id, payload.discount_type, payload.discount_value, _clean(payload.notes), enrollment_id),
             )
         else:
             conn.execute(
-                """
-                INSERT INTO academy_enrollment_billing(enrollment_id,fee_plan_id,discount_type,discount_value,notes)
-                VALUES(?,?,?,?,?)
-                """,
-                (enrollment_id,payload.fee_plan_id,payload.discount_type,payload.discount_value,_clean(payload.notes)),
+                "INSERT INTO academy_enrollment_billing(enrollment_id,fee_plan_id,discount_type,discount_value,notes) VALUES(?,?,?,?,?)",
+                (enrollment_id, payload.fee_plan_id, payload.discount_type, payload.discount_value, _clean(payload.notes)),
             )
     return _enrollment_billing(enrollment_id)
 
@@ -399,30 +370,25 @@ def invoice_from_enrollment(payload: EnrollmentInvoicePayload):
     discount = _discount_cents(amount, str(billing["discount_type"]), int(billing["discount_value"]))
     total = amount - discount
     description = _clean(payload.description) or f"{billing['program_name']} — {billing['fee_plan_name']}"
-
     with connection() as conn:
         account = conn.execute("SELECT id,status FROM academy_billing_accounts WHERE id=?", (payload.account_id,)).fetchone()
         if not account:
             raise HTTPException(404, "Billing account not found")
         if str(account["status"]) != "active":
             raise HTTPException(409, "Invoice requires an active billing account")
-        _validate_account_player(conn,payload.account_id,int(billing["player_id"]))
+        _validate_account_player(conn, payload.account_id, int(billing["player_id"]))
         row = conn.execute(
-            """
-            INSERT INTO academy_invoices(academy_id,account_id,issue_date,due_date,status,subtotal_cents,discount_cents,total_cents,source_type,source_id)
-            VALUES(?,?,?,?,'open',?,?,?,'enrollment',?) RETURNING id
-            """,
-            (_academy_id(conn),payload.account_id,payload.issue_date,payload.due_date,amount,discount,total,payload.enrollment_id),
+            """INSERT INTO academy_invoices(academy_id,account_id,issue_date,due_date,status,subtotal_cents,discount_cents,total_cents,source_type,source_id)
+               VALUES(?,?,?,?,'open',?,?,?,'enrollment',?) RETURNING id""",
+            (_academy_id(conn), payload.account_id, payload.issue_date, payload.due_date, amount, discount, total, payload.enrollment_id),
         ).fetchone()
         invoice_id = int(row["id"])
         invoice_number = f"INV-{invoice_id:06d}"
-        conn.execute("UPDATE academy_invoices SET invoice_number=? WHERE id=?", (invoice_number,invoice_id))
+        conn.execute("UPDATE academy_invoices SET invoice_number=? WHERE id=?", (invoice_number, invoice_id))
         conn.execute(
-            """
-            INSERT INTO academy_invoice_items(invoice_id,fee_plan_id,description,quantity,unit_amount_cents,discount_cents,line_total_cents)
-            VALUES(?,?,?,1,?,?,?)
-            """,
-            (invoice_id,int(billing["fee_plan_id"]),description,amount,discount,total),
+            """INSERT INTO academy_invoice_items(invoice_id,fee_plan_id,description,quantity,unit_amount_cents,discount_cents,line_total_cents)
+               VALUES(?,?,?,1,?,?,?)""",
+            (invoice_id, int(billing["fee_plan_id"]), description, amount, discount, total),
         )
     return _invoice(invoice_id)
 
@@ -435,8 +401,7 @@ def invoices(account_id: int | None = None):
         sql += " AND account_id=?"
         params.append(account_id)
     sql += " ORDER BY id DESC"
-    rows = fetch_all(sql,params)
-    return [_invoice(int(row["id"])) for row in rows]
+    return [_invoice(int(row["id"])) for row in fetch_all(sql, params)]
 
 
 @router.get("/invoices/{invoice_id}")
