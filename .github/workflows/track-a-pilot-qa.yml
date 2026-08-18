@@ -10,14 +10,19 @@ on:
     paths:
       - 'app/academy_*.py'
       - 'app/static/academy_batch_roster_lifecycle_v1.js'
+      - 'app/static/academy_tournament_type_v1.js'
       - 'app/static/index.html'
       - 'tests/test_track_a_core_qa.py'
       - 'tests/test_track_a_batches_sessions_qa.py'
       - 'tests/test_track_a_batch_roster_ui.py'
       - 'tests/test_track_a_attendance_security_qa.py'
+      - 'tests/test_track_a_tournament_type_qa.py'
+      - 'tests/test_track_a_tournament_type_ui.py'
       - 'tests/test_academy_programs_api.py'
       - 'tests/test_academy_coaches_api.py'
       - 'tests/test_academy_batches_api.py'
+      - 'tests/test_academy_matches_api.py'
+      - 'tests/test_academy_tournaments_api.py'
       - 'tests/test_academy_rbac_enforcement_api.py'
       - 'tests/test_academy_auth_api.py'
       - 'tests/test_academy_parent_billing_api.py'
@@ -67,13 +72,18 @@ jobs:
             tests/test_track_a_batches_sessions_qa.py \
             tests/test_track_a_batch_roster_ui.py \
             tests/test_track_a_attendance_security_qa.py \
+            tests/test_track_a_tournament_type_qa.py \
+            tests/test_track_a_tournament_type_ui.py \
             tests/test_academy_programs_api.py \
             tests/test_academy_coaches_api.py \
             tests/test_academy_batches_api.py \
+            tests/test_academy_matches_api.py \
+            tests/test_academy_tournaments_api.py \
             tests/test_academy_rbac_enforcement_api.py \
             tests/test_academy_auth_api.py \
             tests/test_academy_parent_billing_api.py
           node --check app/static/academy_batch_roster_lifecycle_v1.js
+          node --check app/static/academy_tournament_type_v1.js
 
       # SQLite: every test module receives its own isolated temporary data dir.
       - name: Track A core permutations on SQLite
@@ -90,6 +100,14 @@ jobs:
         run: pytest -q tests/test_track_a_batch_roster_ui.py
       - name: Attendance statuses, corrections, and role boundaries on SQLite
         run: pytest -q tests/test_track_a_attendance_security_qa.py
+      - name: Teams and Matches on SQLite
+        run: pytest -q tests/test_academy_matches_api.py
+      - name: Tournament lifecycle on SQLite
+        run: pytest -q tests/test_academy_tournaments_api.py
+      - name: Internal and external Tournament types on SQLite
+        run: pytest -q tests/test_track_a_tournament_type_qa.py
+      - name: Tournament type Chromium flow on SQLite
+        run: pytest -q tests/test_track_a_tournament_type_ui.py
       - name: Generic RBAC boundary on SQLite
         run: pytest -q tests/test_academy_rbac_enforcement_api.py
       - name: Access lifecycle on SQLite
@@ -97,8 +115,8 @@ jobs:
       - name: Parent family isolation and billing on SQLite
         run: pytest -q tests/test_academy_parent_billing_api.py
 
-      # PostgreSQL: legacy operational suites run first against the fresh service.
-      # Track A/security suites explicitly reset shared state at their start.
+      # PostgreSQL: operational suites run before any test that bootstraps auth.
+      # Track A/security suites explicitly reset shared state when needed.
       - name: Coach lifecycle on PostgreSQL
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
@@ -119,6 +137,22 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
         run: pytest -q tests/test_track_a_batch_roster_ui.py
+      - name: Teams and Matches on PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        run: pytest -q tests/test_academy_matches_api.py
+      - name: Tournament lifecycle on PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        run: pytest -q tests/test_academy_tournaments_api.py
+      - name: Internal and external Tournament types on PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        run: pytest -q tests/test_track_a_tournament_type_qa.py
+      - name: Tournament type Chromium flow on PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        run: pytest -q tests/test_track_a_tournament_type_ui.py
       - name: Attendance statuses, corrections, and role boundaries on PostgreSQL
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
