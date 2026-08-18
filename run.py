@@ -12,6 +12,7 @@ from app.academy_coaches_api import router as academy_coaches_router
 from app.academy_batches_api import router as academy_batches_router
 from app.academy_attendance_api import router as academy_attendance_router
 from app.academy_matches_api import router as academy_matches_router
+from app.academy_tournaments_api import router as academy_tournaments_router
 from app.biomechanics import router as biomechanics_router
 from app.system_api import router as system_router
 
@@ -29,6 +30,7 @@ app.include_router(academy_coaches_router)
 app.include_router(academy_batches_router)
 app.include_router(academy_attendance_router)
 app.include_router(academy_matches_router)
+app.include_router(academy_tournaments_router)
 app.include_router(system_router)
 app.router.routes.extend(spa_routes)
 
