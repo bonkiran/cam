@@ -244,9 +244,10 @@ def test_parent_portal_login_add_card_partial_payment_and_receipt():
                 assert receipt_number.startswith("RCT-")
 
                 receipt_button.click()
-                expect(page.get_by_role("heading", name=receipt_number)).to_be_visible(timeout=10000)
-                expect(page.get_by_text("Payment received", exact=True)).to_be_visible()
-                expect(page.get_by_text("$100.00", exact=True)).to_be_visible()
+                receipt_panel = page.locator(".academy-parent-receipt")
+                expect(receipt_panel.get_by_role("heading", name=receipt_number)).to_be_visible(timeout=10000)
+                expect(receipt_panel.get_by_text("Payment received", exact=True)).to_be_visible()
+                expect(receipt_panel.get_by_text("$100.00", exact=True)).to_be_visible()
             except Exception:
                 Path("test-results").mkdir(exist_ok=True)
                 page.screenshot(path="test-results/academy-parent-billing-ui-failure.png", full_page=True)
