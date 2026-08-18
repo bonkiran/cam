@@ -201,8 +201,8 @@
         return !!selector && !!session && !session.querySelector('.academy-loading');
       }
       case 'teams': return !!content.querySelector('#openTeamForm') || !!content.querySelector('.academy-foundation-card');
-      case 'tournaments':
-      case 'fees': return !!content.querySelector('.academy-foundation-card');
+      case 'tournaments': return !!content.querySelector('#openTournamentForm') || !!content.querySelector('.academy-foundation-card');
+      case 'fees': return !!content.querySelector('#openFeePlan') || !!content.querySelector('.academy-foundation-card');
       default: return content.children.length > 0;
     }
   }
