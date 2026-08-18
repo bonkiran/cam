@@ -39,7 +39,18 @@ def _create_player(page, name: str):
 
 
 def _open_player_editor(page, row):
-    row.get_by_role("button", name="Edit").click()
+    edit = row.get_by_role("button", name="Edit")
+    expect(edit).to_be_visible(timeout=10000)
+    # Academy render inserts the DOM and then wires click handlers in the same
+    # render cycle. A headless browser can observe the node a few milliseconds
+    # before wiring finishes, especially when PostgreSQL makes the preceding
+    # render slower. Wait for the actual handler rather than racing the app.
+    page.wait_for_function(
+        "el => typeof el.onclick === 'function'",
+        arg=edit.element_handle(),
+        timeout=10000,
+    )
+    edit.click()
     form = page.locator("#academyPlayerForm")
     expect(form).to_be_visible(timeout=10000)
     return form
