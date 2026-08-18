@@ -66,6 +66,14 @@
     return btn;
   }
 
+  function normalizeChildLabel(child, icon, label){
+    const currentIcon=qs('i',child)?.textContent||'';
+    const currentLabel=qs('b',child)?.textContent||'';
+    if(currentIcon!==icon || currentLabel!==label){
+      child.innerHTML=`<i>${icon}</i><b>${label}</b>`;
+    }
+  }
+
   function ensureGroup(nav, group){
     let wrapper = qs(`.nav-group[data-nav-group="${group.key}"]`, nav);
     if(!wrapper){
@@ -117,8 +125,8 @@
         }
       }
 
-      // Normalize the display label even when a legacy direct button is reused.
-      child.innerHTML = `<i>${icon}</i><b>${label}</b>`;
+      // Normalize a reused legacy button only when its display actually differs.
+      normalizeChildLabel(child,icon,label);
       child.classList.add('nav-group-child');
       child.classList.toggle('active', childIsActive(group,route));
       child.onclick = () => {
