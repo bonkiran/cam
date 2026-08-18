@@ -141,13 +141,16 @@ def test_fees_foundation_ui_end_to_end():
                     invoice_form.get_by_role("button", name="Generate Invoice").click()
                     expect(page.locator("#academyEnrollmentInvoiceForm")).to_have_count(0, timeout=10000)
 
-                invoice_rows = page.locator(".academy-invoice-row")
+                invoice_rows = page.locator(".academy-invoice-row", has_text="UI Patel Family")
                 expect(invoice_rows).to_have_count(2)
                 expect(invoice_rows.first).to_contain_text("$150.00")
                 expect(invoice_rows.first).to_contain_text("$15.00")
                 expect(invoice_rows.first).to_contain_text("$135.00")
 
-                invoices = page.evaluate("async () => await (await fetch('/api/academy/invoices')).json()")
+                invoices = page.evaluate(
+                    "async (id) => await (await fetch(`/api/academy/invoices?account_id=${id}`)).json()",
+                    account_id,
+                )
                 numbers = [row["invoice_number"] for row in invoices]
                 assert len(numbers) == len(set(numbers)) == 2
                 assert all(int(row["subtotal_cents"]) == 15000 for row in invoices)
