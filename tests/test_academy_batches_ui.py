@@ -43,6 +43,14 @@ def _wait_editor_gone(page, selector: str):
     expect(page.locator(selector)).to_have_count(0, timeout=10000)
 
 
+def _batch_session_row(page, session_date: str):
+    return page.locator(".academy-session-row").filter(has_text="UI U15 Mon Wed").filter(has_text=session_date)
+
+
+def _private_session_row(page, session_date: str):
+    return page.locator(".academy-session-row").filter(has_text="UI Private Coach").filter(has_text=session_date)
+
+
 def test_batches_and_sessions_ui_end_to_end():
     data_dir = tempfile.mkdtemp(prefix="crickanalysis-batches-ui-test-")
     env = os.environ.copy()
@@ -138,7 +146,8 @@ def test_batches_and_sessions_ui_end_to_end():
                 batch_row = page.locator(".academy-batch-row", has_text="UI U15 Mon Wed")
                 expect(batch_row).to_contain_text("1 waitlisted")
 
-                # Generate Mon/Wed sessions; all should retain the academy timezone and batch resource.
+                # Generate Mon/Wed sessions. Scope assertions to this batch because PostgreSQL
+                # intentionally retains records created by earlier regression steps.
                 page.get_by_role("button", name="Generate Sessions").click()
                 form = page.locator("#academyBatchScheduleForm")
                 form.locator('[name="batch_id"]').select_option(label="UI U15 Mon Wed")
@@ -150,34 +159,36 @@ def test_batches_and_sessions_ui_end_to_end():
                 form.locator('[name="weekday"][value="2"]').check()
                 page.get_by_role("button", name="Generate Sessions").last.click()
                 _wait_editor_gone(page, "#academyBatchScheduleForm")
-                expect(page.locator(".academy-session-row")).to_have_count(4, timeout=10000)
+                ui_batch_sessions = page.locator(".academy-session-row").filter(has_text="UI U15 Mon Wed")
+                expect(ui_batch_sessions).to_have_count(4, timeout=10000)
                 for d in ("2026-09-07", "2026-09-09", "2026-09-14", "2026-09-16"):
-                    row = page.locator(".academy-session-row", has_text=d)
+                    row = _batch_session_row(page, d)
+                    expect(row).to_have_count(1)
                     expect(row).to_contain_text("America/New_York")
                     expect(row).to_contain_text("Net 3")
                     expect(row).to_contain_text("2 players")
 
                 # Edit one occurrence only.
-                row_0907 = page.locator(".academy-session-row", has_text="2026-09-07")
+                row_0907 = _batch_session_row(page, "2026-09-07")
                 row_0907.get_by_role("button", name="Edit").click()
                 form = page.locator("#academySessionEditForm")
                 form.locator('[name="start_time"]').fill("20:15")
                 form.locator('[name="resource"]').fill("Net 4")
                 page.get_by_role("button", name="Save Session").click()
                 _wait_editor_gone(page, "#academySessionEditForm")
-                row_0907 = page.locator(".academy-session-row", has_text="2026-09-07")
+                row_0907 = _batch_session_row(page, "2026-09-07")
                 expect(row_0907).to_contain_text("20:15", timeout=10000)
                 expect(row_0907).to_contain_text("Net 4")
-                expect(page.locator(".academy-session-row", has_text="2026-09-14")).to_contain_text("19:00")
+                expect(_batch_session_row(page, "2026-09-14")).to_contain_text("19:00")
 
                 # Cancel one occurrence and retain reason/history.
-                row_0909 = page.locator(".academy-session-row", has_text="2026-09-09")
+                row_0909 = _batch_session_row(page, "2026-09-09")
                 row_0909.get_by_role("button", name="Cancel").click()
                 form = page.locator("#academySessionCancelForm")
                 form.locator('[name="reason"]').fill("Facility closure")
                 page.get_by_role("button", name="Confirm Cancellation").click()
                 _wait_editor_gone(page, "#academySessionCancelForm")
-                row_0909 = page.locator(".academy-session-row", has_text="2026-09-09")
+                row_0909 = _batch_session_row(page, "2026-09-09")
                 expect(row_0909).to_contain_text("cancelled", timeout=10000)
                 expect(row_0909).to_contain_text("Reason: Facility closure")
 
@@ -188,10 +199,10 @@ def test_batches_and_sessions_ui_end_to_end():
                 form.locator('[name="start_time"]').fill("18:00")
                 page.get_by_role("button", name="Create Make-up").click()
                 _wait_editor_gone(page, "#academyMakeupSessionForm")
-                makeup_row = page.locator(".academy-session-row", has_text="2026-09-10")
-                expect(makeup_row).to_be_visible(timeout=10000)
+                makeup_row = _batch_session_row(page, "2026-09-10")
+                expect(makeup_row).to_have_count(1, timeout=10000)
                 expect(makeup_row).to_contain_text("2 players")
-                expect(row_0909).to_contain_text("cancelled")
+                expect(_batch_session_row(page, "2026-09-09")).to_contain_text("cancelled")
 
                 # Create a private session with the second coach.
                 page.get_by_role("button", name="Private Session").click()
@@ -205,9 +216,9 @@ def test_batches_and_sessions_ui_end_to_end():
                 form.locator('[name="resource"]').fill("Lane 1")
                 page.get_by_role("button", name="Create Private Session").click()
                 _wait_editor_gone(page, "#academyPrivateSessionForm")
-                private_row = page.locator(".academy-session-row", has_text="2026-09-08")
-                expect(private_row).to_contain_text("Private session", timeout=10000)
-                expect(private_row).to_contain_text("UI Private Coach")
+                private_row = _private_session_row(page, "2026-09-08")
+                expect(private_row).to_have_count(1, timeout=10000)
+                expect(private_row).to_contain_text("Private session")
                 expect(private_row).to_contain_text("Lane 1")
                 expect(private_row).to_contain_text("1 player")
 
@@ -222,7 +233,8 @@ def test_batches_and_sessions_ui_end_to_end():
                 page.get_by_role("button", name="Create Private Session").click()
                 expect(page.locator("#privateSessionStatus")).to_contain_text("conflicting session", timeout=10000)
 
-                # Workload is now backed by actual session rows.
+                # Workload is scoped by the newly created coach ID, so pre-existing
+                # PostgreSQL test records cannot affect this calculation.
                 workload = _json_request("GET", f"/api/academy/coaches/{coach1['id']}/workload")
                 assert workload["coach_name"] == "UI Batch Coach"
                 assert workload["session_count"] == 4
