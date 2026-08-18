@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import sqlite3
-from typing import Literal
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from .database import connection, fetch_all, fetch_one
+from .database import IntegrityErrors, connection, database_backend, fetch_all, fetch_one
 
 router = APIRouter(prefix="/api/academy", tags=["academy"])
 
@@ -94,7 +93,7 @@ def _academy_row() -> dict | None:
     return fetch_one("SELECT * FROM academies ORDER BY id LIMIT 1")
 
 
-def _academy_id(conn: sqlite3.Connection) -> int | None:
+def _academy_id(conn: Any) -> int | None:
     row = conn.execute("SELECT id FROM academies ORDER BY id LIMIT 1").fetchone()
     return int(row["id"]) if row else None
 
@@ -142,7 +141,7 @@ def _payload_values(payload: PlayerPayload) -> list[str | None]:
     return values
 
 
-def _save_guardians(conn: sqlite3.Connection, player_id: int, academy_id: int | None,
+def _save_guardians(conn: Any, player_id: int, academy_id: int | None,
                     guardians: list[GuardianPayload]) -> None:
     conn.execute("DELETE FROM player_guardians WHERE player_id=?", (player_id,))
     for guardian in guardians:
@@ -182,7 +181,7 @@ def _save_guardians(conn: sqlite3.Connection, player_id: int, academy_id: int | 
 @router.get("/profile")
 def academy_profile():
     profile = _academy_row()
-    return {"configured": bool(profile), "profile": profile}
+    return {"configured": bool(profile), "profile": profile, "database_backend": database_backend()}
 
 
 @router.put("/profile")
@@ -216,7 +215,11 @@ def save_academy_profile(payload: AcademyProfilePayload):
             )
             academy_id = int(cur.lastrowid)
             conn.execute("UPDATE players SET academy_id=? WHERE academy_id IS NULL", (academy_id,))
-    return {"configured": True, "profile": fetch_one("SELECT * FROM academies WHERE id=?", (academy_id,))}
+    return {
+        "configured": True,
+        "profile": fetch_one("SELECT * FROM academies WHERE id=?", (academy_id,)),
+        "database_backend": database_backend(),
+    }
 
 
 @router.get("/players")
@@ -256,8 +259,8 @@ def create_academy_player(payload: PlayerPayload):
             player_id = int(cur.lastrowid)
             if payload.guardians:
                 _save_guardians(conn, player_id, academy_id, payload.guardians)
-    except sqlite3.IntegrityError as exc:
-        if "players.name" in str(exc) or "UNIQUE" in str(exc).upper():
+    except IntegrityErrors as exc:
+        if "players.name" in str(exc) or "UNIQUE" in str(exc).upper() or "idx_players_name_nocase" in str(exc):
             raise HTTPException(409, "A player with this name already exists") from exc
         raise
     return _player_row(player_id)
@@ -279,8 +282,8 @@ def update_academy_player(player_id: int, payload: PlayerPayload):
             )
             if payload.guardians is not None:
                 _save_guardians(conn, player_id, academy_id, payload.guardians)
-    except sqlite3.IntegrityError as exc:
-        if "players.name" in str(exc) or "UNIQUE" in str(exc).upper():
+    except IntegrityErrors as exc:
+        if "players.name" in str(exc) or "UNIQUE" in str(exc).upper() or "idx_players_name_nocase" in str(exc):
             raise HTTPException(409, "A player with this name already exists") from exc
         raise
     return _player_row(player_id)
