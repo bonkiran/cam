@@ -1,0 +1,25 @@
+name: Seed Live Academy Demo Data
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/seed_live_demo.py'
+      - '.github/workflows/seed-live-demo.yml'
+  workflow_dispatch:
+
+jobs:
+  seed-live-demo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate seeder syntax
+        run: python -m py_compile scripts/seed_live_demo.py
+      - name: Seed persistent DEMO data into live Render PostgreSQL
+        run: python scripts/seed_live_demo.py
