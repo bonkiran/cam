@@ -14,6 +14,56 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 BASE_URL = "http://127.0.0.1:8791"
 
 
+def _reset_shared_postgres_state() -> None:
+    database_url = os.environ.get("DATABASE_URL", "").strip()
+    if not database_url:
+        return
+    import psycopg
+
+    candidates = [
+        "academy_billing_security_audit",
+        "academy_saved_payment_methods",
+        "academy_review_actions",
+        "academy_player_reviews",
+        "academy_refunds",
+        "academy_payment_allocations",
+        "academy_payments",
+        "academy_invoice_items",
+        "academy_invoices",
+        "academy_enrollment_billing",
+        "academy_billing_account_players",
+        "academy_billing_accounts",
+        "academy_fee_plans",
+        "academy_auth_sessions",
+        "academy_access_audit",
+        "academy_users",
+        "session_attendance",
+        "session_players",
+        "academy_sessions",
+        "batch_coach_assignments",
+        "batch_players",
+        "batches",
+        "coach_player_assignments",
+        "coaches",
+        "enrollments",
+        "programs",
+        "player_guardians",
+        "guardians",
+        "players",
+        "academies",
+    ]
+    with psycopg.connect(database_url) as conn:
+        with conn.cursor() as cursor:
+            existing = []
+            for table in candidates:
+                cursor.execute("SELECT to_regclass(%s)", (f"public.{table}",))
+                if cursor.fetchone()[0] is not None:
+                    existing.append(table)
+            if existing:
+                cursor.execute(f"TRUNCATE TABLE {', '.join(existing)} RESTART IDENTITY CASCADE")
+        conn.commit()
+
+
 def _wait_for_server(url: str, timeout: float = 25.0) -> None:
     deadline = time.time() + timeout
     last_error = None
@@ -52,6 +102,8 @@ def _post(path: str, payload: dict):
 
 
 def test_batch_roster_remove_and_waitlist_promote_in_browser():
+    _reset_shared_postgres_state()
+
     data_dir = tempfile.mkdtemp(prefix="cam-track-a-roster-ui-")
     env = os.environ.copy()
     env["CRICKANALYSIS_DATA_DIR"] = data_dir
