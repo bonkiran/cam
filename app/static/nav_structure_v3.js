@@ -117,6 +117,8 @@
         }
       }
 
+      // Normalize the display label even when a legacy direct button is reused.
+      child.innerHTML = `<i>${icon}</i><b>${label}</b>`;
       child.classList.add('nav-group-child');
       child.classList.toggle('active', childIsActive(group,route));
       child.onclick = () => {
