@@ -101,7 +101,7 @@ def test_academy_access_roles_ui_end_to_end():
                 bootstrap.get_by_role("button", name="Create Owner Account").click()
 
                 expect(page.get_by_text("Signed in as")).to_be_visible(timeout=10000)
-                expect(page.get_by_text("UI Academy Owner")).to_be_visible()
+                expect(page.locator(".academy-access-session").get_by_text("UI Academy Owner", exact=True)).to_be_visible()
                 expect(page.locator("#academyAddAccessUser")).to_be_visible()
                 expect(page.locator(".academy-access-role-card")).to_have_count(5)
                 expect(page.locator(".academy-access-user-row", has_text="ui-owner@example.test")).to_be_visible()
