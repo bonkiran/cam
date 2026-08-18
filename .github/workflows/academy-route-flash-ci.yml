@@ -6,20 +6,27 @@ on:
       - main
       - fix-academy-route-flash
       - fix-academy-navigation-performance
+      - ui-navigation-cleanup
     paths:
       - 'app/static/academy_route_guard.js'
       - 'app/static/academy_navigation_performance_v1.js'
+      - 'app/static/academy_reports_tab_v1.js'
+      - 'app/static/nav_structure_v3.js'
       - 'app/static/index.html'
       - 'tests/test_academy_route_flash_ui.py'
       - 'tests/test_academy_navigation_performance_ui.py'
+      - 'tests/test_ui_navigation_cleanup.py'
       - '.github/workflows/academy-route-flash-ci.yml'
   pull_request:
     paths:
       - 'app/static/academy_route_guard.js'
       - 'app/static/academy_navigation_performance_v1.js'
+      - 'app/static/academy_reports_tab_v1.js'
+      - 'app/static/nav_structure_v3.js'
       - 'app/static/index.html'
       - 'tests/test_academy_route_flash_ui.py'
       - 'tests/test_academy_navigation_performance_ui.py'
+      - 'tests/test_ui_navigation_cleanup.py'
       - '.github/workflows/academy-route-flash-ci.yml'
 
 jobs:
@@ -41,7 +48,11 @@ jobs:
         run: |
           node --check app/static/academy_route_guard.js
           node --check app/static/academy_navigation_performance_v1.js
+          node --check app/static/academy_reports_tab_v1.js
+          node --check app/static/nav_structure_v3.js
       - name: Academy route no-flash browser regression
         run: pytest -q tests/test_academy_route_flash_ui.py
       - name: Academy navigation performance browser regression
         run: pytest -q tests/test_academy_navigation_performance_ui.py
+      - name: Sidebar and Academy navigation cleanup regression
+        run: pytest -q tests/test_ui_navigation_cleanup.py
