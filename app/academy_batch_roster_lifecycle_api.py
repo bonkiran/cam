@@ -27,14 +27,14 @@ def _clean(value: str | None) -> str | None:
     return value or None
 
 
-def _date(value: str | None, label: str) -> date:
+def _parse_date(value: str | None, label: str, *, allow_future: bool = True) -> date:
     if not value:
         return date.today()
     try:
         parsed = date.fromisoformat(value)
     except Exception as exc:
         raise HTTPException(422, f"{label} must be YYYY-MM-DD") from exc
-    if parsed > date.today():
+    if not allow_future and parsed > date.today():
         raise HTTPException(422, f"{label} cannot be in the future for an immediate roster change")
     return parsed
 
@@ -77,9 +77,8 @@ def _membership_detail(membership_id: int) -> dict:
 
 
 def _future_sync_start(requested: date) -> str:
-    # Historical session rosters are immutable. Even when a membership has a
-    # back-dated joined/ended date, only today and future scheduled sessions are
-    # synchronized by a roster lifecycle action.
+    # Historical session rosters are immutable. Back-dated changes only affect
+    # today/future sessions; future join dates begin synchronization on that date.
     return max(requested, date.today()).isoformat()
 
 
@@ -118,9 +117,9 @@ def add_batch_player_with_future_sync(batch_id: int, payload: BatchPlayerPayload
     This intentionally replaces the original add-member handler at app assembly
     time. Existing API shape is preserved, while active members added after
     sessions have already been generated are inserted into future scheduled
-    batch-session rosters.
+    batch-session rosters beginning on their join date.
     """
-    joined = _date(payload.joined_on, "Joined on") if payload.joined_on else date.today()
+    joined = _parse_date(payload.joined_on, "Joined on", allow_future=True)
     with connection() as conn:
         batch = _batch_row(conn, batch_id)
         if str(batch["status"] or "active") != "active":
@@ -168,7 +167,7 @@ def add_batch_player_with_future_sync(batch_id: int, payload: BatchPlayerPayload
 
 @router.post("/batches/{batch_id}/players/{membership_id}/end")
 def end_batch_membership(batch_id: int, membership_id: int, payload: MembershipLifecyclePayload):
-    effective = _date(payload.effective_date, "Effective date")
+    effective = _parse_date(payload.effective_date, "Effective date", allow_future=False)
     with connection() as conn:
         _batch_row(conn, batch_id)
         membership = _membership_row(conn, batch_id, membership_id)
@@ -193,7 +192,7 @@ def end_batch_membership(batch_id: int, membership_id: int, payload: MembershipL
 
 @router.post("/batches/{batch_id}/players/{membership_id}/promote")
 def promote_waitlisted_member(batch_id: int, membership_id: int, payload: MembershipLifecyclePayload):
-    effective = _date(payload.effective_date, "Effective date")
+    effective = _parse_date(payload.effective_date, "Effective date", allow_future=False)
     with connection() as conn:
         batch = _batch_row(conn, batch_id)
         if str(batch["status"] or "active") != "active":
