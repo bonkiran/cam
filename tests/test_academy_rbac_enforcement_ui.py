@@ -42,7 +42,11 @@ def _auth(token: str) -> dict[str, str]:
 
 
 def _set_session(page, token: str) -> None:
+    # The root route renders Dashboard asynchronously after DOMContentLoaded.
+    # Wait for that render to finish before changing the hash, otherwise a slow
+    # PostgreSQL dashboard response can complete later and overwrite Academy.
     page.goto(BASE_URL, wait_until="domcontentloaded")
+    expect(page.get_by_role("heading", name="Dashboard")).to_be_visible(timeout=15000)
     page.evaluate("([key,value]) => sessionStorage.setItem(key,value)", [SESSION_KEY, token])
 
 
