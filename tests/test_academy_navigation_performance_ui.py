@@ -47,6 +47,7 @@ def _observe_click(page, label: str, ready_selector: str) -> dict:
             blankFrames: 0,
             snapshotFrames: 0,
             loadingPanelExposedFrames: 0,
+            movingProgressVisibleFrames: 0,
             maxVisibleMainChildren: 0,
           };
 
@@ -61,6 +62,9 @@ def _observe_click(page, label: str, ready_selector: str) -> dict:
             const snapshot = document.getElementById('academyTransitionSnapshot');
             const snapshotVisible = visible(snapshot);
             if (snapshotVisible) result.snapshotFrames += 1;
+
+            const movingProgress = document.querySelector('#academyTransitionSnapshot .academy-transition-progress');
+            if (visible(movingProgress)) result.movingProgressVisibleFrames += 1;
 
             const content = document.querySelector('#academyWorkspace .academy-content');
             const contentVisible = visible(content);
@@ -84,6 +88,15 @@ def _observe_click(page, label: str, ready_selector: str) -> dict:
         """,
         {"label": label, "readySelector": ready_selector},
     )
+
+
+def _assert_stable_transition(result: dict, require_snapshot: bool = False) -> None:
+    assert result["firstFrameActive"] is True, result
+    assert result["blankFrames"] == 0, result
+    assert result["loadingPanelExposedFrames"] == 0, result
+    assert result["movingProgressVisibleFrames"] == 0, result
+    if require_snapshot:
+        assert result["snapshotFrames"] > 0, result
 
 
 def test_academy_tab_clicks_are_immediate_and_visually_stable():
@@ -121,31 +134,20 @@ def test_academy_tab_clicks_are_immediate_and_visually_stable():
                 expect(page.locator(".academy-hero")).to_be_visible(timeout=20000)
 
                 players = _observe_click(page, "Players", ".academy-player-panel")
-                assert players["firstFrameActive"] is True, players
-                assert players["blankFrames"] == 0, players
-                assert players["loadingPanelExposedFrames"] == 0, players
-                assert players["snapshotFrames"] > 0, players
+                _assert_stable_transition(players, require_snapshot=True)
 
                 overview = _observe_click(page, "Overview", ".academy-hero")
-                assert overview["firstFrameActive"] is True, overview
-                assert overview["blankFrames"] == 0, overview
-                assert overview["loadingPanelExposedFrames"] == 0, overview
+                _assert_stable_transition(overview)
 
                 programs = _observe_click(page, "Programs & Enrollment", "#openProgramForm")
-                assert programs["firstFrameActive"] is True, programs
-                assert programs["blankFrames"] == 0, programs
-                assert programs["loadingPanelExposedFrames"] == 0, programs
-                assert programs["snapshotFrames"] > 0, programs
+                _assert_stable_transition(programs, require_snapshot=True)
 
                 coaches = _observe_click(page, "Coaches", "#openCoachForm")
-                assert coaches["firstFrameActive"] is True, coaches
-                assert coaches["blankFrames"] == 0, coaches
-                assert coaches["loadingPanelExposedFrames"] == 0, coaches
-                assert coaches["snapshotFrames"] > 0, coaches
+                _assert_stable_transition(coaches, require_snapshot=True)
 
                 # Returning through recently-used data should exercise the short-lived GET cache.
                 back_players = _observe_click(page, "Players", ".academy-player-panel")
-                assert back_players["blankFrames"] == 0, back_players
+                _assert_stable_transition(back_players)
                 metrics = back_players["metrics"]
                 assert metrics.get("version") == "1", metrics
                 assert metrics.get("cacheHits", 0) + metrics.get("deduplicatedRequests", 0) > 0, metrics
