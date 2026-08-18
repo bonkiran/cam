@@ -8,12 +8,12 @@
   }
 
   function ensureStyle() {
-    let style = document.getElementById(STYLE_ID);
-    if (!style) {
-      style = document.createElement('style');
-      style.id = STYLE_ID;
-      document.head.appendChild(style);
+    if (document.getElementById(STYLE_ID)) {
+      document.documentElement.dataset.academyRouteGuard = VERSION;
+      return;
     }
+    const style = document.createElement('style');
+    style.id = STYLE_ID;
     style.textContent = `
       html.${CLASS_NAME} #app .main > :not(.topbar) {
         visibility: hidden !important;
@@ -43,6 +43,7 @@
         visibility: hidden !important;
       }
     `;
+    document.head.appendChild(style);
     document.documentElement.dataset.academyRouteGuard = VERSION;
   }
 
@@ -71,14 +72,14 @@
     }
   }
 
-  // Loaded before app.js. Mark Academy routes pending synchronously so any
-  // generic shell produced by the base router stays hidden regardless of how
-  // later theme/navigation scripts wrap or rename the shell content.
   window.addEventListener('hashchange', () => {
     markPending();
     queueMicrotask(releaseWhenAcademyMounted);
   });
 
+  // Important: callbacks only toggle classes / inspect DOM. ensureStyle() is
+  // idempotent and never rewrites the style node after creation, preventing the
+  // observer from triggering itself in a mutation loop.
   const observer = new MutationObserver(() => {
     if (isAcademyRoute()) markPending();
     releaseWhenAcademyMounted();
