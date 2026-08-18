@@ -9,6 +9,7 @@ from app.main import app
 from app.academy_api import router as academy_router
 from app.academy_programs_api import router as academy_programs_router
 from app.academy_coaches_api import router as academy_coaches_router
+from app.academy_batches_api import router as academy_batches_router
 from app.biomechanics import router as biomechanics_router
 from app.system_api import router as system_router
 
@@ -23,6 +24,7 @@ app.include_router(biomechanics_router)
 app.include_router(academy_router)
 app.include_router(academy_programs_router)
 app.include_router(academy_coaches_router)
+app.include_router(academy_batches_router)
 app.include_router(system_router)
 app.router.routes.extend(spa_routes)
 
