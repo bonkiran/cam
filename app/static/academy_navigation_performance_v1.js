@@ -200,7 +200,7 @@
         const session = content.querySelector('#attendanceSessionWorkspace');
         return !!selector && !!session && !session.querySelector('.academy-loading');
       }
-      case 'teams':
+      case 'teams': return !!content.querySelector('#openTeamForm') || !!content.querySelector('.academy-foundation-card');
       case 'tournaments':
       case 'fees': return !!content.querySelector('.academy-foundation-card');
       default: return content.children.length > 0;
