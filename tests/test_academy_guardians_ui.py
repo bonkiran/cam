@@ -30,12 +30,19 @@ def _wait_for_server(url: str, timeout: float = 20.0) -> None:
 def _create_player(page, name: str):
     page.get_by_role("button", name="Add Player").click()
     form = page.locator("#academyPlayerForm")
-    expect(form).to_be_visible()
+    expect(form).to_be_visible(timeout=10000)
     form.locator('[name="name"]').fill(name)
     page.get_by_role("button", name="Create Player").click()
     row = page.locator(".academy-player-row", has_text=name)
     expect(row).to_be_visible(timeout=10000)
     return row
+
+
+def _open_player_editor(page, row):
+    row.get_by_role("button", name="Edit").click()
+    form = page.locator("#academyPlayerForm")
+    expect(form).to_be_visible(timeout=10000)
+    return form
 
 
 def _guardian_card(page, index: int):
@@ -70,7 +77,7 @@ def test_academy_guardian_ui_end_to_end():
                 # Create Player A and add first guardian.
                 player_a = "Guardian Test Player A"
                 row_a = _create_player(page, player_a)
-                row_a.get_by_role("button", name="Edit").click()
+                _open_player_editor(page, row_a)
                 page.get_by_role("button", name="Add Guardian").click()
                 card1 = _guardian_card(page, 0)
 
@@ -103,7 +110,7 @@ def test_academy_guardian_ui_end_to_end():
                 expect(row_a).to_contain_text("Guardian: Primary Parent · 555-0200", timeout=10000)
 
                 # Reopen: Primary, Billing, Pickup, relationship/contact all persist.
-                row_a.get_by_role("button", name="Edit").click()
+                _open_player_editor(page, row_a)
                 card1 = _guardian_card(page, 0)
                 expect(card1.locator('[name="guardian_first_name"]')).to_have_value("Primary")
                 expect(card1.locator('[name="guardian_last_name"]')).to_have_value("Parent")
@@ -125,8 +132,9 @@ def test_academy_guardian_ui_end_to_end():
                 page.get_by_role("button", name="Save Changes").click()
 
                 row_a = page.locator(".academy-player-row", has_text=player_a)
-                row_a.get_by_role("button", name="Edit").click()
-                expect(page.locator("[data-guardian-card]")).to_have_count(2)
+                expect(row_a).to_be_visible(timeout=10000)
+                _open_player_editor(page, row_a)
+                expect(page.locator("[data-guardian-card]")).to_have_count(2, timeout=10000)
 
                 # Edit Guardian 1 phone and revoke pickup authorization; flags stay isolated.
                 card1 = _guardian_card(page, 0)
@@ -136,7 +144,7 @@ def test_academy_guardian_ui_end_to_end():
                 row_a = page.locator(".academy-player-row", has_text=player_a)
                 expect(row_a).to_contain_text("Guardian: Primary Parent · 555-0300", timeout=10000)
 
-                row_a.get_by_role("button", name="Edit").click()
+                _open_player_editor(page, row_a)
                 card1 = _guardian_card(page, 0)
                 expect(card1.locator('[name="guardian_phone"]')).to_have_value("555-0300")
                 expect(card1.locator('[name="guardian_pickup_authorized"]')).not_to_be_checked()
@@ -148,14 +156,15 @@ def test_academy_guardian_ui_end_to_end():
                 expect(page.locator("[data-guardian-card]")).to_have_count(1)
                 page.get_by_role("button", name="Save Changes").click()
                 row_a = page.locator(".academy-player-row", has_text=player_a)
-                row_a.get_by_role("button", name="Edit").click()
-                expect(page.locator("[data-guardian-card]")).to_have_count(1)
+                expect(row_a).to_be_visible(timeout=10000)
+                _open_player_editor(page, row_a)
+                expect(page.locator("[data-guardian-card]")).to_have_count(1, timeout=10000)
                 page.get_by_role("button", name="Cancel").click()
 
                 # Player B gets a different guardian. Editing A must not alter B.
                 player_b = "Guardian Test Player B"
                 row_b = _create_player(page, player_b)
-                row_b.get_by_role("button", name="Edit").click()
+                _open_player_editor(page, row_b)
                 page.get_by_role("button", name="Add Guardian").click()
                 bcard = _guardian_card(page, 0)
                 bcard.locator('[name="guardian_first_name"]').fill("Other")
@@ -168,15 +177,15 @@ def test_academy_guardian_ui_end_to_end():
 
                 # Edit A again.
                 row_a = page.locator(".academy-player-row", has_text=player_a)
-                row_a.get_by_role("button", name="Edit").click()
+                _open_player_editor(page, row_a)
                 card1 = _guardian_card(page, 0)
                 card1.locator('[name="guardian_phone"]').fill("555-0311")
                 page.get_by_role("button", name="Save Changes").click()
 
                 # Reopen B and ensure its guardian is unchanged.
                 row_b = page.locator(".academy-player-row", has_text=player_b)
-                expect(row_b).to_contain_text("Guardian: Other Family · 555-0500")
-                row_b.get_by_role("button", name="Edit").click()
+                expect(row_b).to_contain_text("Guardian: Other Family · 555-0500", timeout=10000)
+                _open_player_editor(page, row_b)
                 bcard = _guardian_card(page, 0)
                 expect(bcard.locator('[name="guardian_first_name"]')).to_have_value("Other")
                 expect(bcard.locator('[name="guardian_last_name"]')).to_have_value("Family")
