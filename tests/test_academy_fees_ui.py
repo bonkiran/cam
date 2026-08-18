@@ -81,18 +81,20 @@ def test_fees_foundation_ui_end_to_end():
                 expect(page.get_by_role("heading", name="Fees & Payments")).to_be_visible(timeout=15000)
                 expect(page.locator("#openFeePlan")).to_be_visible()
 
-                # AM-FEE-001: fee plan.
+                # AM-FEE-001: $200 monthly plan, due on the 1st.
                 page.locator("#openFeePlan").click()
                 fee_form = page.locator("#academyFeePlanForm")
                 expect(fee_form).to_be_visible()
                 fee_form.locator('[name="name"]').fill("UI U15 Monthly")
-                fee_form.locator('[name="amount_dollars"]').fill("150.00")
+                fee_form.locator('[name="amount_dollars"]').fill("200.00")
                 fee_form.locator('[name="billing_frequency"]').select_option("monthly")
+                fee_form.locator('[name="due_day_of_month"]').fill("1")
                 fee_form.locator('[name="program_id"]').select_option(str(program["id"]))
                 fee_form.get_by_role("button", name="Create Fee Plan").click()
                 fee_row = page.locator(".academy-fee-row", has_text="UI U15 Monthly").first
                 expect(fee_row).to_be_visible(timeout=10000)
-                expect(fee_row).to_contain_text("$150.00")
+                expect(fee_row).to_contain_text("$200.00")
+                expect(fee_row).to_contain_text("due day 1")
                 expect(fee_row).to_contain_text("UI Fees U15")
 
                 # AM-FEE-002: family billing account.
@@ -126,7 +128,7 @@ def test_fees_foundation_ui_end_to_end():
                 expect(configured_row).to_contain_text("UI U15 Monthly")
                 expect(configured_row).to_contain_text("10%")
 
-                # AM-FEE-003/004/005: generate two invoices and verify unique numbers/calculation.
+                # AM-FEE-003/004/005: generate two invoices; $200 - 10% = $180.
                 account_id = page.evaluate("""
                     async () => (await (await fetch('/api/academy/billing-accounts')).json()).find(x => x.account_name === 'UI Patel Family').id
                 """)
@@ -143,9 +145,9 @@ def test_fees_foundation_ui_end_to_end():
 
                 invoice_rows = page.locator(".academy-invoice-row", has_text="UI Patel Family")
                 expect(invoice_rows).to_have_count(2)
-                expect(invoice_rows.first).to_contain_text("$150.00")
-                expect(invoice_rows.first).to_contain_text("$15.00")
-                expect(invoice_rows.first).to_contain_text("$135.00")
+                expect(invoice_rows.first).to_contain_text("$200.00")
+                expect(invoice_rows.first).to_contain_text("$20.00")
+                expect(invoice_rows.first).to_contain_text("$180.00")
 
                 invoices = page.evaluate(
                     "async (id) => await (await fetch(`/api/academy/invoices?account_id=${id}`)).json()",
@@ -153,12 +155,12 @@ def test_fees_foundation_ui_end_to_end():
                 )
                 numbers = [row["invoice_number"] for row in invoices]
                 assert len(numbers) == len(set(numbers)) == 2
-                assert all(int(row["subtotal_cents"]) == 15000 for row in invoices)
-                assert all(int(row["discount_cents"]) == 1500 for row in invoices)
-                assert all(int(row["total_cents"]) == 13500 for row in invoices)
+                assert all(int(row["subtotal_cents"]) == 20000 for row in invoices)
+                assert all(int(row["discount_cents"]) == 2000 for row in invoices)
+                assert all(int(row["total_cents"]) == 18000 for row in invoices)
 
                 account = page.evaluate("async (id) => await (await fetch(`/api/academy/billing-accounts/${id}`)).json()", account_id)
-                assert int(account["balance_cents"]) == 27000
+                assert int(account["balance_cents"]) == 36000
             except Exception:
                 Path("test-results").mkdir(exist_ok=True)
                 page.screenshot(path="test-results/academy-fees-ui-failure.png", full_page=True)
