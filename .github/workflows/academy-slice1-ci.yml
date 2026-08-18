@@ -13,6 +13,7 @@ on:
       - 'tests/test_academy_slice1.py'
       - 'tests/test_academy_players_ui.py'
       - 'tests/test_academy_guardians_ui.py'
+      - 'tests/test_academy_extended_ui.py'
       - 'run.py'
       - 'requirements.txt'
 
@@ -35,7 +36,7 @@ jobs:
           python -m playwright install chromium
 
       - name: Compile Python
-        run: python -m compileall -q app run.py tests/test_academy_players_ui.py tests/test_academy_guardians_ui.py
+        run: python -m compileall -q app run.py tests/test_academy_players_ui.py tests/test_academy_guardians_ui.py tests/test_academy_extended_ui.py
 
       - name: Check academy JavaScript syntax
         run: |
@@ -66,6 +67,9 @@ jobs:
 
       - name: Run Academy Guardians browser regression
         run: pytest -q tests/test_academy_guardians_ui.py
+
+      - name: Run extended Academy Setup and Player browser regression
+        run: pytest -q tests/test_academy_extended_ui.py
 
       - name: Upload browser failure screenshot
         if: failure()
