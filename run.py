@@ -14,6 +14,7 @@ from app.academy_attendance_api import router as academy_attendance_router
 from app.academy_matches_api import router as academy_matches_router
 from app.academy_tournaments_api import router as academy_tournaments_router
 from app.academy_fees_api import router as academy_fees_router
+from app.academy_payments_v2_api import router as academy_payments_router
 from app.biomechanics import router as biomechanics_router
 from app.system_api import router as system_router
 
@@ -33,6 +34,7 @@ app.include_router(academy_attendance_router)
 app.include_router(academy_matches_router)
 app.include_router(academy_tournaments_router)
 app.include_router(academy_fees_router)
+app.include_router(academy_payments_router)
 app.include_router(system_router)
 app.router.routes.extend(spa_routes)
 
