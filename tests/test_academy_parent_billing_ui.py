@@ -212,7 +212,7 @@ def test_parent_portal_login_add_card_partial_payment_and_receipt():
                 login.locator('[name="password"]').fill("ParentTest!123")
                 login.get_by_role("button", name="Sign In").click()
 
-                expect(page.get_by_text("UI Aarav Patel", exact=True)).to_be_visible(timeout=15000)
+                expect(page.locator(".academy-parent-children").get_by_text("UI Aarav Patel", exact=True)).to_be_visible(timeout=15000)
                 expect(page.get_by_text("$175.00", exact=True).first).to_be_visible()
                 expect(page.get_by_text(invoice["invoice_number"], exact=True)).to_be_visible()
                 expect(page.get_by_role("button", name="Add Test Card")).to_be_visible()
