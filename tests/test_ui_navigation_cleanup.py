@@ -30,6 +30,13 @@ def _button_labels(locator) -> list[str]:
     return [text.strip() for text in locator.all_text_contents()]
 
 
+def _open_group(group) -> None:
+    parent = group.locator(".nav-group-parent")
+    if parent.get_attribute("aria-expanded") != "true":
+        parent.click()
+    expect(parent).to_have_attribute("aria-expanded", "true")
+
+
 def test_sidebar_and_academy_report_navigation_are_cleaned_up():
     data_dir = tempfile.mkdtemp(prefix="crickanalysis-ui-nav-cleanup-")
     env = os.environ.copy()
@@ -70,7 +77,10 @@ def test_sidebar_and_academy_report_navigation_are_cleaned_up():
                 expect(page.locator('.sidebar .nav > button[data-route="reports"]')).to_have_count(0)
 
                 # Open Academy and confirm Reports lives beside Player Reviews in the Academy tabs.
-                academy_group.locator('.nav-group-submenu button').filter(has_text="Overview").click()
+                _open_group(academy_group)
+                academy_overview = academy_group.locator('.nav-group-submenu button').filter(has_text="Overview")
+                expect(academy_overview).to_be_visible()
+                academy_overview.click()
                 expect(page.locator('#academyWorkspace .academy-tabs')).to_be_visible(timeout=15000)
                 reviews = page.locator('#academyWorkspace .academy-tabs button').filter(has_text="Player Reviews")
                 reports = page.locator('#academyWorkspace .academy-tabs button').filter(has_text="Reports")
@@ -91,8 +101,10 @@ def test_sidebar_and_academy_report_navigation_are_cleaned_up():
                 expect(page.locator('.academy-reports-shell h1')).to_have_text("Reports", timeout=10000)
 
                 # Analysis > Overview still routes to the existing analysis dashboard content.
-                analysis_group.locator('.nav-group-parent').click()
-                analysis_group.locator('.nav-group-submenu button').filter(has_text="Overview").click()
+                _open_group(analysis_group)
+                analysis_overview = analysis_group.locator('.nav-group-submenu button').filter(has_text="Overview")
+                expect(analysis_overview).to_be_visible()
+                analysis_overview.click()
                 expect(page).to_have_url(f"{BASE_URL}/#dashboard")
             finally:
                 browser.close()
