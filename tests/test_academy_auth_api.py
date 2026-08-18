@@ -69,12 +69,18 @@ def test_academy_roles_security_end_to_end():
     no_auth_users = client.get("/api/academy/access/users")
     assert no_auth_users.status_code == 401
 
-    # Create real Academy identities that can be linked to role accounts.
-    profile = client.put("/api/academy/profile", json={"name": "Security Test Academy"})
+    # Once Access is bootstrapped, generic Academy management operations require
+    # the Owner/Admin session. Access endpoints retain their own role checks.
+    profile = client.put(
+        "/api/academy/profile",
+        json={"name": "Security Test Academy"},
+        headers=_auth(owner_token),
+    )
     assert profile.status_code == 200, profile.text
     coach = _post(
         "/api/academy/coaches",
         {"first_name": "Anita", "last_name": "Coach", "email": "anita@example.test", "status": "active"},
+        owner_token,
     )
     player = _post(
         "/api/academy/players",
@@ -93,6 +99,7 @@ def test_academy_roles_security_end_to_end():
                 }
             ],
         },
+        owner_token,
     )
     guardian_id = int(player["guardians"][0]["id"])
 
