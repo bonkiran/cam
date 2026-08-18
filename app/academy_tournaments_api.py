@@ -66,7 +66,6 @@ def _ensure_tables() -> None:
         );
         CREATE INDEX IF NOT EXISTS idx_academy_tournaments_dates ON academy_tournaments(start_date,end_date);
         CREATE INDEX IF NOT EXISTS idx_academy_tournaments_status ON academy_tournaments(status);
-        CREATE INDEX IF NOT EXISTS idx_academy_tournaments_type ON academy_tournaments(tournament_type);
 
         CREATE TABLE IF NOT EXISTS academy_tournament_entries (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -85,13 +84,8 @@ def _ensure_tables() -> None:
     """
     with connection() as conn:
         conn.executescript(schema)
-        # Existing pilot/dev databases predate tournament classification. Add the
-        # field in-place with a backward-compatible external default so no record
-        # is lost and old API payloads remain valid.
         if "tournament_type" not in _table_columns(conn, "academy_tournaments"):
             conn.execute("ALTER TABLE academy_tournaments ADD COLUMN tournament_type TEXT NOT NULL DEFAULT 'external'")
-        # The CREATE INDEX in the schema cannot reference a column absent from an
-        # older table before the ALTER above, so ensure it once migration is done.
         conn.execute("CREATE INDEX IF NOT EXISTS idx_academy_tournaments_type ON academy_tournaments(tournament_type)")
 
 
