@@ -1,0 +1,97 @@
+name: Track A Pilot QA
+
+on:
+  push:
+    branches:
+      - track-a-pilot-qa
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'app/academy_*.py'
+      - 'tests/test_track_a_core_qa.py'
+      - 'tests/test_academy_programs_api.py'
+      - 'tests/test_academy_rbac_enforcement_api.py'
+      - 'tests/test_academy_auth_api.py'
+      - 'tests/test_academy_parent_billing_api.py'
+      - '.github/workflows/track-a-pilot-qa.yml'
+      - 'run.py'
+
+jobs:
+  track-a-core-api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: crickanalysis_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d crickanalysis_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      CAM_PAYMENT_MODE: sandbox
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest httpx
+
+      - name: Compile Track A test surface
+        run: |
+          python -m compileall -q app run.py \
+            tests/test_track_a_core_qa.py \
+            tests/test_academy_programs_api.py \
+            tests/test_academy_rbac_enforcement_api.py \
+            tests/test_academy_auth_api.py \
+            tests/test_academy_parent_billing_api.py
+
+      # SQLite: every test module receives its own isolated temporary data dir.
+      - name: Track A core permutations on SQLite
+        run: pytest -q tests/test_track_a_core_qa.py
+      - name: Programs and enrollment lifecycle on SQLite
+        run: pytest -q tests/test_academy_programs_api.py
+      - name: Generic RBAC boundary on SQLite
+        run: pytest -q tests/test_academy_rbac_enforcement_api.py
+      - name: Access lifecycle on SQLite
+        run: pytest -q tests/test_academy_auth_api.py
+      - name: Parent family isolation and billing on SQLite
+        run: pytest -q tests/test_academy_parent_billing_api.py
+
+      # PostgreSQL: Programs runs first against the fresh service; subsequent
+      # security suites explicitly reset shared state at their start.
+      - name: Programs and enrollment lifecycle on PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        run: pytest -q tests/test_academy_programs_api.py
+      - name: Track A core permutations on PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        run: pytest -q tests/test_track_a_core_qa.py
+      - name: Generic RBAC boundary on PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        run: pytest -q tests/test_academy_rbac_enforcement_api.py
+      - name: Access lifecycle on PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        run: pytest -q tests/test_academy_auth_api.py
+      - name: Parent family isolation and billing on PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        run: pytest -q tests/test_academy_parent_billing_api.py
