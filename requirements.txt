@@ -4,3 +4,4 @@ python-multipart>=0.0.9
 opencv-python>=4.10
 numpy>=1.26
 requests>=2.32
+psycopg[binary]>=3.2
