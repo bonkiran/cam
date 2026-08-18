@@ -69,6 +69,9 @@ def _reset_shared_postgres_state() -> None:
 
 
 def _create_family(owner_token: str, suffix: str, amount_cents: int = 17500):
+    # Once Access is bootstrapped, all generic Academy management setup must be
+    # performed under the Owner/Admin session. Parent-specific calls remain scoped
+    # to the linked Parent account later in the scenario.
     player = _post(
         "/api/academy/players",
         {
@@ -76,7 +79,7 @@ def _create_family(owner_token: str, suffix: str, amount_cents: int = 17500):
             "status": "active",
             "guardians": [
                 {
-                    "first_name": f"{suffix}",
+                    "first_name": suffix,
                     "last_name": "Parent",
                     "relationship": "Parent",
                     "email": f"{suffix.lower()}@example.test",
@@ -87,11 +90,13 @@ def _create_family(owner_token: str, suffix: str, amount_cents: int = 17500):
                 }
             ],
         },
+        owner_token,
     )
     guardian_id = int(player["guardians"][0]["id"])
     program = _post(
         "/api/academy/programs",
         {"name": f"{suffix} U13 Program", "program_type": "group", "status": "active"},
+        owner_token,
     )
     enrollment = _post(
         "/api/academy/enrollments",
@@ -101,6 +106,7 @@ def _create_family(owner_token: str, suffix: str, amount_cents: int = 17500):
             "enrollment_type": "regular",
             "start_date": "2026-09-01",
         },
+        owner_token,
     )
     fee_plan = _post(
         "/api/academy/fee-plans",
@@ -113,6 +119,7 @@ def _create_family(owner_token: str, suffix: str, amount_cents: int = 17500):
             "program_id": program["id"],
             "status": "active",
         },
+        owner_token,
     )
     account = _post(
         "/api/academy/billing-accounts",
@@ -123,10 +130,12 @@ def _create_family(owner_token: str, suffix: str, amount_cents: int = 17500):
             "overpayment_allowed": True,
             "status": "active",
         },
+        owner_token,
     )
     billing = client.put(
         f"/api/academy/enrollments/{enrollment['id']}/billing",
         json={"fee_plan_id": fee_plan["id"], "discount_type": "none", "discount_value": 0},
+        headers=_auth(owner_token),
     )
     assert billing.status_code == 200, billing.text
     invoice = _post(
@@ -137,6 +146,7 @@ def _create_family(owner_token: str, suffix: str, amount_cents: int = 17500):
             "issue_date": "2026-09-01",
             "due_date": "2026-09-15",
         },
+        owner_token,
     )
     parent_user = _post(
         "/api/academy/access/users",
@@ -197,7 +207,6 @@ def test_parent_login_saved_test_card_partial_payment_receipt_and_family_isolati
     assert int(summary_json["accounts"][0]["balance_cents"]) == 17500
     assert summary_json["payment_methods"] == []
 
-    # CAM accepts only explicit sandbox cards and persists only masked/token metadata.
     real_like_card = client.post(
         "/api/academy/parent/payment-methods/sandbox",
         json={"card_number": "4111111111111111", "exp_month": 12, "exp_year": 2034, "cvc": "123"},
@@ -239,7 +248,6 @@ def test_parent_login_saved_test_card_partial_payment_receipt_and_family_isolati
     )
     assert declined_method["last4"] == "9995"
 
-    # A failed sandbox charge must not alter the invoice balance or create a receipt.
     failed = client.post(
         f"/api/academy/parent/invoices/{family['invoice']['id']}/pay",
         json={"payment_method_id": declined_method["id"], "amount_cents": 10000},
@@ -250,7 +258,6 @@ def test_parent_login_saved_test_card_partial_payment_receipt_and_family_isolati
     assert int(after_failed["accounts"][0]["invoices"][0]["balance_due_cents"]) == 17500
     assert after_failed["accounts"][0]["payments"] == []
 
-    # Partial payment: $175 invoice -> $100 payment -> $75 remains.
     partial = client.post(
         f"/api/academy/parent/invoices/{family['invoice']['id']}/pay",
         json={"payment_method_id": success_method["id"], "amount_cents": 10000},
@@ -267,7 +274,6 @@ def test_parent_login_saved_test_card_partial_payment_receipt_and_family_isolati
     assert receipt.status_code == 200, receipt.text
     assert receipt.json()["receipt_number"] == partial_json["payment"]["receipt_number"]
 
-    # Final payment closes the invoice and further payment attempts are rejected.
     final_payment = client.post(
         f"/api/academy/parent/invoices/{family['invoice']['id']}/pay",
         json={"payment_method_id": success_method["id"], "amount_cents": 7500},
@@ -284,7 +290,6 @@ def test_parent_login_saved_test_card_partial_payment_receipt_and_family_isolati
     )
     assert paid_again.status_code == 409
 
-    # Parent A cannot pay or read Parent B's billing/receipt through parent-scoped APIs.
     cross_family = client.post(
         f"/api/academy/parent/invoices/{other_family['invoice']['id']}/pay",
         json={"payment_method_id": success_method["id"], "amount_cents": 1000},
@@ -301,7 +306,6 @@ def test_parent_login_saved_test_card_partial_payment_receipt_and_family_isolati
     assert [int(row["id"]) for row in other_json["players"]] == [int(other_family["player"]["id"])]
     assert int(other_json["accounts"][0]["balance_cents"]) == 12500
 
-    # Card removal is self-scoped and records no sensitive card data.
     removed = client.delete(
         f"/api/academy/parent/payment-methods/{declined_method['id']}",
         headers=_auth(parent_token),
