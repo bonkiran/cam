@@ -26,11 +26,7 @@ def _wait_for_server(url: str, timeout: float = 25.0) -> None:
     raise RuntimeError(f"CrickAnalysis navigation cleanup server did not become ready: {last_error}")
 
 
-def _button_labels(locator) -> list[str]:
-    return [text.strip() for text in locator.all_text_contents()]
-
-
-def test_analysis_and_academy_use_direct_workspace_navigation():
+def test_analysis_is_paused_without_video_api_traffic_and_academy_stays_operational():
     data_dir = tempfile.mkdtemp(prefix="crickanalysis-ui-nav-cleanup-")
     env = os.environ.copy()
     env["CRICKANALYSIS_DATA_DIR"] = data_dir
@@ -50,54 +46,62 @@ def test_analysis_and_academy_use_direct_workspace_navigation():
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True)
             page = browser.new_page(viewport={"width": 1600, "height": 1000})
+            requests: list[str] = []
+            page.on("request", lambda request: requests.append(request.url))
             try:
-                page.goto(f"{BASE_URL}/#dashboard", wait_until="domcontentloaded")
+                # A stale Analysis URL must be neutralized before app.js can call
+                # /api/videos/{id}, /api/dashboard or biomechanics endpoints.
+                page.goto(f"{BASE_URL}/#analysis?id=1", wait_until="domcontentloaded")
+                expect(page).to_have_url(f"{BASE_URL}/#academy", timeout=10000)
+                expect(page.locator('#academyWorkspace .academy-tabs')).to_be_visible(timeout=15000)
 
-                # Analysis is one top-level sidebar workspace, with no fly-out submenu.
+                forbidden_network = [
+                    url for url in requests
+                    if "/api/videos" in url
+                    or "/api/biomechanics" in url
+                    or url.endswith("/api/dashboard")
+                    or url.endswith("/api/players")
+                ]
+                assert forbidden_network == [], forbidden_network
+
+                # Analysis remains visible as a parked workspace, but is disabled so
+                # users cannot accidentally restart video traffic while Academy is active.
                 analysis_button = page.locator('.sidebar .nav > button[data-workspace-nav="analysis"]')
                 expect(analysis_button).to_be_visible(timeout=10000)
                 expect(analysis_button).to_have_text("◈Analysis")
-                expect(analysis_button).to_have_class("active")
+                expect(analysis_button).to_be_disabled()
+                expect(analysis_button).to_have_attribute("aria-disabled", "true")
+                expect(analysis_button).to_have_attribute(
+                    "title", "Analysis is temporarily paused while Academy pilot work is active."
+                )
+                expect(page.locator('#analysisWorkspaceTabs')).to_have_count(0)
                 expect(page.locator('.nav-group[data-nav-group="analysis"]')).to_have_count(0)
-                expect(page.locator('.sidebar .nav > button[data-route="upload"]')).to_have_count(0)
-                expect(page.locator('.sidebar .nav > button[data-route="analyses"]')).to_have_count(0)
-                expect(page.locator('.sidebar .nav > button[data-route="comparisons"]')).to_have_count(0)
 
-                # Analysis navigation is horizontal, matching the Academy workspace pattern.
-                analysis_tabs = page.locator('#analysisWorkspaceTabs')
-                expect(analysis_tabs).to_be_visible(timeout=10000)
-                assert _button_labels(analysis_tabs.locator('button')) == [
-                    "Overview", "Upload Video", "My Analyses", "Comparisons"
-                ]
-                expect(analysis_tabs.locator('button[data-analysis-route="dashboard"]')).to_have_class("active")
+                # Programmatic attempts to enter every Analysis route are redirected
+                # back to Academy before the legacy router runs.
+                for route in ["dashboard", "upload", "analyses", "comparisons", "analysis?id=99"]:
+                    before = len(requests)
+                    page.evaluate("route => { location.hash = route; }", route)
+                    expect(page).to_have_url(f"{BASE_URL}/#academy", timeout=10000)
+                    page.wait_for_timeout(150)
+                    new_requests = requests[before:]
+                    assert not any(
+                        "/api/videos" in url
+                        or "/api/biomechanics" in url
+                        or url.endswith("/api/dashboard")
+                        or url.endswith("/api/players")
+                        for url in new_requests
+                    ), new_requests
 
-                analysis_tabs.locator('button[data-analysis-route="upload"]').click()
-                expect(page).to_have_url(f"{BASE_URL}/#upload")
-                expect(page.locator('#analysisWorkspaceTabs button[data-analysis-route="upload"]')).to_have_class("active")
-
-                page.locator('#analysisWorkspaceTabs button[data-analysis-route="analyses"]').click()
-                expect(page).to_have_url(f"{BASE_URL}/#analyses")
-                expect(page.locator('#analysisWorkspaceTabs button[data-analysis-route="analyses"]')).to_have_class("active")
-
-                page.locator('#analysisWorkspaceTabs button[data-analysis-route="comparisons"]').click()
-                expect(page).to_have_url(f"{BASE_URL}/#comparisons")
-                expect(page.locator('#analysisWorkspaceTabs button[data-analysis-route="comparisons"]')).to_have_class("active")
-
-                # Academy is also one direct sidebar workspace. Its Overview is available
-                # only in the horizontal Academy tabs, not a redundant fly-out submenu.
+                # Academy keeps its direct sidebar entry and horizontal workspace tabs.
                 academy_button = page.locator('.sidebar .nav > button[data-workspace-nav="academy"]')
                 expect(academy_button).to_be_visible(timeout=10000)
                 expect(academy_button).to_have_text("▦Academy")
+                expect(academy_button).to_have_class("active")
                 expect(page.locator('.nav-group[data-nav-group="academy"]')).to_have_count(0)
                 expect(page.locator('.sidebar .nav > button[data-route="players"]')).to_have_count(0)
                 expect(page.locator('.sidebar .nav > button[data-route="reports"]')).to_have_count(0)
-
-                academy_button.click()
-                expect(page).to_have_url(f"{BASE_URL}/#academy")
-                expect(page.locator('#academyWorkspace .academy-tabs')).to_be_visible(timeout=15000)
-                expect(page.locator('#analysisWorkspaceTabs')).to_have_count(0)
                 expect(page.locator('#academyWorkspace .academy-tabs button').filter(has_text="Overview")).to_have_count(1)
-                expect(academy_button).to_have_class("active")
 
                 reviews = page.locator('#academyWorkspace .academy-tabs button').filter(has_text="Player Reviews")
                 reports = page.locator('#academyWorkspace .academy-tabs button').filter(has_text="Reports")
@@ -117,12 +121,6 @@ def test_analysis_and_academy_use_direct_workspace_navigation():
                 expect(page).to_have_url(f"{BASE_URL}/#academy?tab=reports")
                 expect(page.locator('.academy-reports-shell h1')).to_have_text("Reports", timeout=10000)
                 expect(academy_button).to_have_class("active")
-
-                # One click on Analysis returns to Analysis Overview and restores its tabs.
-                analysis_button.click()
-                expect(page).to_have_url(f"{BASE_URL}/#dashboard")
-                expect(page.locator('#analysisWorkspaceTabs')).to_be_visible(timeout=10000)
-                expect(page.locator('#analysisWorkspaceTabs button[data-analysis-route="dashboard"]')).to_have_class("active")
             finally:
                 browser.close()
     finally:
