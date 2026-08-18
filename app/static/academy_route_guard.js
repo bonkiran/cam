@@ -1,7 +1,7 @@
 (() => {
   const CLASS_NAME = 'academy-route-pending';
   const STYLE_ID = 'academyRouteGuardStyle';
-  const VERSION = '2';
+  const VERSION = '3';
 
   function isAcademyRoute() {
     return location.hash.replace(/^#/, '').split('?')[0] === 'academy';
@@ -47,18 +47,18 @@
     document.documentElement.dataset.academyRouteGuard = VERSION;
   }
 
-  function markPending() {
-    if (!isAcademyRoute()) {
-      document.documentElement.classList.remove(CLASS_NAME);
-      return;
-    }
+  function setPending() {
     ensureStyle();
     document.documentElement.classList.add(CLASS_NAME);
   }
 
+  function clearPending() {
+    document.documentElement.classList.remove(CLASS_NAME);
+  }
+
   function releaseWhenAcademyMounted() {
     if (!isAcademyRoute()) {
-      document.documentElement.classList.remove(CLASS_NAME);
+      clearPending();
       return;
     }
     if (!document.documentElement.classList.contains(CLASS_NAME)) return;
@@ -67,30 +67,38 @@
     if (workspace && content) {
       requestAnimationFrame(() => {
         if (isAcademyRoute() && document.getElementById('academyWorkspace')) {
-          document.documentElement.classList.remove(CLASS_NAME);
+          clearPending();
         }
       });
     }
   }
 
-  // The guard becomes active only when entering/changing an Academy route.
-  // It must not be re-activated by ordinary Academy DOM updates after the page
-  // has already mounted (forms, attendance rows, coach workload, etc.).
+  // The full-page loading guard is needed only when ENTERING Academy from a
+  // different top-level route (or on a direct #academy page load). Switching
+  // between Academy tabs must keep the mounted Academy workspace visible.
+  let wasAcademyRoute = isAcademyRoute();
   window.addEventListener('hashchange', () => {
-    markPending();
+    const nowAcademyRoute = isAcademyRoute();
+    if (nowAcademyRoute && !wasAcademyRoute) {
+      setPending();
+    } else if (!nowAcademyRoute) {
+      clearPending();
+    } else {
+      // Academy -> Academy navigation: never blank/hide the existing workspace.
+      releaseWhenAcademyMounted();
+    }
+    wasAcademyRoute = nowAcademyRoute;
     queueMicrotask(releaseWhenAcademyMounted);
   });
 
-  // The observer has one job only: detect when the real Academy workspace has
-  // mounted and release the temporary loading guard. It never calls markPending.
+  // Observer can only release an entry guard after the real Academy workspace
+  // mounts. It never activates the guard during normal Academy DOM updates.
   const observer = new MutationObserver(() => {
     releaseWhenAcademyMounted();
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
 
   ensureStyle();
-  markPending();
-  document.addEventListener('DOMContentLoaded', () => {
-    releaseWhenAcademyMounted();
-  });
+  if (wasAcademyRoute) setPending();
+  document.addEventListener('DOMContentLoaded', releaseWhenAcademyMounted);
 })();
