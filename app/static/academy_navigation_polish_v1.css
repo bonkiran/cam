@@ -1,0 +1,8 @@
+/* Academy navigation polish: keep transitions visually still.
+   The active tab already acknowledges navigation immediately, so the animated
+   horizontal progress strip added by the transition snapshot is intentionally
+   hidden. This prevents slower Academy modules from looking like the tab row
+   itself is scrolling left/right. */
+.academy-transition-progress{
+  display:none !important;
+}
