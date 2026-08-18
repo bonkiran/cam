@@ -10,9 +10,11 @@ on:
       - 'app/academy_batches_api.py'
       - 'app/static/academy_batches_v1.js'
       - 'app/static/academy_batches_v1.css'
+      - 'app/static/academy_coach_workload_v1.js'
       - 'app/static/index.html'
       - 'tests/test_academy_batches_api.py'
       - 'tests/test_academy_batches_ui.py'
+      - 'tests/test_academy_coach_workload_ui.py'
       - 'run.py'
       - '.github/workflows/academy-batches-ci.yml'
 
@@ -48,12 +50,15 @@ jobs:
           python -m playwright install chromium
       - name: Compile and JavaScript syntax check
         run: |
-          python -m compileall -q app run.py tests/test_academy_batches_api.py tests/test_academy_batches_ui.py
+          python -m compileall -q app run.py tests/test_academy_batches_api.py tests/test_academy_batches_ui.py tests/test_academy_coach_workload_ui.py
           node --check app/static/academy_batches_v1.js
+          node --check app/static/academy_coach_workload_v1.js
       - name: Batches API on SQLite
         run: pytest -q tests/test_academy_batches_api.py
       - name: Batches Chromium UI on SQLite
         run: pytest -q tests/test_academy_batches_ui.py
+      - name: Coach workload Chromium UI on SQLite
+        run: pytest -q tests/test_academy_coach_workload_ui.py
       - name: Batches API on PostgreSQL
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
@@ -62,6 +67,10 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
         run: pytest -q tests/test_academy_batches_ui.py
+      - name: Coach workload Chromium UI on PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        run: pytest -q tests/test_academy_coach_workload_ui.py
       - name: Prior Academy API regression on PostgreSQL
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
