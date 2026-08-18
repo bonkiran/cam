@@ -18,6 +18,7 @@ from app.academy_payments_v2_api import router as academy_payments_router
 from app.academy_auth_api import router as academy_auth_router
 from app.academy_parent_billing_api import router as academy_parent_billing_router
 from app.academy_reviews_api import router as academy_reviews_router
+from app.academy_rbac_middleware import install_academy_management_rbac
 from app.biomechanics import router as biomechanics_router
 from app.system_api import router as system_router
 
@@ -43,6 +44,10 @@ app.include_router(academy_parent_billing_router)
 app.include_router(academy_reviews_router)
 app.include_router(system_router)
 app.router.routes.extend(spa_routes)
+
+# Once the first Owner account exists, the generic Academy management surface
+# becomes Owner/Admin-only. Role-specific APIs keep their own narrower controls.
+install_academy_management_rbac(app)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
