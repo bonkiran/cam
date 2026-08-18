@@ -9,24 +9,21 @@
     const params=new URLSearchParams(query);
     return {page:page||'dashboard',tab:params.get('tab')||'overview'};
   }
-  function currentPage(){ return routeInfo().page; }
 
   const GROUPS = [
     {
       key:'analysis', label:'Analysis', icon:'◈',
       children:[
+        ['dashboard','⌂','Overview'],
         ['upload','⇧','Upload Video'],
         ['analyses','▣','My Analyses'],
-        ['comparisons','⇄','Comparisons'],
-        ['reports','▤','Reports']
+        ['comparisons','⇄','Comparisons']
       ]
     },
     {
       key:'academy', label:'Academy', icon:'▦',
       children:[
-        ['academy','⌂','Overview'],
-        ['players','♙','Players'],
-        ['reports','▤','Reports']
+        ['academy','⌂','Overview']
       ]
     },
     {
@@ -38,26 +35,18 @@
     }
   ];
 
-  function reportsContext(){
-    return localStorage.getItem('crick-reports-context') || 'analysis';
-  }
-
   function childTarget(group, route){
-    if(group.key==='academy' && route==='players') return 'academy?tab=players';
     return route;
   }
 
   function childIsActive(group, route){
     const info=routeInfo();
-    if(route==='reports') return info.page==='reports' && group.key===reportsContext();
     if(group.key==='academy' && route==='academy') return info.page==='academy' && info.tab==='overview';
-    if(group.key==='academy' && route==='players') return info.page==='academy' && info.tab==='players';
     return info.page===route;
   }
 
   function groupOwnsPage(group){
     const info=routeInfo();
-    if(info.page==='reports') return group.key===reportsContext();
     if(group.key==='academy' && info.page==='academy') return true;
     return group.children.some(([route])=>route===info.page);
   }
@@ -124,7 +113,6 @@
       child.classList.add('nav-group-child');
       child.classList.toggle('active', childIsActive(group,route));
       child.onclick = () => {
-        if(route === 'reports') localStorage.setItem('crick-reports-context', group.key);
         setOpen(wrapper, parent, group, true);
         location.hash = childTarget(group,route);
       };
@@ -163,21 +151,12 @@
       if(!nav) return;
 
       cleanup(nav);
-
-      let dashboard = qs(':scope > button[data-route="dashboard"]', nav);
-      if(!dashboard){
-        dashboard = document.createElement('button');
-        dashboard.dataset.route = 'dashboard';
-        dashboard.innerHTML = '<i>⌂</i><b>Dashboard</b>';
-        dashboard.onclick = () => { location.hash = 'dashboard'; };
-        nav.prepend(dashboard);
-      }
-      dashboard.classList.toggle('active', currentPage() === 'dashboard');
-
       GROUPS.forEach(group => ensureGroup(nav, group));
 
+      // Keep legacy direct buttons out of the top-level sidebar. Players and Reports
+      // now live inside the Academy workspace; Dashboard is Analysis > Overview.
       const groupedRoutes = new Set([
-        'upload','analyses','comparisons','reports',
+        'dashboard','upload','analyses','comparisons','reports',
         'academy','players','insights','shot-library'
       ]);
       qsa(':scope > button[data-route]', nav).forEach(btn => {
