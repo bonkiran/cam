@@ -33,9 +33,11 @@ def _watch_transition(page, target_hash: str) -> dict:
           const result = {
             badPlaceholderFrames: 0,
             badInterimVisibleFrames: 0,
+            badPlaceholderDomFrames: 0,
             frames: 0,
             sawLoadingState: false,
             guardVersion: null,
+            baseRouterBypassed: false,
           };
           const isVisible = (el) => {
             if (!el) return false;
@@ -49,22 +51,19 @@ def _watch_transition(page, target_hash: str) -> dict:
             await frame();
             result.frames += 1;
             result.guardVersion = document.documentElement.dataset.academyRouteGuard || null;
+            result.baseRouterBypassed = window.__academyBaseRouterBypassed === true;
             const pending = document.documentElement.classList.contains('academy-route-pending');
             result.sawLoadingState = result.sawLoadingState || pending;
 
-            // The real defect is any visible generic placeholder text, regardless
-            // of which wrapper the theme/navigation layer has transformed it into.
             const genericTextNodes = [...document.querySelectorAll('#app .main *')].filter(el => {
               const text = (el.textContent || '').trim();
               return text.includes('Not implemented yet') ||
                      text.includes('This module is part of the real application shell') ||
                      (text.startsWith('Page') && text.includes('Core engineering'));
             });
+            if (genericTextNodes.length) result.badPlaceholderDomFrames += 1;
             if (genericTextNodes.some(isVisible)) result.badPlaceholderFrames += 1;
 
-            // While the Academy route is pending, nothing from the old/generic
-            // main content may be visible. Only the persistent topbar plus the
-            // guard's CSS loading overlay are allowed to paint.
             if (pending) {
               const main = document.querySelector('#app .main');
               if (main) {
@@ -87,11 +86,13 @@ def _watch_transition(page, target_hash: str) -> dict:
 
 def _assert_clean(result: dict) -> None:
     assert result["guardVersion"] == "2", result
+    assert result["baseRouterBypassed"] is True, result
+    assert result["badPlaceholderDomFrames"] == 0, result
     assert result["badPlaceholderFrames"] == 0, result
     assert result["badInterimVisibleFrames"] == 0, result
 
 
-def test_academy_routes_never_paint_generic_placeholder():
+def test_academy_routes_never_paint_or_create_generic_placeholder():
     data_dir = tempfile.mkdtemp(prefix="crickanalysis-route-flash-")
     env = os.environ.copy()
     env["CRICKANALYSIS_DATA_DIR"] = data_dir
@@ -110,7 +111,7 @@ def test_academy_routes_never_paint_generic_placeholder():
         _wait_for_server(f"{BASE_URL}/api/health")
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True)
-            page = browser.new_page(viewport={"width": 1500, "height": 1000})
+            page = browser.new_page(viewport={"width": 1778, "height": 832})
             try:
                 page.goto(f"{BASE_URL}/#dashboard", wait_until="domcontentloaded")
                 expect(page.get_by_role("heading", name="Dashboard")).to_be_visible(timeout=15000)
@@ -126,6 +127,15 @@ def test_academy_routes_never_paint_generic_placeholder():
                 back_overview = _watch_transition(page, "academy")
                 expect(page.locator("#academyWorkspace")).to_be_visible(timeout=15000)
                 _assert_clean(back_overview)
+
+                # Direct-load path: app.js would have created the placeholder before
+                # Academy loaded in v1. The bridge must remove/bypass it before paint.
+                direct = browser.new_page(viewport={"width": 1778, "height": 832})
+                direct.goto(f"{BASE_URL}/#academy?tab=players", wait_until="domcontentloaded")
+                expect(direct.get_by_role("heading", name="Academy Players")).to_be_visible(timeout=15000)
+                assert direct.evaluate("window.__academyBaseRouterBypassed === true") is True
+                assert direct.locator("text=Not implemented yet").count() == 0
+                direct.close()
             finally:
                 browser.close()
     finally:
