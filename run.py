@@ -2,10 +2,13 @@ import os
 
 import uvicorn
 
+# Import the core FastAPI app first. app.main initializes the base database schema
+# (academies, players, videos, etc.) before dependent Academy modules create tables
+# that reference those core entities.
+from app.main import app
 from app.academy_api import router as academy_router
 from app.academy_programs_api import router as academy_programs_router
 from app.biomechanics import router as biomechanics_router
-from app.main import app
 from app.system_api import router as system_router
 
 # Register optional API routers after app.main is imported. The SPA catch-all
