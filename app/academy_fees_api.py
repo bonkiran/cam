@@ -16,6 +16,7 @@ class FeePlanPayload(BaseModel):
     amount_cents: int = Field(ge=0, le=100_000_000)
     currency: str = Field(default="USD", min_length=3, max_length=3)
     billing_frequency: Literal["one_time", "monthly", "session", "tournament"] = "monthly"
+    due_day_of_month: int | None = Field(default=None, ge=1, le=28)
     program_id: int | None = Field(default=None, gt=0)
     status: Literal["active", "inactive"] = "active"
     notes: str | None = Field(default=None, max_length=1500)
@@ -69,6 +70,7 @@ def _ensure_tables() -> None:
             amount_cents INTEGER NOT NULL,
             currency TEXT NOT NULL DEFAULT 'USD',
             billing_frequency TEXT NOT NULL DEFAULT 'monthly',
+            due_day_of_month INTEGER,
             status TEXT NOT NULL DEFAULT 'active',
             notes TEXT,
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -208,7 +210,8 @@ def _billing_account(account_id: int) -> dict:
 def _enrollment_billing(enrollment_id: int) -> dict:
     row = fetch_one(
         """SELECT eb.*,fp.name AS fee_plan_name,fp.amount_cents,fp.currency,fp.billing_frequency,
-                  fp.program_id AS fee_plan_program_id,e.player_id,e.program_id,p.name AS player_name,pr.name AS program_name
+                  fp.due_day_of_month,fp.program_id AS fee_plan_program_id,e.player_id,e.program_id,
+                  p.name AS player_name,pr.name AS program_name
            FROM academy_enrollment_billing eb
            JOIN academy_fee_plans fp ON fp.id=eb.fee_plan_id
            JOIN enrollments e ON e.id=eb.enrollment_id
@@ -280,9 +283,11 @@ def create_fee_plan(payload: FeePlanPayload):
         if conn.execute("SELECT id FROM academy_fee_plans WHERE name=? COLLATE NOCASE", (name,)).fetchone():
             raise HTTPException(409, "A fee plan with this name already exists")
         row = conn.execute(
-            """INSERT INTO academy_fee_plans(academy_id,program_id,name,amount_cents,currency,billing_frequency,status,notes)
-               VALUES(?,?,?,?,?,?,?,?) RETURNING id""",
-            (_academy_id(conn), payload.program_id, name, payload.amount_cents, currency, payload.billing_frequency, payload.status, _clean(payload.notes)),
+            """INSERT INTO academy_fee_plans(
+                   academy_id,program_id,name,amount_cents,currency,billing_frequency,due_day_of_month,status,notes
+               ) VALUES(?,?,?,?,?,?,?,?,?) RETURNING id""",
+            (_academy_id(conn), payload.program_id, name, payload.amount_cents, currency, payload.billing_frequency,
+             payload.due_day_of_month, payload.status, _clean(payload.notes)),
         ).fetchone()
         fee_plan_id = int(row["id"])
     return _fee_plan(fee_plan_id)
