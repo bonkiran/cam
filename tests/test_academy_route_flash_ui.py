@@ -33,10 +33,13 @@ def _watch_transition(page, target_hash: str) -> dict:
           const result = {
             badPlaceholderFrames: 0,
             badInterimVisibleFrames: 0,
+            workspaceMissingFrames: 0,
             frames: 0,
             sawLoadingState: false,
             guardVersion: null,
+            adapterVersion: null,
           };
+          const hadWorkspace = !!document.querySelector('#academyWorkspace');
           const isVisible = (el) => {
             if (!el) return false;
             const style = getComputedStyle(el);
@@ -49,11 +52,14 @@ def _watch_transition(page, target_hash: str) -> dict:
             await frame();
             result.frames += 1;
             result.guardVersion = document.documentElement.dataset.academyRouteGuard || null;
+            result.adapterVersion = document.documentElement.dataset.academyRouterAdapter || null;
             const pending = document.documentElement.classList.contains('academy-route-pending');
             result.sawLoadingState = result.sawLoadingState || pending;
 
-            // Search the whole themed main area because theme/navigation scripts can
-            // wrap or rename the base router's original .page-head/.panel elements.
+            if (hadWorkspace && !document.querySelector('#academyWorkspace')) {
+              result.workspaceMissingFrames += 1;
+            }
+
             const genericTextNodes = [...document.querySelectorAll('#app .main *')].filter(el => {
               const text = (el.textContent || '').trim();
               return text.includes('Not implemented yet') ||
@@ -62,8 +68,6 @@ def _watch_transition(page, target_hash: str) -> dict:
             });
             if (genericTextNodes.some(isVisible)) result.badPlaceholderFrames += 1;
 
-            // While pending, all non-topbar main children must be hidden. The only
-            // visible interim UI should be the route guard's Loading Academy overlay.
             if (pending) {
               const main = document.querySelector('#app .main');
               if (main) {
@@ -85,12 +89,14 @@ def _watch_transition(page, target_hash: str) -> dict:
 
 
 def _assert_clean(result: dict) -> None:
-    assert result["guardVersion"] == "2", result
+    assert result["guardVersion"] == "3", result
+    assert result["adapterVersion"] == "1", result
     assert result["badPlaceholderFrames"] == 0, result
     assert result["badInterimVisibleFrames"] == 0, result
+    assert result["workspaceMissingFrames"] == 0, result
 
 
-def test_academy_routes_never_paint_generic_placeholder():
+def test_academy_routes_never_paint_generic_placeholder_or_reload_between_tabs():
     data_dir = tempfile.mkdtemp(prefix="crickanalysis-route-flash-")
     env = os.environ.copy()
     env["CRICKANALYSIS_DATA_DIR"] = data_dir
@@ -114,17 +120,23 @@ def test_academy_routes_never_paint_generic_placeholder():
                 page.goto(f"{BASE_URL}/#dashboard", wait_until="domcontentloaded")
                 expect(page.get_by_role("heading", name="Dashboard")).to_be_visible(timeout=15000)
 
+                # Entering Academy from another top-level route may use the one-time
+                # loading guard, but the generic placeholder must never paint.
                 overview = _watch_transition(page, "academy")
                 expect(page.locator("#academyWorkspace")).to_be_visible(timeout=15000)
                 _assert_clean(overview)
 
+                # Academy -> Academy navigation must preserve the mounted workspace
+                # and must never re-enable the full-page Loading Academy overlay.
                 players = _watch_transition(page, "academy?tab=players")
                 expect(page.get_by_role("heading", name="Academy Players")).to_be_visible(timeout=15000)
                 _assert_clean(players)
+                assert players["sawLoadingState"] is False, players
 
                 back_overview = _watch_transition(page, "academy")
                 expect(page.locator("#academyWorkspace")).to_be_visible(timeout=15000)
                 _assert_clean(back_overview)
+                assert back_overview["sawLoadingState"] is False, back_overview
             finally:
                 browser.close()
     finally:
