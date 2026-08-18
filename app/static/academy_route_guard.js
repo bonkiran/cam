@@ -61,6 +61,7 @@
       document.documentElement.classList.remove(CLASS_NAME);
       return;
     }
+    if (!document.documentElement.classList.contains(CLASS_NAME)) return;
     const workspace = document.getElementById('academyWorkspace');
     const content = workspace && workspace.querySelector('.academy-content');
     if (workspace && content) {
@@ -72,16 +73,17 @@
     }
   }
 
+  // The guard becomes active only when entering/changing an Academy route.
+  // It must not be re-activated by ordinary Academy DOM updates after the page
+  // has already mounted (forms, attendance rows, coach workload, etc.).
   window.addEventListener('hashchange', () => {
     markPending();
     queueMicrotask(releaseWhenAcademyMounted);
   });
 
-  // Important: callbacks only toggle classes / inspect DOM. ensureStyle() is
-  // idempotent and never rewrites the style node after creation, preventing the
-  // observer from triggering itself in a mutation loop.
+  // The observer has one job only: detect when the real Academy workspace has
+  // mounted and release the temporary loading guard. It never calls markPending.
   const observer = new MutationObserver(() => {
-    if (isAcademyRoute()) markPending();
     releaseWhenAcademyMounted();
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
@@ -89,7 +91,6 @@
   ensureStyle();
   markPending();
   document.addEventListener('DOMContentLoaded', () => {
-    markPending();
     releaseWhenAcademyMounted();
   });
 })();
