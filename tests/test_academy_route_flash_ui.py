@@ -117,14 +117,15 @@ def test_academy_routes_never_paint_generic_placeholder_or_reload_between_tabs()
             browser = playwright.chromium.launch(headless=True)
             page = browser.new_page(viewport={"width": 1778, "height": 832})
             try:
-                page.goto(f"{BASE_URL}/#dashboard", wait_until="domcontentloaded")
-                expect(page.get_by_role("heading", name="Dashboard")).to_be_visible(timeout=15000)
-
-                # Entering Academy from another top-level route may use the one-time
-                # loading guard, but the generic placeholder must never paint.
-                overview = _watch_transition(page, "academy")
+                # Analysis is intentionally parked during Academy pilot work, so
+                # Academy is now the stable initial workspace for this regression.
+                # The separate paused-Analysis regression verifies stale Analysis
+                # URLs redirect here before any video API request can leave the page.
+                page.goto(f"{BASE_URL}/#academy", wait_until="domcontentloaded")
                 expect(page.locator("#academyWorkspace")).to_be_visible(timeout=15000)
-                _assert_clean(overview)
+                expect(page.locator("#academyWorkspace .academy-content")).to_be_visible(timeout=15000)
+                assert page.evaluate("document.documentElement.dataset.academyRouteGuard") == "3"
+                assert page.evaluate("document.documentElement.dataset.academyRouterAdapter") == "1"
 
                 # Academy -> Academy navigation must preserve the mounted workspace
                 # and must never re-enable the full-page Loading Academy overlay.
