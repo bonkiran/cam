@@ -30,14 +30,7 @@ def _button_labels(locator) -> list[str]:
     return [text.strip() for text in locator.all_text_contents()]
 
 
-def _open_group(group) -> None:
-    parent = group.locator(".nav-group-parent")
-    if parent.get_attribute("aria-expanded") != "true":
-        parent.click()
-    expect(parent).to_have_attribute("aria-expanded", "true")
-
-
-def test_analysis_uses_horizontal_tabs_and_academy_navigation_stays_clean():
+def test_analysis_and_academy_use_direct_workspace_navigation():
     data_dir = tempfile.mkdtemp(prefix="crickanalysis-ui-nav-cleanup-")
     env = os.environ.copy()
     env["CRICKANALYSIS_DATA_DIR"] = data_dir
@@ -90,20 +83,21 @@ def test_analysis_uses_horizontal_tabs_and_academy_navigation_stays_clean():
                 expect(page).to_have_url(f"{BASE_URL}/#comparisons")
                 expect(page.locator('#analysisWorkspaceTabs button[data-analysis-route="comparisons"]')).to_have_class("active")
 
-                # Academy remains a separate workspace and Analysis tabs disappear there.
-                academy_group = page.locator('.nav-group[data-nav-group="academy"]')
-                expect(academy_group).to_be_visible(timeout=10000)
-                academy_labels = _button_labels(academy_group.locator('.nav-group-submenu button'))
-                assert academy_labels == ["⌂Overview"], academy_labels
+                # Academy is also one direct sidebar workspace. Its Overview is available
+                # only in the horizontal Academy tabs, not a redundant fly-out submenu.
+                academy_button = page.locator('.sidebar .nav > button[data-workspace-nav="academy"]')
+                expect(academy_button).to_be_visible(timeout=10000)
+                expect(academy_button).to_have_text("▦Academy")
+                expect(page.locator('.nav-group[data-nav-group="academy"]')).to_have_count(0)
                 expect(page.locator('.sidebar .nav > button[data-route="players"]')).to_have_count(0)
                 expect(page.locator('.sidebar .nav > button[data-route="reports"]')).to_have_count(0)
 
-                _open_group(academy_group)
-                academy_overview = academy_group.locator('.nav-group-submenu button').filter(has_text="Overview")
-                expect(academy_overview).to_be_visible()
-                academy_overview.click()
+                academy_button.click()
+                expect(page).to_have_url(f"{BASE_URL}/#academy")
                 expect(page.locator('#academyWorkspace .academy-tabs')).to_be_visible(timeout=15000)
                 expect(page.locator('#analysisWorkspaceTabs')).to_have_count(0)
+                expect(page.locator('#academyWorkspace .academy-tabs button').filter(has_text="Overview")).to_have_count(1)
+                expect(academy_button).to_have_class("active")
 
                 reviews = page.locator('#academyWorkspace .academy-tabs button').filter(has_text="Player Reviews")
                 reports = page.locator('#academyWorkspace .academy-tabs button').filter(has_text="Reports")
@@ -122,9 +116,10 @@ def test_analysis_uses_horizontal_tabs_and_academy_navigation_stays_clean():
                 reports.click()
                 expect(page).to_have_url(f"{BASE_URL}/#academy?tab=reports")
                 expect(page.locator('.academy-reports-shell h1')).to_have_text("Reports", timeout=10000)
+                expect(academy_button).to_have_class("active")
 
-                # One click on Analysis returns to Analysis Overview and restores the horizontal tabs.
-                page.locator('.sidebar .nav > button[data-workspace-nav="analysis"]').click()
+                # One click on Analysis returns to Analysis Overview and restores its tabs.
+                analysis_button.click()
                 expect(page).to_have_url(f"{BASE_URL}/#dashboard")
                 expect(page.locator('#analysisWorkspaceTabs')).to_be_visible(timeout=10000)
                 expect(page.locator('#analysisWorkspaceTabs button[data-analysis-route="dashboard"]')).to_have_class("active")
