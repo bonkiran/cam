@@ -98,7 +98,7 @@ def test_teams_matches_ui_end_to_end():
                 expect(team_row).to_contain_text("UI Match Rohan")
 
                 # AM-MAT-002: create fixture.
-                page.get_by_role("button", name="Fixture", exact=True).click()
+                page.get_by_role("button", name="Fixture").click()
                 fixture_form = page.locator("#academyFixtureForm")
                 expect(fixture_form).to_be_visible()
                 fixture_form.locator('[name="team_id"]').select_option(label="UI U15 Match XI")
@@ -165,7 +165,7 @@ def test_teams_matches_ui_end_to_end():
                 expect(match_row).to_contain_text("131/8")
 
                 # Verify persisted statistics via API from the same Chromium context.
-                match_id = await_match_id = page.evaluate("""
+                match_id = page.evaluate("""
                     async () => {
                       const matches = await (await fetch('/api/academy/matches')).json();
                       return matches.find(m => m.opponent === 'UI North Atlanta Juniors')?.id;
