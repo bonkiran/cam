@@ -5,6 +5,7 @@ import sys
 import tempfile
 import time
 import urllib.request
+import uuid
 from pathlib import Path
 
 from playwright.sync_api import expect, sync_playwright
@@ -38,17 +39,17 @@ def _json_request(method: str, path: str, payload: dict):
         return json.loads(response.read().decode("utf-8"))
 
 
-def _setup():
-    _json_request("PUT", "/api/academy/profile", {"name": "Payment UI Academy"})
-    p1 = _json_request("POST", "/api/academy/players", {"name": "UI Pay Aarav", "status": "active"})
-    p2 = _json_request("POST", "/api/academy/players", {"name": "UI Pay Maya", "status": "active"})
-    program = _json_request("POST", "/api/academy/programs", {"name": "UI Pay U15", "program_type": "group", "status": "active"})
+def _setup(tag: str):
+    _json_request("PUT", "/api/academy/profile", {"name": f"Payment UI Academy {tag}"})
+    p1 = _json_request("POST", "/api/academy/players", {"name": f"UI Pay Aarav {tag}", "status": "active"})
+    p2 = _json_request("POST", "/api/academy/players", {"name": f"UI Pay Maya {tag}", "status": "active"})
+    program = _json_request("POST", "/api/academy/programs", {"name": f"UI Pay U15 {tag}", "program_type": "group", "status": "active"})
     e1 = _json_request("POST", "/api/academy/enrollments", {"player_id": p1["id"], "program_id": program["id"], "enrollment_type": "regular", "start_date": "2026-09-01"})
     e2 = _json_request("POST", "/api/academy/enrollments", {"player_id": p2["id"], "program_id": program["id"], "enrollment_type": "regular", "start_date": "2026-09-01"})
-    plan = _json_request("POST", "/api/academy/fee-plans", {"name": "UI Pay Monthly 200", "amount_cents": 20000, "billing_frequency": "monthly", "due_day_of_month": 1, "program_id": program["id"], "status": "active"})
+    plan = _json_request("POST", "/api/academy/fee-plans", {"name": f"UI Pay Monthly 200 {tag}", "amount_cents": 20000, "billing_frequency": "monthly", "due_day_of_month": 1, "program_id": program["id"], "status": "active"})
     for enrollment in (e1, e2):
         _json_request("PUT", f"/api/academy/enrollments/{enrollment['id']}/billing", {"fee_plan_id": plan["id"], "discount_type": "none", "discount_value": 0})
-    account = _json_request("POST", "/api/academy/billing-accounts", {"account_name": "UI Pay Family", "player_ids": [p1["id"], p2["id"]], "overpayment_allowed": True, "status": "active"})
+    account = _json_request("POST", "/api/academy/billing-accounts", {"account_name": f"UI Pay Family {tag}", "player_ids": [p1["id"], p2["id"]], "overpayment_allowed": True, "status": "active"})
     i1 = _json_request("POST", "/api/academy/invoices/from-enrollment", {"account_id": account["id"], "enrollment_id": e1["id"], "issue_date": "2026-09-01", "due_date": "2026-09-15"})
     i2 = _json_request("POST", "/api/academy/invoices/from-enrollment", {"account_id": account["id"], "enrollment_id": e2["id"], "issue_date": "2026-09-01", "due_date": "2026-09-15"})
     return p1, p2, account, i1, i2
@@ -74,6 +75,7 @@ def test_payment_ledger_ui_partial_full_credit_receipt_refund_and_reconciliation
     env = os.environ.copy()
     env["CRICKANALYSIS_DATA_DIR"] = data_dir
     env["PYTHONPATH"] = str(REPO_ROOT)
+    tag = uuid.uuid4().hex[:8]
     server = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "run:app", "--host", "127.0.0.1", "--port", "8780"],
         cwd=REPO_ROOT,
@@ -84,8 +86,12 @@ def test_payment_ledger_ui_partial_full_credit_receipt_refund_and_reconciliation
     )
     try:
         _wait_for_server(f"{BASE_URL}/api/health")
-        p1, p2, account, i1, i2 = _setup()
+        p1, p2, account, i1, i2 = _setup(tag)
         account_id = int(account["id"])
+        account_name = account["account_name"]
+        cash_ref = f"CASH-{tag}"
+        check_ref = f"CHECK-{tag}"
+        card_ref = f"CARD-{tag}"
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True)
             page = browser.new_page(viewport={"width": 1600, "height": 1100})
@@ -94,18 +100,17 @@ def test_payment_ledger_ui_partial_full_credit_receipt_refund_and_reconciliation
                 expect(page.get_by_role("heading", name="Fees & Payments")).to_be_visible(timeout=15000)
                 expect(page.locator("#openPaymentForm")).to_be_visible(timeout=15000)
 
-                # Partial cash payment.
-                _post_payment(page, account_id, i1["id"], "80.00", "cash", "CASH-DESK-UI")
-                partial_row = page.locator(".academy-payment-row", has_text="UI Pay Family").filter(has_text="$80.00")
+                _post_payment(page, account_id, i1["id"], "80.00", "cash", cash_ref)
+                partial_row = page.locator(".academy-payment-row", has_text=cash_ref)
                 expect(partial_row).to_be_visible(timeout=10000)
+                expect(partial_row).to_contain_text("$80.00")
                 expect(partial_row).to_contain_text("cash")
                 invoice1 = page.evaluate("async (id) => await (await fetch(`/api/academy/invoices/${id}`)).json()", i1["id"])
                 assert invoice1["status"] == "partially_paid"
                 assert int(invoice1["balance_due_cents"]) == 12000
 
-                # Finish invoice with manual check and inspect receipt.
-                _post_payment(page, account_id, i1["id"], "120.00", "check", "CHECK-UI-1042")
-                check_row = page.locator(".academy-payment-row", has_text="CHECK-UI-1042")
+                _post_payment(page, account_id, i1["id"], "120.00", "check", check_ref)
+                check_row = page.locator(".academy-payment-row", has_text=check_ref)
                 expect(check_row).to_be_visible(timeout=10000)
                 check_row.get_by_role("button", name="Receipt").click()
                 receipt = page.locator(".academy-payment-receipt")
@@ -119,16 +124,14 @@ def test_payment_ledger_ui_partial_full_credit_receipt_refund_and_reconciliation
                 assert invoice1["status"] == "paid"
                 assert int(invoice1["balance_due_cents"]) == 0
 
-                # Overpay second invoice: $250 received, $200 allocated, $50 family credit.
-                _post_payment(page, account_id, i2["id"], "250.00", "card", "CARD-UI-OVERPAY")
-                overpay_row = page.locator(".academy-payment-row", has_text="CARD-UI-OVERPAY")
+                _post_payment(page, account_id, i2["id"], "250.00", "card", card_ref)
+                overpay_row = page.locator(".academy-payment-row", has_text=card_ref)
                 expect(overpay_row).to_be_visible(timeout=10000)
                 expect(overpay_row).to_contain_text("Credit $50.00")
-                ledger_row = page.locator(".academy-ledger-row", has_text="UI Pay Family")
+                ledger_row = page.locator(".academy-ledger-row", has_text=account_name)
                 expect(ledger_row).to_contain_text("Credit $50.00", timeout=10000)
                 expect(ledger_row).to_contain_text("Net -$50.00")
 
-                # Refund $70: consume $50 credit, reverse $20 from invoice 2.
                 overpay_row.get_by_role("button", name="Refund").click()
                 refund_form = page.locator("#academyRefundForm")
                 expect(refund_form).to_be_visible()
@@ -137,9 +140,9 @@ def test_payment_ledger_ui_partial_full_credit_receipt_refund_and_reconciliation
                 refund_form.locator('[name="reason"]').fill("UI family refund")
                 refund_form.get_by_role("button", name="Post Refund").click()
                 expect(page.locator("#academyRefundForm")).to_have_count(0, timeout=10000)
-                overpay_row = page.locator(".academy-payment-row", has_text="CARD-UI-OVERPAY")
+                overpay_row = page.locator(".academy-payment-row", has_text=card_ref)
                 expect(overpay_row).to_contain_text("Refunded $70.00", timeout=10000)
-                ledger_row = page.locator(".academy-ledger-row", has_text="UI Pay Family")
+                ledger_row = page.locator(".academy-ledger-row", has_text=account_name)
                 expect(ledger_row).to_contain_text("Outstanding $20.00")
                 expect(ledger_row).to_contain_text("Credit $0.00")
                 expect(ledger_row).to_contain_text("Net $20.00")
