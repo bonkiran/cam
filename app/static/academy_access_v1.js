@@ -75,7 +75,7 @@
   }
   async function renderAccess(){
     if(route().page!=='academy'||route().tab!=='access')return;
-    const myGeneration=++generation;ensureTab();const content=qs('#academyWorkspace .academy-content');if(!content)return;content.innerHTML='<div class="academy-access-loading">Loading access controls…</div>';
+    const myGeneration=++generation;ensureTab();const content=qs('#academyWorkspace .academy-content');if(!content)return;content.dataset.academyAccessOwned='1';content.innerHTML='<div class="academy-access-loading">Loading access controls…</div>';
     let statusData;try{statusData=await request('/api/auth/bootstrap-status',{headers:{}});}catch(error){content.innerHTML=`<div class="academy-empty"><strong>Access service unavailable</strong><span>${esc(error.message)}</span></div>`;return;}
     if(myGeneration!==generation)return;
     if(!token()){content.innerHTML=loginView(statusData);wireLogin();return;}
@@ -83,6 +83,19 @@
     if(!['owner','admin'].includes(me.role)){currentReference={coaches:[],guardians:[],players:[]};content.innerHTML=memberView(me);wireAuthenticated(me);return;}
     try{const [users,roles,reference,audit]=await Promise.all([request('/api/academy/access/users'),request('/api/academy/access/roles'),request('/api/academy/access/reference'),request('/api/academy/access/audit?limit=50')]);if(myGeneration!==generation)return;currentReference=reference;content.innerHTML=adminView(me,users,roles,audit);wireAuthenticated(me);}catch(error){content.innerHTML=`<div class="academy-empty"><strong>Could not load access controls</strong><span>${esc(error.message)}</span></div>`;}
   }
-  function apply(){if(applying)return;applying=true;try{if(route().page!=='academy')return;ensureTab();if(route().tab==='access')setTimeout(renderAccess,0);}finally{applying=false;}}
+  function apply(){
+    if(applying)return;applying=true;
+    try{
+      if(route().page!=='academy')return;
+      ensureTab();
+      if(route().tab==='access'){
+        const content=qs('#academyWorkspace .academy-content');
+        if(content&&content.dataset.academyAccessOwned!=='1'){
+          content.dataset.academyAccessOwned='1';
+          setTimeout(renderAccess,0);
+        }
+      }
+    }finally{applying=false;}
+  }
   const observer=new MutationObserver(()=>apply());observer.observe(document.documentElement,{childList:true,subtree:true});window.addEventListener('hashchange',()=>setTimeout(apply,0));document.addEventListener('DOMContentLoaded',apply);apply();
 })();
