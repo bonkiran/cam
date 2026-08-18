@@ -30,30 +30,52 @@ def _watch_transition(page, target_hash: str) -> dict:
     return page.evaluate(
         """
         async (targetHash) => {
-          const result = { badVisibleFrames: 0, frames: 0, sawLoadingState: false };
+          const result = {
+            badPlaceholderFrames: 0,
+            badInterimVisibleFrames: 0,
+            frames: 0,
+            sawLoadingState: false,
+            guardVersion: null,
+          };
           const isVisible = (el) => {
             if (!el) return false;
             const style = getComputedStyle(el);
             const rect = el.getBoundingClientRect();
-            return style.visibility !== 'hidden' && style.display !== 'none' && rect.width > 0 && rect.height > 0;
+            return style.visibility !== 'hidden' && style.display !== 'none' && style.opacity !== '0' && rect.width > 0 && rect.height > 0;
           };
           const frame = () => new Promise(resolve => requestAnimationFrame(resolve));
           location.hash = targetHash;
           for (let i = 0; i < 180; i++) {
             await frame();
             result.frames += 1;
-            result.sawLoadingState = result.sawLoadingState || document.documentElement.classList.contains('academy-route-pending');
-            const bad = [...document.querySelectorAll('.page-head,.panel')].some(el => {
-              const text = el.textContent || '';
-              return isVisible(el) && (
-                text.includes('Not implemented yet') ||
-                text.includes('This module is part of the real application shell') ||
-                (text.trim().startsWith('Page') && text.includes('Core engineering'))
-              );
-            });
-            if (bad) result.badVisibleFrames += 1;
-            const workspace = document.querySelector('#academyWorkspace .academy-content');
+            result.guardVersion = document.documentElement.dataset.academyRouteGuard || null;
             const pending = document.documentElement.classList.contains('academy-route-pending');
+            result.sawLoadingState = result.sawLoadingState || pending;
+
+            // The real defect is any visible generic placeholder text, regardless
+            // of which wrapper the theme/navigation layer has transformed it into.
+            const genericTextNodes = [...document.querySelectorAll('#app .main *')].filter(el => {
+              const text = (el.textContent || '').trim();
+              return text.includes('Not implemented yet') ||
+                     text.includes('This module is part of the real application shell') ||
+                     (text.startsWith('Page') && text.includes('Core engineering'));
+            });
+            if (genericTextNodes.some(isVisible)) result.badPlaceholderFrames += 1;
+
+            // While the Academy route is pending, nothing from the old/generic
+            // main content may be visible. Only the persistent topbar plus the
+            // guard's CSS loading overlay are allowed to paint.
+            if (pending) {
+              const main = document.querySelector('#app .main');
+              if (main) {
+                const visibleInterim = [...main.children]
+                  .filter(el => !el.classList.contains('topbar'))
+                  .some(isVisible);
+                if (visibleInterim) result.badInterimVisibleFrames += 1;
+              }
+            }
+
+            const workspace = document.querySelector('#academyWorkspace .academy-content');
             if (workspace && !pending) break;
           }
           return result;
@@ -61,6 +83,12 @@ def _watch_transition(page, target_hash: str) -> dict:
         """,
         target_hash,
     )
+
+
+def _assert_clean(result: dict) -> None:
+    assert result["guardVersion"] == "2", result
+    assert result["badPlaceholderFrames"] == 0, result
+    assert result["badInterimVisibleFrames"] == 0, result
 
 
 def test_academy_routes_never_paint_generic_placeholder():
@@ -89,15 +117,15 @@ def test_academy_routes_never_paint_generic_placeholder():
 
                 overview = _watch_transition(page, "academy")
                 expect(page.locator("#academyWorkspace")).to_be_visible(timeout=15000)
-                assert overview["badVisibleFrames"] == 0, overview
+                _assert_clean(overview)
 
                 players = _watch_transition(page, "academy?tab=players")
                 expect(page.get_by_role("heading", name="Academy Players")).to_be_visible(timeout=15000)
-                assert players["badVisibleFrames"] == 0, players
+                _assert_clean(players)
 
                 back_overview = _watch_transition(page, "academy")
                 expect(page.locator("#academyWorkspace")).to_be_visible(timeout=15000)
-                assert back_overview["badVisibleFrames"] == 0, back_overview
+                _assert_clean(back_overview)
             finally:
                 browser.close()
     finally:
