@@ -201,7 +201,10 @@ def test_player_reviews_staff_to_parent_publish_flow():
                 action_button = published_card.get_by_role("button", name="Mark complete")
                 expect(action_button).to_be_visible()
                 action_button.click()
-                expect(staff.locator(".academy-review-card", has_text="August Development Review")).to_contain_text("completed", timeout=10000)
+                updated_card = staff.locator(".academy-review-card", has_text="August Development Review")
+                expect(updated_card.locator(".academy-review-action.completed")).to_have_count(1, timeout=10000)
+                expect(updated_card).to_contain_text("0 open")
+                expect(updated_card.get_by_role("button", name="Reopen")).to_be_visible()
             except Exception:
                 Path("test-results").mkdir(exist_ok=True)
                 staff.screenshot(path="test-results/academy-reviews-staff-failure.png", full_page=True)
