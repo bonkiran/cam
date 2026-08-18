@@ -1,0 +1,1 @@
+Live demo seed status is reported through GitHub issue comments.
