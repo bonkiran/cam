@@ -38,7 +38,33 @@ def _json_request(method: str, path: str, payload: dict):
         return json.loads(response.read().decode("utf-8"))
 
 
+def _reset_shared_postgres_access_state() -> None:
+    """Give the UI regression a first-run auth state on the shared CI database.
+
+    SQLite already gets a new temp data directory for every test process. The
+    PostgreSQL workflow deliberately reuses one test database across API, UI,
+    and prior-regression steps, so the API test's access users must not leak
+    into the UI test that validates the bootstrap experience.
+    """
+    database_url = os.environ.get("DATABASE_URL", "").strip()
+    if not database_url:
+        return
+
+    import psycopg
+
+    with psycopg.connect(database_url) as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT to_regclass('public.academy_users')")
+            if cursor.fetchone()[0] is not None:
+                cursor.execute(
+                    "TRUNCATE TABLE academy_auth_sessions, academy_access_audit, academy_users RESTART IDENTITY CASCADE"
+                )
+        conn.commit()
+
+
 def test_academy_access_roles_ui_end_to_end():
+    _reset_shared_postgres_access_state()
+
     data_dir = tempfile.mkdtemp(prefix="cam-access-ui-test-")
     env = os.environ.copy()
     env["CRICKANALYSIS_DATA_DIR"] = data_dir
