@@ -20,6 +20,21 @@ on:
 jobs:
   smoke-test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: crickanalysis_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d crickanalysis_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -59,17 +74,27 @@ jobs:
           assert.equal(isValidWebsite(''), true);
           NODE
 
-      - name: Run academy Slice 1 API smoke test
+      - name: Run Academy Slice 1 API smoke test on SQLite fallback
         run: pytest -q tests/test_academy_slice1.py
 
-      - name: Run Academy Players browser regression
+      - name: Run Academy Players browser regression on SQLite fallback
         run: pytest -q tests/test_academy_players_ui.py
 
-      - name: Run Academy Guardians browser regression
+      - name: Run Academy Guardians browser regression on SQLite fallback
         run: pytest -q tests/test_academy_guardians_ui.py
 
-      - name: Run extended Academy Setup and Player browser regression
+      - name: Run extended Academy Setup and Player browser regression on SQLite fallback
         run: pytest -q tests/test_academy_extended_ui.py
+
+      - name: Run Academy Slice 1 API smoke test on PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        run: pytest -q tests/test_academy_slice1.py
+
+      - name: Run Academy browser regression on PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        run: pytest -q tests/test_academy_players_ui.py tests/test_academy_guardians_ui.py tests/test_academy_extended_ui.py
 
       - name: Upload browser failure screenshot
         if: failure()
