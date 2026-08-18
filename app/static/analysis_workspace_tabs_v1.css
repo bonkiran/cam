@@ -1,0 +1,4 @@
+.analysis-workspace-tabs{display:flex;gap:8px;overflow:auto;padding:14px 0 10px;margin-bottom:8px;position:sticky;top:58px;z-index:8;background:linear-gradient(180deg,rgba(247,250,248,.98),rgba(247,250,248,.93));backdrop-filter:blur(8px)}
+.analysis-workspace-tabs button{border:1px solid #d9e5dd;background:#fff;color:#54665a;border-radius:999px;padding:8px 12px;font-size:9px;font-weight:700;white-space:nowrap;cursor:pointer}
+.analysis-workspace-tabs button.active{background:#174b31;color:#fff;border-color:#174b31;box-shadow:0 5px 14px rgba(23,75,49,.15)}
+@media(max-width:800px){.analysis-workspace-tabs{top:50px}}

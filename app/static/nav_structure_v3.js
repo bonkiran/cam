@@ -3,6 +3,8 @@
   const qsa = (s, r=document) => [...r.querySelectorAll(s)];
   let applying = false;
 
+  const ANALYSIS_ROUTES = new Set(['dashboard','upload','analyses','analysis','comparisons']);
+
   function routeInfo(){
     const raw=location.hash.replace(/^#/,'');
     const [page,query='']=raw.split('?');
@@ -11,15 +13,6 @@
   }
 
   const GROUPS = [
-    {
-      key:'analysis', label:'Analysis', icon:'◈',
-      children:[
-        ['dashboard','⌂','Overview'],
-        ['upload','⇧','Upload Video'],
-        ['analyses','▣','My Analyses'],
-        ['comparisons','⇄','Comparisons']
-      ]
-    },
     {
       key:'academy', label:'Academy', icon:'▦',
       children:[
@@ -34,6 +27,10 @@
       ]
     }
   ];
+
+  function isAnalysisPage(){
+    return ANALYSIS_ROUTES.has(routeInfo().page);
+  }
 
   function childTarget(group, route){
     return route;
@@ -66,12 +63,47 @@
     return btn;
   }
 
-  function normalizeChildLabel(child, icon, label){
-    const currentIcon=qs('i',child)?.textContent||'';
-    const currentLabel=qs('b',child)?.textContent||'';
+  function normalizeButtonLabel(button, icon, label){
+    const currentIcon=qs('i',button)?.textContent||'';
+    const currentLabel=qs('b',button)?.textContent||'';
     if(currentIcon!==icon || currentLabel!==label){
-      child.innerHTML=`<i>${icon}</i><b>${label}</b>`;
+      button.innerHTML=`<i>${icon}</i><b>${label}</b>`;
     }
+  }
+
+  function unwrap(wrapper, nav){
+    if(!wrapper) return;
+    const submenu = qs('.nav-group-submenu, .analysis-nav-submenu', wrapper);
+    if(submenu){
+      qsa('button[data-route]', submenu).forEach(btn => nav.insertBefore(btn, wrapper));
+    }
+    wrapper.remove();
+  }
+
+  function ensureAnalysisEntry(nav){
+    let button = qs(':scope > button[data-workspace-nav="analysis"]', nav);
+    if(!button){
+      button = qs(':scope > button[data-route="dashboard"]', nav);
+    }
+    if(!button){
+      button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.route = 'dashboard';
+      nav.prepend(button);
+    }
+
+    button.dataset.workspaceNav = 'analysis';
+    button.dataset.route = 'dashboard';
+    button.classList.remove('nav-group-child');
+    normalizeButtonLabel(button,'◈','Analysis');
+    button.classList.toggle('active', isAnalysisPage());
+    button.onclick = () => { location.hash='dashboard'; };
+
+    // Keep Analysis as the first major workspace item.
+    if(nav.firstElementChild !== button){
+      nav.prepend(button);
+    }
+    return button;
   }
 
   function ensureGroup(nav, group){
@@ -94,7 +126,7 @@
       if(anchor){
         nav.insertBefore(wrapper, anchor);
       } else if(group.key==='academy'){
-        const analysis=qs('.nav-group[data-nav-group="analysis"]',nav);
+        const analysis=qs(':scope > button[data-workspace-nav="analysis"]',nav);
         if(analysis) analysis.after(wrapper); else nav.prepend(wrapper);
       } else {
         nav.appendChild(wrapper);
@@ -125,8 +157,7 @@
         }
       }
 
-      // Normalize a reused legacy button only when its display actually differs.
-      normalizeChildLabel(child,icon,label);
+      normalizeButtonLabel(child,icon,label);
       child.classList.add('nav-group-child');
       child.classList.toggle('active', childIsActive(group,route));
       child.onclick = () => {
@@ -145,17 +176,10 @@
     parent.setAttribute('aria-expanded', open ? 'true' : 'false');
   }
 
-  function unwrap(wrapper, nav){
-    if(!wrapper) return;
-    const submenu = qs('.nav-group-submenu, .analysis-nav-submenu', wrapper);
-    if(submenu){
-      qsa('button[data-route]', submenu).forEach(btn => nav.insertBefore(btn, wrapper));
-    }
-    wrapper.remove();
-  }
-
   function cleanup(nav){
+    // Remove both the legacy Analysis submenu and the grouped Analysis submenu.
     unwrap(qs('.analysis-nav-group', nav), nav);
+    unwrap(qs('.nav-group[data-nav-group="analysis"]', nav), nav);
     unwrap(qs('.nav-group[data-nav-group="dashboard"]', nav), nav);
     qsa('button[data-route="sessions"]', nav).forEach(btn => btn.remove());
   }
@@ -168,16 +192,17 @@
       if(!nav) return;
 
       cleanup(nav);
+      ensureAnalysisEntry(nav);
       GROUPS.forEach(group => ensureGroup(nav, group));
 
-      // Keep legacy direct buttons out of the top-level sidebar. Players and Reports
-      // now live inside the Academy workspace; Dashboard is Analysis > Overview.
+      // Analysis has one top-level entry. Its pages are exposed through horizontal
+      // workspace tabs instead of a sidebar submenu.
       const groupedRoutes = new Set([
         'dashboard','upload','analyses','comparisons','reports',
         'academy','players','insights','shot-library'
       ]);
       qsa(':scope > button[data-route]', nav).forEach(btn => {
-        if(groupedRoutes.has(btn.dataset.route)) btn.remove();
+        if(groupedRoutes.has(btn.dataset.route) && btn.dataset.workspaceNav!=='analysis') btn.remove();
       });
     } finally {
       applying = false;

@@ -37,7 +37,7 @@ def _open_group(group) -> None:
     expect(parent).to_have_attribute("aria-expanded", "true")
 
 
-def test_sidebar_and_academy_report_navigation_are_cleaned_up():
+def test_analysis_uses_horizontal_tabs_and_academy_navigation_stays_clean():
     data_dir = tempfile.mkdtemp(prefix="crickanalysis-ui-nav-cleanup-")
     env = os.environ.copy()
     env["CRICKANALYSIS_DATA_DIR"] = data_dir
@@ -60,28 +60,51 @@ def test_sidebar_and_academy_report_navigation_are_cleaned_up():
             try:
                 page.goto(f"{BASE_URL}/#dashboard", wait_until="domcontentloaded")
 
-                analysis_group = page.locator('.nav-group[data-nav-group="analysis"]')
+                # Analysis is one top-level sidebar workspace, with no fly-out submenu.
+                analysis_button = page.locator('.sidebar .nav > button[data-workspace-nav="analysis"]')
+                expect(analysis_button).to_be_visible(timeout=10000)
+                expect(analysis_button).to_have_text("◈Analysis")
+                expect(analysis_button).to_have_class("active")
+                expect(page.locator('.nav-group[data-nav-group="analysis"]')).to_have_count(0)
+                expect(page.locator('.sidebar .nav > button[data-route="upload"]')).to_have_count(0)
+                expect(page.locator('.sidebar .nav > button[data-route="analyses"]')).to_have_count(0)
+                expect(page.locator('.sidebar .nav > button[data-route="comparisons"]')).to_have_count(0)
+
+                # Analysis navigation is horizontal, matching the Academy workspace pattern.
+                analysis_tabs = page.locator('#analysisWorkspaceTabs')
+                expect(analysis_tabs).to_be_visible(timeout=10000)
+                assert _button_labels(analysis_tabs.locator('button')) == [
+                    "Overview", "Upload Video", "My Analyses", "Comparisons"
+                ]
+                expect(analysis_tabs.locator('button[data-analysis-route="dashboard"]')).to_have_class("active")
+
+                analysis_tabs.locator('button[data-analysis-route="upload"]').click()
+                expect(page).to_have_url(f"{BASE_URL}/#upload")
+                expect(page.locator('#analysisWorkspaceTabs button[data-analysis-route="upload"]')).to_have_class("active")
+
+                page.locator('#analysisWorkspaceTabs button[data-analysis-route="analyses"]').click()
+                expect(page).to_have_url(f"{BASE_URL}/#analyses")
+                expect(page.locator('#analysisWorkspaceTabs button[data-analysis-route="analyses"]')).to_have_class("active")
+
+                page.locator('#analysisWorkspaceTabs button[data-analysis-route="comparisons"]').click()
+                expect(page).to_have_url(f"{BASE_URL}/#comparisons")
+                expect(page.locator('#analysisWorkspaceTabs button[data-analysis-route="comparisons"]')).to_have_class("active")
+
+                # Academy remains a separate workspace and Analysis tabs disappear there.
                 academy_group = page.locator('.nav-group[data-nav-group="academy"]')
-                expect(analysis_group).to_be_visible(timeout=10000)
                 expect(academy_group).to_be_visible(timeout=10000)
-
-                # Dashboard is no longer a standalone item. It is Analysis > Overview.
-                expect(page.locator('.sidebar .nav > button[data-route="dashboard"]')).to_have_count(0)
-                analysis_labels = _button_labels(analysis_group.locator('.nav-group-submenu button'))
-                assert analysis_labels == ["⌂Overview", "⇧Upload Video", "▣My Analyses", "⇄Comparisons"], analysis_labels
-
-                # Players and Reports no longer appear in the Academy sidebar submenu.
                 academy_labels = _button_labels(academy_group.locator('.nav-group-submenu button'))
                 assert academy_labels == ["⌂Overview"], academy_labels
                 expect(page.locator('.sidebar .nav > button[data-route="players"]')).to_have_count(0)
                 expect(page.locator('.sidebar .nav > button[data-route="reports"]')).to_have_count(0)
 
-                # Open Academy and confirm Reports lives beside Player Reviews in the Academy tabs.
                 _open_group(academy_group)
                 academy_overview = academy_group.locator('.nav-group-submenu button').filter(has_text="Overview")
                 expect(academy_overview).to_be_visible()
                 academy_overview.click()
                 expect(page.locator('#academyWorkspace .academy-tabs')).to_be_visible(timeout=15000)
+                expect(page.locator('#analysisWorkspaceTabs')).to_have_count(0)
+
                 reviews = page.locator('#academyWorkspace .academy-tabs button').filter(has_text="Player Reviews")
                 reports = page.locator('#academyWorkspace .academy-tabs button').filter(has_text="Reports")
                 expect(reviews).to_have_count(1)
@@ -100,12 +123,11 @@ def test_sidebar_and_academy_report_navigation_are_cleaned_up():
                 expect(page).to_have_url(f"{BASE_URL}/#academy?tab=reports")
                 expect(page.locator('.academy-reports-shell h1')).to_have_text("Reports", timeout=10000)
 
-                # Analysis > Overview still routes to the existing analysis dashboard content.
-                _open_group(analysis_group)
-                analysis_overview = analysis_group.locator('.nav-group-submenu button').filter(has_text="Overview")
-                expect(analysis_overview).to_be_visible()
-                analysis_overview.click()
+                # One click on Analysis returns to Analysis Overview and restores the horizontal tabs.
+                page.locator('.sidebar .nav > button[data-workspace-nav="analysis"]').click()
                 expect(page).to_have_url(f"{BASE_URL}/#dashboard")
+                expect(page.locator('#analysisWorkspaceTabs')).to_be_visible(timeout=10000)
+                expect(page.locator('#analysisWorkspaceTabs button[data-analysis-route="dashboard"]')).to_have_class("active")
             finally:
                 browser.close()
     finally:
