@@ -14,6 +14,7 @@ on:
       - 'tests/test_track_a_core_qa.py'
       - 'tests/test_track_a_batches_sessions_qa.py'
       - 'tests/test_track_a_batch_roster_ui.py'
+      - 'tests/test_track_a_attendance_security_qa.py'
       - 'tests/test_academy_programs_api.py'
       - 'tests/test_academy_coaches_api.py'
       - 'tests/test_academy_batches_api.py'
@@ -65,6 +66,7 @@ jobs:
             tests/test_track_a_core_qa.py \
             tests/test_track_a_batches_sessions_qa.py \
             tests/test_track_a_batch_roster_ui.py \
+            tests/test_track_a_attendance_security_qa.py \
             tests/test_academy_programs_api.py \
             tests/test_academy_coaches_api.py \
             tests/test_academy_batches_api.py \
@@ -86,6 +88,8 @@ jobs:
         run: pytest -q tests/test_track_a_batches_sessions_qa.py
       - name: Track A roster browser flow on SQLite
         run: pytest -q tests/test_track_a_batch_roster_ui.py
+      - name: Attendance statuses, corrections, and role boundaries on SQLite
+        run: pytest -q tests/test_track_a_attendance_security_qa.py
       - name: Generic RBAC boundary on SQLite
         run: pytest -q tests/test_academy_rbac_enforcement_api.py
       - name: Access lifecycle on SQLite
@@ -115,6 +119,10 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
         run: pytest -q tests/test_track_a_batch_roster_ui.py
+      - name: Attendance statuses, corrections, and role boundaries on PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        run: pytest -q tests/test_track_a_attendance_security_qa.py
       - name: Track A core permutations on PostgreSQL
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
