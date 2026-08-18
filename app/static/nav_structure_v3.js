@@ -14,12 +14,6 @@
 
   const GROUPS = [
     {
-      key:'academy', label:'Academy', icon:'▦',
-      children:[
-        ['academy','⌂','Overview']
-      ]
-    },
-    {
       key:'insights', label:'Insights', icon:'⌁',
       children:[
         ['insights','⌂','Overview'],
@@ -32,19 +26,20 @@
     return ANALYSIS_ROUTES.has(routeInfo().page);
   }
 
+  function isAcademyPage(){
+    return routeInfo().page==='academy';
+  }
+
   function childTarget(group, route){
     return route;
   }
 
   function childIsActive(group, route){
-    const info=routeInfo();
-    if(group.key==='academy' && route==='academy') return info.page==='academy' && info.tab==='overview';
-    return info.page===route;
+    return routeInfo().page===route;
   }
 
   function groupOwnsPage(group){
     const info=routeInfo();
-    if(group.key==='academy' && info.page==='academy') return true;
     return group.children.some(([route])=>route===info.page);
   }
 
@@ -99,8 +94,34 @@
     button.classList.toggle('active', isAnalysisPage());
     button.onclick = () => { location.hash='dashboard'; };
 
-    // Keep Analysis as the first major workspace item.
     if(nav.firstElementChild !== button){
+      nav.prepend(button);
+    }
+    return button;
+  }
+
+  function ensureAcademyEntry(nav){
+    let button = qs(':scope > button[data-workspace-nav="academy"]', nav);
+    if(!button){
+      button = qs(':scope > button[data-route="academy"]', nav);
+    }
+    if(!button){
+      button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.route = 'academy';
+    }
+
+    button.dataset.workspaceNav = 'academy';
+    button.dataset.route = 'academy';
+    button.classList.remove('nav-group-child');
+    normalizeButtonLabel(button,'▦','Academy');
+    button.classList.toggle('active', isAcademyPage());
+    button.onclick = () => { location.hash='academy'; };
+
+    const analysis=qs(':scope > button[data-workspace-nav="analysis"]',nav);
+    if(analysis && analysis.nextElementSibling!==button){
+      analysis.after(button);
+    } else if(!analysis && nav.firstElementChild!==button){
       nav.prepend(button);
     }
     return button;
@@ -125,9 +146,6 @@
       }
       if(anchor){
         nav.insertBefore(wrapper, anchor);
-      } else if(group.key==='academy'){
-        const analysis=qs(':scope > button[data-workspace-nav="analysis"]',nav);
-        if(analysis) analysis.after(wrapper); else nav.prepend(wrapper);
       } else {
         nav.appendChild(wrapper);
       }
@@ -177,10 +195,12 @@
   }
 
   function cleanup(nav){
-    // Remove both the legacy Analysis submenu and the grouped Analysis submenu.
+    // Remove legacy/grouped workspace wrappers so Analysis and Academy can be
+    // represented by one direct sidebar entry each.
     unwrap(qs('.analysis-nav-group', nav), nav);
     unwrap(qs('.nav-group[data-nav-group="analysis"]', nav), nav);
     unwrap(qs('.nav-group[data-nav-group="dashboard"]', nav), nav);
+    unwrap(qs('.nav-group[data-nav-group="academy"]', nav), nav);
     qsa('button[data-route="sessions"]', nav).forEach(btn => btn.remove());
   }
 
@@ -193,16 +213,19 @@
 
       cleanup(nav);
       ensureAnalysisEntry(nav);
+      ensureAcademyEntry(nav);
       GROUPS.forEach(group => ensureGroup(nav, group));
 
-      // Analysis has one top-level entry. Its pages are exposed through horizontal
-      // workspace tabs instead of a sidebar submenu.
+      // Analysis and Academy each have one top-level entry. Their internal pages
+      // are exposed through horizontal workspace tabs instead of sidebar submenus.
       const groupedRoutes = new Set([
         'dashboard','upload','analyses','comparisons','reports',
         'academy','players','insights','shot-library'
       ]);
       qsa(':scope > button[data-route]', nav).forEach(btn => {
-        if(groupedRoutes.has(btn.dataset.route) && btn.dataset.workspaceNav!=='analysis') btn.remove();
+        const workspace=btn.dataset.workspaceNav;
+        const keepWorkspace=workspace==='analysis' || workspace==='academy';
+        if(groupedRoutes.has(btn.dataset.route) && !keepWorkspace) btn.remove();
       });
     } finally {
       applying = false;
