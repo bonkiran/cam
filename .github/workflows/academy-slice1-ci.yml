@@ -12,6 +12,7 @@ on:
       - 'app/**'
       - 'tests/test_academy_slice1.py'
       - 'tests/test_academy_players_ui.py'
+      - 'tests/test_academy_guardians_ui.py'
       - 'run.py'
       - 'requirements.txt'
 
@@ -34,7 +35,7 @@ jobs:
           python -m playwright install chromium
 
       - name: Compile Python
-        run: python -m compileall -q app run.py tests/test_academy_players_ui.py
+        run: python -m compileall -q app run.py tests/test_academy_players_ui.py tests/test_academy_guardians_ui.py
 
       - name: Check academy JavaScript syntax
         run: |
@@ -63,10 +64,13 @@ jobs:
       - name: Run Academy Players browser regression
         run: pytest -q tests/test_academy_players_ui.py
 
+      - name: Run Academy Guardians browser regression
+        run: pytest -q tests/test_academy_guardians_ui.py
+
       - name: Upload browser failure screenshot
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: academy-player-ui-failure
+          name: academy-ui-failure
           path: test-results/
           if-no-files-found: ignore
