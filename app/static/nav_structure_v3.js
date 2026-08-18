@@ -83,7 +83,14 @@
         anchor = qs(`:scope > button[data-route="${route}"]`, nav);
         if(anchor) break;
       }
-      if(anchor) nav.insertBefore(wrapper, anchor); else nav.appendChild(wrapper);
+      if(anchor){
+        nav.insertBefore(wrapper, anchor);
+      } else if(group.key==='academy'){
+        const analysis=qs('.nav-group[data-nav-group="analysis"]',nav);
+        if(analysis) analysis.after(wrapper); else nav.prepend(wrapper);
+      } else {
+        nav.appendChild(wrapper);
+      }
     }
 
     const parent = qs('.nav-group-parent', wrapper);
