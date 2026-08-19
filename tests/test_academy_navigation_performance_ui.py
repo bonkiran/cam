@@ -30,16 +30,16 @@ def _observe_click(page, label: str, ready_selector: str) -> dict:
     return page.evaluate(
         """
         async ({label, readySelector}) => {
-          const buttons = [...document.querySelectorAll('#academyWorkspace .academy-tabs button')];
-          const button = buttons.find(el => (el.textContent || '').trim() === label);
-          if (!button) throw new Error(`Tab not found: ${label}`);
-
           const visible = (el) => {
             if (!el) return false;
             const style = getComputedStyle(el);
             const rect = el.getBoundingClientRect();
-            return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' && rect.width > 0 && rect.height > 0;
+            return !el.hidden && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' && rect.width > 0 && rect.height > 0;
           };
+          const buttons = [...document.querySelectorAll('#academyWorkspace .academy-tabs button')];
+          const button = buttons.find(el => (el.textContent || '').trim() === label && visible(el));
+          if (!button) throw new Error(`Visible tab not found: ${label}`);
+
           const frame = () => new Promise(resolve => requestAnimationFrame(resolve));
           const result = {
             frames: 0,
@@ -56,7 +56,7 @@ def _observe_click(page, label: str, ready_selector: str) -> dict:
             await frame();
             result.frames += 1;
             const currentButtons = [...document.querySelectorAll('#academyWorkspace .academy-tabs button')];
-            const currentButton = currentButtons.find(el => (el.textContent || '').trim() === label);
+            const currentButton = currentButtons.find(el => (el.textContent || '').trim() === label && visible(el));
             if (i === 0) result.firstFrameActive = !!currentButton?.classList.contains('active');
 
             const snapshot = document.getElementById('academyTransitionSnapshot');
