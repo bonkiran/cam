@@ -233,6 +233,12 @@
     if (current.page !== 'academy' || !target || current.tab === target) return;
 
     setActiveTab(target);
+    // Owner Console and legacy Academy click handlers can both update tab classes in the
+    // same click task. Re-assert the intended target in a microtask so the first rendered
+    // frame always reflects the tab the user actually selected.
+    queueMicrotask(() => {
+      if (transition?.target === target) setActiveTab(target);
+    });
     if (!transition) createSnapshot();
     transition = { target, startedAt: performance.now() };
     metrics.transitionsStarted += 1;
