@@ -127,7 +127,7 @@ def test_dashboard_setup_batch_invoice_and_parent_payment_ui():
                 # Academy Profile remains fully reachable from contextual Settings.
                 page.get_by_role("button",name="Settings",exact=True).click()
                 expect(page.get_by_role("heading",name="Settings",exact=True)).to_be_visible(timeout=10000)
-                page.get_by_role("button",name="Academy Profile",exact=True).click()
+                page.locator('[data-owner-settings-target="setup"]').click()
                 expect(page.get_by_role("heading",name="Academy Setup")).to_be_visible(timeout=10000)
                 timezone=page.locator('#academyProfileForm [name="timezone"]')
                 expect(timezone).to_be_hidden()
