@@ -34,15 +34,28 @@
     if(input.placeholder!==wanted) input.placeholder=wanted;
   }
 
-  function normalizeSidebar(){
-    const nav=$('.sidebar .nav');
-    if(!nav) return;
-    const hide=academyActive();
-    ['settings','integrations'].forEach(routeName => {
-      $$(`:scope > button[data-route="${routeName}"]`,nav).forEach(button => {
-        button.hidden=hide;
-        button.setAttribute('aria-hidden',hide?'true':'false');
-      });
+  function replaceExactText(selector, from, to){
+    $$(selector).forEach(node=>{
+      if((node.textContent||'').trim()===from) node.textContent=to;
+    });
+  }
+
+  function polishDashboard(){
+    const content=$('#academyWorkspace .academy-content');
+    if(!content) return;
+    const dashboard=academyActive() && route().tab==='overview';
+    content.classList.toggle('cam-owner-dashboard-polished',dashboard);
+    if(!dashboard) return;
+
+    replaceExactText('button','Fees & Payments','Finance');
+    replaceExactText('button','Teams & Matches','Matches');
+    replaceExactText('button','Sessions','Programs & Sessions');
+
+    $$('*',content).forEach(node=>{
+      if(node.children.length) return;
+      const text=(node.textContent||'').trim();
+      if(text==='Finance ledger not enabled yet') node.textContent='Finance tracking not configured yet';
+      if(text==='Weather.com connection is ready for a server API key.') node.textContent='Weekend weather will appear when the academy weather integration is configured.';
     });
   }
 
@@ -71,8 +84,8 @@
     scheduled=false;
     markAcademyShell();
     normalizeSearch();
-    normalizeSidebar();
     normalizePageTitles();
+    polishDashboard();
     enrichLoadingState();
   }
   function schedule(){

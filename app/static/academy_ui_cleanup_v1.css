@@ -34,6 +34,13 @@ body.cam-academy-context #academyWorkspace .academy-owner-context-nav button.act
   color:#134c37;
 }
 
+/* The left sidebar is owned by nav_structure_v3. Academy Settings and Integrations
+   live inside the Academy Settings page, so their global duplicates stay hidden. */
+body.cam-academy-context .sidebar .nav > button[data-route="settings"],
+body.cam-academy-context .sidebar .nav > button[data-route="integrations"]{
+  display:none !important;
+}
+
 #academyWorkspace .academy-content.cam-academy-loading{
   min-height:440px;
 }
@@ -69,7 +76,94 @@ body.cam-academy-context #academyWorkspace .academy-reports-shell{
   max-width:1180px;
 }
 
+/* Dashboard shell: keep cards aligned, prevent action buttons from clipping, and
+   make the operational sections read as one executive workspace. */
+#academyWorkspace .academy-content.cam-owner-dashboard-polished{
+  overflow:visible;
+}
+
+#academyWorkspace .cam-owner-dashboard-polished .academy-hero,
+#academyWorkspace .cam-owner-dashboard-polished .academy-stats,
+#academyWorkspace .cam-owner-dashboard-polished .academy-owner-dashboard-snapshot,
+#academyWorkspace .cam-owner-dashboard-polished .academy-dashboard-grid{
+  min-width:0;
+}
+
+#academyWorkspace .cam-owner-dashboard-polished .academy-owner-dashboard-snapshot,
+#academyWorkspace .cam-owner-dashboard-polished .academy-dashboard-grid{
+  gap:16px;
+}
+
+#academyWorkspace .cam-owner-dashboard-polished .panel,
+#academyWorkspace .cam-owner-dashboard-polished article,
+#academyWorkspace .cam-owner-dashboard-polished section{
+  min-width:0;
+}
+
+#academyWorkspace .cam-owner-dashboard-polished .panel-head,
+#academyWorkspace .cam-owner-dashboard-polished .academy-form-title,
+#academyWorkspace .cam-owner-dashboard-polished .academy-hero{
+  gap:16px;
+}
+
+#academyWorkspace .cam-owner-dashboard-polished .panel-head > div,
+#academyWorkspace .cam-owner-dashboard-polished .academy-form-title > div,
+#academyWorkspace .cam-owner-dashboard-polished .academy-hero > div:first-child{
+  min-width:0;
+}
+
+#academyWorkspace .cam-owner-dashboard-polished .panel-head button,
+#academyWorkspace .cam-owner-dashboard-polished .academy-hero-actions button,
+#academyWorkspace .cam-owner-dashboard-polished .academy-owner-session-actions button{
+  flex:0 0 auto;
+  max-width:100%;
+  white-space:nowrap;
+}
+
+#academyWorkspace .cam-owner-dashboard-polished .academy-owner-session-actions{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+#academyWorkspace .cam-owner-dashboard-polished .academy-dash-session{
+  grid-template-columns:minmax(0,1fr) auto !important;
+  align-items:center;
+  gap:12px;
+}
+
+#academyWorkspace .cam-owner-dashboard-polished .academy-dash-session > *{
+  min-width:0;
+}
+
+#academyWorkspace .cam-owner-dashboard-polished .academy-owner-money-card small,
+#academyWorkspace .cam-owner-dashboard-polished .academy-dash-empty,
+#academyWorkspace .cam-owner-dashboard-polished [class*="weather"] small{
+  color:#6f7f77;
+}
+
+#academyWorkspace .cam-owner-dashboard-polished .academy-owner-money-card strong:empty::after{
+  content:'—';
+}
+
+@media (max-width:1100px){
+  #academyWorkspace .cam-owner-dashboard-polished .academy-owner-dashboard-snapshot,
+  #academyWorkspace .cam-owner-dashboard-polished .academy-dashboard-grid{
+    grid-template-columns:1fr !important;
+  }
+}
+
 @media (max-width:900px){
   .cam-ui-loading-skeleton{grid-template-columns:1fr;}
   body.cam-academy-context #academyWorkspace .academy-owner-context-nav{width:100%;}
+  #academyWorkspace .cam-owner-dashboard-polished .academy-hero,
+  #academyWorkspace .cam-owner-dashboard-polished .panel-head,
+  #academyWorkspace .cam-owner-dashboard-polished .academy-form-title{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  #academyWorkspace .cam-owner-dashboard-polished .academy-owner-session-actions{
+    justify-content:flex-start;
+  }
 }
