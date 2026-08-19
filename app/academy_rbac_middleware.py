@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
@@ -13,6 +15,12 @@ SELF_AUTHORIZED_PREFIXES = (
     "/api/academy/parent",
     "/api/academy/reviews",
 )
+
+
+def _temporary_admin_mode() -> bool:
+    return os.environ.get("CAM_TEMP_ADMIN_MODE", "0").strip().lower() in {
+        "1", "true", "yes", "on"
+    }
 
 
 def _access_is_bootstrapped() -> bool:
@@ -34,6 +42,9 @@ def install_academy_management_rbac(app) -> None:
     - After bootstrap: generic Academy management APIs are Owner/Admin-only.
     - Parent, Access/Roles and Player Reviews endpoints retain their dedicated
       fine-grained authorization logic.
+    - During the temporary controlled-pilot Admin mode, generic Academy APIs are
+      intentionally left open so the current single-Admin web console can be
+      manually validated without a browser session. Track B.0 will remove this.
 
     Role-specific Coach/Parent/Player operational APIs should be added as
     dedicated endpoints rather than reopening the generic management surface.
@@ -43,6 +54,8 @@ def install_academy_management_rbac(app) -> None:
     async def academy_management_rbac(request: Request, call_next):
         path = request.url.path
         if request.method == "OPTIONS" or not path.startswith("/api/academy/"):
+            return await call_next(request)
+        if _temporary_admin_mode():
             return await call_next(request)
         if any(path.startswith(prefix) for prefix in SELF_AUTHORIZED_PREFIXES):
             return await call_next(request)
