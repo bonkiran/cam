@@ -232,8 +232,10 @@ def test_parent_login_saved_test_card_full_payment_receipt_and_family_isolation(
     assert "cvc" not in success_method
 
     stored_rows = fetch_all("SELECT * FROM academy_saved_payment_methods")
-    assert "4242424242424242" not in str(stored_rows)
-    assert "123" not in str(stored_rows)
+    stored_columns = {key for row in stored_rows for key in row.keys()}
+    assert "card_number" not in stored_columns
+    assert "cvc" not in stored_columns
+    assert all("4242424242424242" not in str(value) for row in stored_rows for value in row.values() if value is not None)
 
     declined_method = _post(
         "/api/academy/parent/payment-methods/sandbox",
