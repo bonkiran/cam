@@ -1,11 +1,11 @@
-/* Canonical CAM-13 Owner/Admin navigation. The legacy Academy renderer still
-   rebuilds its historical module buttons internally; keep those buttons hidden
-   at CSS time so users never see the old menu flash before the canonical
-   controller removes them. */
+/* CAM-13 Owner/Admin navigation guard.
+   The legacy Academy renderer may still rebuild historical module buttons internally.
+   Hide those legacy buttons at CSS time so only the Owner Console tabs are visible. */
 #academyWorkspace .academy-tabs {
   min-height: 46px;
   align-items: center;
   gap: 10px;
+  position: relative;
 }
 
 #academyWorkspace .academy-tabs button:not([data-owner-console-tab]) {
@@ -18,9 +18,20 @@
   align-items: center;
   justify-content: center;
   white-space: nowrap;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto !important;
+  cursor: pointer;
 }
 
-.cam-canonical-academy #academyWorkspace .academy-tabs {
+/* The base Academy active treatment already supplies the selected pill. Remove the
+   older CAM-13 inset underline so Dashboard does not look like two stacked buttons. */
+#academyWorkspace .academy-tabs .academy-owner-console-tab.active {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+#academyWorkspace .academy-tabs {
   overflow-x: auto;
   scrollbar-width: thin;
 }
