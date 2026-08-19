@@ -1,0 +1,26 @@
+/* Canonical CAM-13 Owner/Admin navigation. The legacy Academy renderer still
+   rebuilds its historical module buttons internally; keep those buttons hidden
+   at CSS time so users never see the old menu flash before the canonical
+   controller removes them. */
+#academyWorkspace .academy-tabs {
+  min-height: 46px;
+  align-items: center;
+  gap: 10px;
+}
+
+#academyWorkspace .academy-tabs button:not([data-owner-console-tab]) {
+  display: none !important;
+}
+
+#academyWorkspace .academy-tabs [data-owner-console-tab] {
+  display: inline-flex !important;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.cam-canonical-academy #academyWorkspace .academy-tabs {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
