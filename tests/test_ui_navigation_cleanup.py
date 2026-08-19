@@ -55,7 +55,7 @@ def test_analysis_is_paused_without_video_api_traffic_and_academy_stays_operatio
             try:
                 # A stale Analysis URL must be neutralized before app.js can call
                 # /api/videos/{id}, event or biomechanics endpoints. Academy may still
-                # call the shared /api/dashboard aggregate for its Overview metrics.
+                # call the shared /api/dashboard aggregate for its Dashboard metrics.
                 page.goto(f"{BASE_URL}/#analysis?id=1", wait_until="domcontentloaded")
                 expect(page).to_have_url(f"{BASE_URL}/#academy", timeout=10000)
                 expect(page.locator('#academyWorkspace .academy-tabs')).to_be_visible(timeout=15000)
@@ -94,7 +94,7 @@ def test_analysis_is_paused_without_video_api_traffic_and_academy_stays_operatio
                 expect(page.locator('.nav-group[data-nav-group="academy"]')).to_have_count(0)
                 expect(page.locator('.sidebar .nav > button[data-route="players"]')).to_have_count(0)
                 expect(page.locator('.sidebar .nav > button[data-route="reports"]')).to_have_count(0)
-                expect(page.locator('#academyWorkspace .academy-tabs button').filter(has_text="Overview")).to_have_count(1)
+                expect(page.locator('#academyWorkspace .academy-tabs button').filter(has_text="Dashboard")).to_have_count(1)
 
                 reviews = page.locator('#academyWorkspace .academy-tabs button').filter(has_text="Player Reviews")
                 reports = page.locator('#academyWorkspace .academy-tabs button').filter(has_text="Reports")
