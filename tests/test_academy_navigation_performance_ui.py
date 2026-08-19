@@ -136,8 +136,8 @@ def test_academy_tab_clicks_are_immediate_and_visually_stable():
                 players = _observe_click(page, "Players", ".academy-player-panel")
                 _assert_stable_transition(players, require_snapshot=True)
 
-                overview = _observe_click(page, "Overview", ".academy-hero")
-                _assert_stable_transition(overview)
+                dashboard = _observe_click(page, "Dashboard", ".academy-hero")
+                _assert_stable_transition(dashboard)
 
                 programs = _observe_click(page, "Programs & Enrollment", "#openProgramForm")
                 _assert_stable_transition(programs, require_snapshot=True)
