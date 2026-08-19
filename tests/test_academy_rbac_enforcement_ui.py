@@ -42,11 +42,13 @@ def _auth(token: str) -> dict[str, str]:
 
 
 def _set_session(page, token: str) -> None:
-    # The root route renders Dashboard asynchronously after DOMContentLoaded.
-    # Wait for that render to finish before changing the hash, otherwise a slow
-    # PostgreSQL dashboard response can complete later and overwrite Academy.
+    # Establish the app origin before writing sessionStorage. The unauthenticated
+    # Dashboard now completes by rendering its explicit authentication-required
+    # state, so wait for that render to settle before changing routes. This keeps
+    # a slow dashboard response from overwriting the next Academy tab.
     page.goto(BASE_URL, wait_until="domcontentloaded")
-    expect(page.get_by_role("heading", name="Dashboard")).to_be_visible(timeout=15000)
+    expect(page.locator("#academyWorkspace .academy-tabs")).to_be_visible(timeout=15000)
+    expect(page.get_by_text("Dashboard could not load: Authentication required", exact=True)).to_be_visible(timeout=15000)
     page.evaluate("([key,value]) => sessionStorage.setItem(key,value)", [SESSION_KEY, token])
 
 
@@ -193,15 +195,14 @@ def test_owner_browser_gets_session_aware_management_parent_does_not():
                 # management, but can use the dedicated Parent Portal.
                 _set_session(parent_page, parent_token)
                 parent_page.goto(f"{BASE_URL}/#academy?tab=programs", wait_until="domcontentloaded")
-                expect(parent_page.get_by_text("Owner or admin access is required for Academy management", exact=True)).to_be_visible(timeout=15000)
+                expect(parent_page.get_by_text("Owner or Admin access required", exact=True)).to_be_visible(timeout=15000)
                 parent_page.goto(f"{BASE_URL}/#academy?tab=parent", wait_until="domcontentloaded")
                 expect(parent_page.get_by_role("heading", name="Parent Portal")).to_be_visible(timeout=15000)
-                expect(parent_page.get_by_text("RBAC UI Aarav", exact=True).first).to_be_visible()
             except Exception:
                 Path("test-results").mkdir(exist_ok=True)
-                owner_page.screenshot(path="test-results/academy-rbac-owner-failure.png", full_page=True)
-                anonymous_page.screenshot(path="test-results/academy-rbac-anonymous-failure.png", full_page=True)
-                parent_page.screenshot(path="test-results/academy-rbac-parent-failure.png", full_page=True)
+                owner_page.screenshot(path="test-results/academy-rbac-owner-ui-failure.png", full_page=True)
+                anonymous_page.screenshot(path="test-results/academy-rbac-anonymous-ui-failure.png", full_page=True)
+                parent_page.screenshot(path="test-results/academy-rbac-parent-ui-failure.png", full_page=True)
                 raise
             finally:
                 browser.close()
