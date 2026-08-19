@@ -195,13 +195,22 @@
   }
 
   function cleanup(nav){
-    // Remove legacy/grouped workspace wrappers so Analysis and Academy can be
-    // represented by one direct sidebar entry each.
     unwrap(qs('.analysis-nav-group', nav), nav);
     unwrap(qs('.nav-group[data-nav-group="analysis"]', nav), nav);
     unwrap(qs('.nav-group[data-nav-group="dashboard"]', nav), nav);
     unwrap(qs('.nav-group[data-nav-group="academy"]', nav), nav);
     qsa('button[data-route="sessions"]', nav).forEach(btn => btn.remove());
+  }
+
+  function normalizeAcademyUtilities(nav){
+    const hide=isAcademyPage();
+    ['settings','integrations'].forEach(routeName=>{
+      qsa(`:scope > button[data-route="${routeName}"]`,nav).forEach(button=>{
+        button.hidden=hide;
+        button.setAttribute('aria-hidden',hide?'true':'false');
+        button.tabIndex=hide?-1:0;
+      });
+    });
   }
 
   function apply(){
@@ -216,8 +225,6 @@
       ensureAcademyEntry(nav);
       GROUPS.forEach(group => ensureGroup(nav, group));
 
-      // Analysis and Academy each have one top-level entry. Their internal pages
-      // are exposed through horizontal workspace tabs instead of sidebar submenus.
       const groupedRoutes = new Set([
         'dashboard','upload','analyses','comparisons','reports',
         'academy','players','insights','shot-library'
@@ -227,6 +234,11 @@
         const keepWorkspace=workspace==='analysis' || workspace==='academy';
         if(groupedRoutes.has(btn.dataset.route) && !keepWorkspace) btn.remove();
       });
+
+      // Sidebar ownership lives here. Academy Settings and Integrations are exposed
+      // inside the Academy Settings workspace, so hide their global duplicates only
+      // while the Academy workspace is active.
+      normalizeAcademyUtilities(nav);
     } finally {
       applying = false;
     }
