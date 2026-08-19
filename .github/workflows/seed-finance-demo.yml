@@ -1,0 +1,42 @@
+name: Seed Finance Manual-Test Data
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/seed_finance_demo.py'
+      - '.github/workflows/seed-finance-demo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-finance-seeder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate seeder syntax
+        run: python -m py_compile scripts/seed_live_demo.py scripts/seed_finance_demo.py
+
+  seed-live-finance-data:
+    if: github.event_name == 'workflow_dispatch'
+    needs: validate-finance-seeder
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Ensure base DEMO academy data exists
+        run: python scripts/seed_live_demo.py
+      - name: Seed repeatable finance scenarios
+        run: python scripts/seed_finance_demo.py
