@@ -20,6 +20,7 @@
   };
   let scheduled=false;
   let applying=false;
+  let rerunRequested=false;
   let meLoaded=false;
   let cachedMe=null;
   let dashboardCache=null;
@@ -44,15 +45,14 @@
     return data;
   }
   async function authMe(){
-    if(meLoaded)return cachedMe;
-    meLoaded=true;
     const token=sessionStorage.getItem(SESSION_KEY)||'';
-    if(!token)return null;
+    if(!token){meLoaded=false;cachedMe=null;return null;}
+    if(meLoaded&&cachedMe)return cachedMe;
     try{
       const response=await fetch('/api/auth/me',{cache:'no-store',headers:{Authorization:`Bearer ${token}`}});
-      if(response.ok)cachedMe=await response.json();
+      if(response.ok){cachedMe=await response.json();meLoaded=true;return cachedMe;}
     }catch{}
-    return cachedMe;
+    meLoaded=false;cachedMe=null;return null;
   }
   function isOwner(me){return !!me&&OWNER_ROLES.has(String(me.role||'').toLowerCase());}
   function go(tab,params={}){
@@ -307,7 +307,8 @@
   }
 
   async function apply(){
-    if(applying)return;applying=true;scheduled=false;
+    if(applying){rerunRequested=true;return;}
+    applying=true;
     try{
       const info=route();if(info.page!=='academy')return;
       const me=await authMe();
@@ -319,9 +320,17 @@
       await enhancePlayerDirectory();
       await enhanceDashboardSnapshot();
       await enhanceDashboardActions();
-    }finally{applying=false;}
+    }finally{
+      applying=false;
+      if(rerunRequested){rerunRequested=false;schedule();}
+    }
   }
-  function schedule(){if(scheduled)return;scheduled=true;setTimeout(apply,30);}
+  function schedule(){
+    if(applying){rerunRequested=true;return;}
+    if(scheduled)return;
+    scheduled=true;
+    setTimeout(()=>{scheduled=false;apply();},30);
+  }
   window.addEventListener('hashchange',()=>{meLoaded=false;cachedMe=null;dashboardCache=null;schedule();});
   document.addEventListener('DOMContentLoaded',schedule);
   new MutationObserver(()=>{if(route().page==='academy')schedule();}).observe(document.documentElement,{childList:true,subtree:true});
