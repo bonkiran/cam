@@ -63,12 +63,19 @@ def pay_parent_invoice_full_balance(
     )
     receipt = payment_receipt(int(result["id"]))
     with connection() as conn:
+        # Keep the original audit action name so downstream audit/reporting
+        # consumers remain compatible; the detail explicitly records the new
+        # full-balance-only policy.
         _audit(
             conn,
             user_id,
-            "parent_pay_invoice_full_balance",
+            "parent_invoice_payment",
             "invoice",
             invoice_id,
-            f"payment_id={result['id']};amount_cents={balance};method_id={payload.payment_method_id}",
+            f"policy=full_balance_only;amount_cents={balance};payment_id={result['id']};last4={method['last4']}",
         )
-    return {"payment": result, "receipt": receipt}
+    return {
+        "payment": result,
+        "receipt": receipt,
+        "invoice": _invoice_for_parent(invoice_id, user),
+    }
