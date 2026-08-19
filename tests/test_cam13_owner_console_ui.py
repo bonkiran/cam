@@ -170,10 +170,11 @@ def test_owner_admin_console_has_clean_navigation_and_contextual_workflows():
 
                 page.get_by_role("button", name="Settings", exact=True).click()
                 expect(page.get_by_role("heading", name="Settings", exact=True)).to_be_visible(timeout=10000)
-                expect(page.get_by_role("button", name="Academy Profile")).to_be_visible()
-                expect(page.get_by_role("button", name="Access & Roles")).to_be_visible()
-                expect(page.get_by_role("button", name="Fee Setup")).to_be_visible()
-                expect(page.get_by_role("button", name="Integrations")).to_be_visible()
+                settings_shell = page.locator(".academy-owner-settings-shell")
+                expect(settings_shell.get_by_role("button", name="Academy Profile")).to_be_visible()
+                expect(settings_shell.get_by_role("button", name="Access & Roles")).to_be_visible()
+                expect(settings_shell.get_by_role("button", name="Fee Setup")).to_be_visible()
+                expect(settings_shell.locator('[data-owner-settings-target="integrations"]')).to_be_visible()
 
                 page.get_by_role("button", name="Players", exact=True).click()
                 expect(page.get_by_role("heading", name="Academy Players")).to_be_visible(timeout=15000)
