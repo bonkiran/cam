@@ -118,7 +118,131 @@ def _decode_event(row: dict) -> dict:
     return out
 
 
+def _player_directory_rows() -> list[dict]:
+    rows = fetch_all(
+        """
+        SELECT p.id AS player_id,p.name AS player_name,p.status AS player_status,p.joined_on,
+               b.id AS batch_id,b.name AS batch_name,bp.status AS batch_status,
+               g.id AS guardian_id,g.first_name AS guardian_first_name,g.last_name AS guardian_last_name,
+               g.phone AS guardian_phone,g.email AS guardian_email,pg.is_primary
+        FROM players p
+        LEFT JOIN batch_players bp ON bp.player_id=p.id AND bp.status IN ('active','waitlisted')
+        LEFT JOIN batches b ON b.id=bp.batch_id
+        LEFT JOIN player_guardians pg ON pg.player_id=p.id
+        LEFT JOIN guardians g ON g.id=pg.guardian_id
+        ORDER BY p.name COLLATE NOCASE,b.name COLLATE NOCASE,pg.is_primary DESC,g.last_name COLLATE NOCASE,g.first_name COLLATE NOCASE
+        """
+    )
+    players: dict[int, dict] = {}
+    for row in rows:
+        player_id = int(row["player_id"])
+        player = players.setdefault(
+            player_id,
+            {
+                "id": player_id,
+                "name": row.get("player_name"),
+                "status": row.get("player_status"),
+                "joined_on": row.get("joined_on"),
+                "batches": [],
+                "guardians": [],
+                "cricclubs": {"status": "not_connected", "last_sync_at": None},
+            },
+        )
+        if row.get("batch_id") and not any(int(item["id"]) == int(row["batch_id"]) for item in player["batches"]):
+            player["batches"].append(
+                {
+                    "id": int(row["batch_id"]),
+                    "name": row.get("batch_name"),
+                    "status": row.get("batch_status"),
+                }
+            )
+        if row.get("guardian_id") and not any(int(item["id"]) == int(row["guardian_id"]) for item in player["guardians"]):
+            player["guardians"].append(
+                {
+                    "id": int(row["guardian_id"]),
+                    "name": f"{row.get('guardian_first_name') or ''} {row.get('guardian_last_name') or ''}".strip(),
+                    "phone": row.get("guardian_phone"),
+                    "email": row.get("guardian_email"),
+                    "is_primary": bool(row.get("is_primary")),
+                }
+            )
+    return list(players.values())
+
+
+def _player_summary(player_id: int) -> dict:
+    player = fetch_one("SELECT * FROM players WHERE id=?", (player_id,))
+    if not player:
+        raise HTTPException(404, "Player not found")
+    guardians = fetch_all(
+        """
+        SELECT g.*,pg.is_primary,pg.billing_contact,pg.pickup_authorized
+        FROM player_guardians pg
+        JOIN guardians g ON g.id=pg.guardian_id
+        WHERE pg.player_id=?
+        ORDER BY pg.is_primary DESC,g.last_name COLLATE NOCASE,g.first_name COLLATE NOCASE
+        """,
+        (player_id,),
+    )
+    batches = fetch_all(
+        """
+        SELECT bp.id,bp.status,bp.joined_on,b.id AS batch_id,b.name AS batch_name,
+               pr.id AS program_id,pr.name AS program_name
+        FROM batch_players bp
+        JOIN batches b ON b.id=bp.batch_id
+        LEFT JOIN programs pr ON pr.id=b.program_id
+        WHERE bp.player_id=? AND bp.status IN ('active','waitlisted')
+        ORDER BY b.name COLLATE NOCASE
+        """,
+        (player_id,),
+    )
+    coaches = fetch_all(
+        """
+        SELECT a.id,a.assignment_role,a.start_date,a.status,c.id AS coach_id,c.first_name,c.last_name
+        FROM coach_player_assignments a
+        JOIN coaches c ON c.id=a.coach_id
+        WHERE a.player_id=? AND a.status='active'
+        ORDER BY CASE WHEN a.assignment_role='primary' THEN 0 ELSE 1 END,c.last_name,c.first_name
+        """,
+        (player_id,),
+    )
+    attendance_rows = fetch_all(
+        "SELECT status,COUNT(*) AS count FROM player_attendance WHERE player_id=? GROUP BY status",
+        (player_id,),
+    )
+    attendance = {"present": 0, "late": 0, "absent": 0, "excused": 0}
+    for row in attendance_rows:
+        status = str(row.get("status") or "")
+        if status in attendance:
+            attendance[status] = int(row.get("count") or 0)
+    review_count = 0
+    try:
+        row = fetch_one("SELECT COUNT(*) AS count FROM academy_player_reviews WHERE player_id=?", (player_id,))
+        review_count = int((row or {}).get("count") or 0)
+    except Exception:
+        review_count = 0
+    return {
+        "player": player,
+        "guardians": guardians,
+        "batches": batches,
+        "coaches": coaches,
+        "attendance": attendance,
+        "review_count": review_count,
+        "cricclubs": {"status": "not_connected", "last_sync_at": None},
+        "requests_complaints": {"count": 0, "status": "not_configured"},
+    }
+
+
 _ensure_tables()
+
+
+@router.get("/players")
+def owner_player_directory(_: dict = Depends(require_access_admin)):
+    return _player_directory_rows()
+
+
+@router.get("/players/{player_id}/summary")
+def owner_player_summary(player_id: int, _: dict = Depends(require_access_admin)):
+    return _player_summary(player_id)
 
 
 @router.post("/notification-events", status_code=201)
