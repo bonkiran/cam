@@ -80,7 +80,7 @@ def _reset_shared_postgres_state(env: dict[str, str]) -> None:
         conn.commit()
 
 
-def test_parent_portal_login_add_card_partial_payment_and_receipt():
+def test_parent_portal_login_add_card_full_payment_and_receipt():
     data_dir = tempfile.mkdtemp(prefix="cam-parent-billing-ui-test-")
     env = os.environ.copy()
     env["CRICKANALYSIS_DATA_DIR"] = data_dir
@@ -233,11 +233,12 @@ def test_parent_portal_login_add_card_partial_payment_and_receipt():
                 page.get_by_role("button", name="Pay invoice").click()
                 pay_form = page.locator("#academyParentPayForm")
                 expect(pay_form).to_be_visible()
-                pay_form.locator('[name="amount"]').fill("100.00")
+                amount = pay_form.locator('[name="amount"]')
+                expect(amount).to_have_value("175.00")
+                expect(amount).not_to_be_editable(timeout=10000)
                 pay_form.get_by_role("button", name="Pay $175.00").click()
 
-                expect(page.get_by_text("$75.00 remaining", exact=True)).to_be_visible(timeout=10000)
-                expect(page.get_by_text("$100.00", exact=True).first).to_be_visible()
+                expect(page.get_by_text("Paid", exact=True).first).to_be_visible(timeout=10000)
                 receipt_button = page.locator('[data-view-receipt]').first
                 expect(receipt_button).to_be_visible()
                 receipt_number = receipt_button.inner_text()
@@ -247,7 +248,7 @@ def test_parent_portal_login_add_card_partial_payment_and_receipt():
                 receipt_panel = page.locator(".academy-parent-receipt")
                 expect(receipt_panel.get_by_role("heading", name=receipt_number)).to_be_visible(timeout=10000)
                 expect(receipt_panel.get_by_text("Payment received", exact=True)).to_be_visible()
-                expect(receipt_panel.locator(".academy-parent-receipt-total").get_by_text("$100.00", exact=True)).to_be_visible()
+                expect(receipt_panel.locator(".academy-parent-receipt-total").get_by_text("$175.00", exact=True)).to_be_visible()
             except Exception:
                 Path("test-results").mkdir(exist_ok=True)
                 page.screenshot(path="test-results/academy-parent-billing-ui-failure.png", full_page=True)
