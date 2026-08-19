@@ -123,7 +123,11 @@ def test_dashboard_setup_batch_invoice_and_parent_payment_ui():
                 assert page.get_by_text("Guardian contacts",exact=True).count()==0
                 assert page.get_by_text("Players with analysis",exact=True).count()==0
 
-                page.get_by_role("button",name="Academy Setup").click()
+                # CAM-13 moves operational setup out of the top-level Owner/Admin menu.
+                # Academy Profile remains fully reachable from contextual Settings.
+                page.get_by_role("button",name="Settings",exact=True).click()
+                expect(page.get_by_role("heading",name="Settings",exact=True)).to_be_visible(timeout=10000)
+                page.get_by_role("button",name="Academy Profile",exact=True).click()
                 expect(page.get_by_role("heading",name="Academy Setup")).to_be_visible(timeout=10000)
                 timezone=page.locator('#academyProfileForm [name="timezone"]')
                 expect(timezone).to_be_hidden()
