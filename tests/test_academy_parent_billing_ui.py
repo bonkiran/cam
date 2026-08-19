@@ -238,7 +238,7 @@ def test_parent_portal_login_add_card_full_payment_and_receipt():
                 expect(amount).not_to_be_editable(timeout=10000)
                 pay_form.get_by_role("button", name="Pay $175.00").click()
 
-                expect(page.get_by_text("Paid", exact=True).first).to_be_visible(timeout=10000)
+                expect(page.get_by_text("Paid in full", exact=False).first).to_be_visible(timeout=10000)
                 receipt_button = page.locator('[data-view-receipt]').first
                 expect(receipt_button).to_be_visible()
                 receipt_number = receipt_button.inner_text()
