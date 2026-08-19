@@ -15,3 +15,5 @@ services:
         value: "536870912"
       - key: PYTHONUNBUFFERED
         value: "1"
+      - key: CAM_TEMP_ADMIN_MODE
+        value: "1"
