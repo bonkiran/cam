@@ -10,6 +10,7 @@ from app.academy_api import router as academy_router
 from app.academy_programs_api import router as academy_programs_router
 from app.academy_coaches_api import router as academy_coaches_router
 from app.academy_batches_api import router as academy_batches_router
+from app.academy_batch_roster_lifecycle_api import router as academy_batch_roster_router
 from app.academy_attendance_api import router as academy_attendance_router
 from app.academy_matches_api import router as academy_matches_router
 from app.academy_tournaments_api import router as academy_tournaments_router
@@ -29,10 +30,23 @@ spa_routes = [route for route in app.router.routes if getattr(route, "path", Non
 for route in spa_routes:
     app.router.routes.remove(route)
 
+# Track A roster lifecycle extends the original add-player endpoint with future
+# session synchronization. Remove only that legacy POST route before including
+# the enhanced router; every other Batches & Sessions route stays untouched.
+academy_batches_router.routes[:] = [
+    route
+    for route in academy_batches_router.routes
+    if not (
+        getattr(route, "path", None) == "/api/academy/batches/{batch_id}/players"
+        and "POST" in (getattr(route, "methods", set()) or set())
+    )
+]
+
 app.include_router(biomechanics_router)
 app.include_router(academy_router)
 app.include_router(academy_programs_router)
 app.include_router(academy_coaches_router)
+app.include_router(academy_batch_roster_router)
 app.include_router(academy_batches_router)
 app.include_router(academy_attendance_router)
 app.include_router(academy_matches_router)
