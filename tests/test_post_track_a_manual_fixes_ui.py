@@ -155,7 +155,7 @@ def test_dashboard_setup_batch_invoice_and_parent_payment_ui():
                 pay.click()
                 amount=page.locator('#academyParentPayForm [name="amount"]')
                 expect(amount).to_be_visible(timeout=10000)
-                assert amount.evaluate("el => el.readOnly") is True
+                expect(amount).not_to_be_editable(timeout=10000)
                 expect(amount).to_have_value("120.00")
             except Exception:
                 Path("test-results").mkdir(exist_ok=True)
