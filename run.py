@@ -16,7 +16,13 @@ from app.academy_matches_api import router as academy_matches_router
 from app.academy_tournaments_api import router as academy_tournaments_router
 from app.academy_fees_api import router as academy_fees_router
 from app.academy_payments_v2_api import router as academy_payments_router
-from app.academy_auth_api import router as academy_auth_router
+from app.academy_auth_api import (
+    ROLE_PERMISSIONS,
+    _user_row,
+    current_access_user,
+    require_access_admin,
+    router as academy_auth_router,
+)
 from app.academy_parent_billing_api import router as academy_parent_billing_router
 from app.academy_parent_payment_policy_api import router as academy_parent_payment_policy_router
 from app.academy_dashboard_api import router as academy_dashboard_router
@@ -24,7 +30,50 @@ from app.academy_owner_console_api import router as academy_owner_console_router
 from app.academy_reviews_api import router as academy_reviews_router
 from app.academy_rbac_middleware import install_academy_management_rbac
 from app.biomechanics import router as biomechanics_router
+from app.database import fetch_one
 from app.system_api import router as system_router
+
+# Temporary controlled-pilot mode. While CAM_TEMP_ADMIN_MODE=1, the current web
+# deployment behaves as a single Admin console so the Academy UX can be tested
+# without repeatedly establishing a browser session. Track B.0 will remove this
+# bypass when tenant-aware authentication is introduced.
+TEMP_ADMIN_MODE = os.environ.get("CAM_TEMP_ADMIN_MODE", "0").strip().lower() in {
+    "1", "true", "yes", "on"
+}
+
+
+def _temporary_admin_user() -> dict:
+    row = fetch_one(
+        """
+        SELECT id
+        FROM academy_users
+        ORDER BY CASE WHEN role IN ('owner','admin') THEN 0 ELSE 1 END, id
+        LIMIT 1
+        """
+    )
+    if row:
+        user = _user_row(int(row["id"]))
+        user["display_name"] = "Admin"
+        user["role"] = "admin"
+        user["permissions"] = list(ROLE_PERMISSIONS["admin"])
+        return user
+    return {
+        "id": None,
+        "academy_id": None,
+        "email": "admin@temporary.local",
+        "display_name": "Admin",
+        "role": "admin",
+        "status": "active",
+        "permissions": list(ROLE_PERMISSIONS["admin"]),
+        "linked_name": None,
+    }
+
+
+if TEMP_ADMIN_MODE:
+    # FastAPI dependency overrides cover endpoints that explicitly depend on the
+    # access helpers. The RBAC middleware separately honors the same env flag.
+    app.dependency_overrides[current_access_user] = _temporary_admin_user
+    app.dependency_overrides[require_access_admin] = _temporary_admin_user
 
 # Register optional API routers after app.main is imported. The SPA catch-all
 # route is temporarily removed and restored last so specific GET API routes
@@ -75,6 +124,17 @@ app.include_router(academy_dashboard_router)
 app.include_router(academy_owner_console_router)
 app.include_router(academy_reviews_router)
 app.include_router(system_router)
+
+
+@app.get("/api/cam-mode")
+def cam_mode():
+    return {
+        "temporary_admin_mode": TEMP_ADMIN_MODE,
+        "display_name": "Admin" if TEMP_ADMIN_MODE else None,
+        "role": "admin" if TEMP_ADMIN_MODE else None,
+    }
+
+
 app.router.routes.extend(spa_routes)
 
 # Once the first Owner account exists, the generic Academy management surface
