@@ -27,6 +27,12 @@
     return Number.isFinite(n)?`${Math.round(n)}°`:'—';
   }
 
+  function number(value,digits=0){
+    const n=Number(value);
+    if(!Number.isFinite(n))return '—';
+    return digits? n.toFixed(digits) : String(Math.round(n));
+  }
+
   async function currentWeather(){
     const now=Date.now();
     if(weatherCache&&now-weatherCacheAt<10*60*1000)return weatherCache;
@@ -46,16 +52,21 @@
     const status=data?.status||'unavailable';
     if(status==='ok'){
       const location=[data.location?.city,data.location?.state].filter(Boolean).join(', ');
-      return `<div class="cam-weather-primary"><span>Weather${location?` · ${esc(location)}`:''}</span><strong>${esc(degree(data.temperature_f))}</strong><small>${esc(data.condition||'Current conditions')}</small></div>
-        <div class="cam-weather-measure"><span>Heat Index</span><strong>${esc(degree(data.heat_index_f))}</strong><small>${data.feels_like_f!==null&&data.feels_like_f!==undefined?`Feels ${esc(degree(data.feels_like_f))}`:'Current'}</small></div>
-        <div class="cam-weather-measure cam-weather-uv"><span>UV</span><strong>${data.uv_index??'—'}</strong><small>${esc(data.uv_description||'Rating unavailable')}</small></div>`;
+      const details=[];
+      if(data.humidity!==null&&data.humidity!==undefined)details.push(`Humidity ${number(data.humidity)}%`);
+      if(data.wind_mph!==null&&data.wind_mph!==undefined)details.push(`Wind ${number(data.wind_mph)} mph`);
+      const provider=data.provider_mode==='no_key_fallback'?'Live pilot feed':data.provider||'Live weather';
+      return `<div class="cam-weather-primary"><span>Weather${location?` · ${esc(location)}`:''}</span><strong>${esc(degree(data.temperature_f))}</strong><small>${esc(data.condition||'Current conditions')}${details.length?` · ${esc(details.join(' · '))}`:''}</small><em>${esc(provider)}</em></div>
+        <div class="cam-weather-measure"><span>Feels Like</span><strong>${esc(degree(data.feels_like_f))}</strong><small>Current comfort</small></div>
+        <div class="cam-weather-measure"><span>Heat Index</span><strong>${esc(degree(data.heat_index_f))}</strong><small>${data.humidity!==null&&data.humidity!==undefined?`${esc(number(data.humidity))}% humidity`:'Current'}</small></div>
+        <div class="cam-weather-measure cam-weather-uv"><span>UV Index</span><strong>${data.uv_index!==null&&data.uv_index!==undefined?esc(number(data.uv_index,1)):'—'}</strong><small>${esc(data.uv_description||'Rating unavailable')}</small></div>`;
     }
-    let title='Weather unavailable',note='Try again shortly.';
-    if(status==='api_key_required'||data?.configured===false){title='Weather setup needed';note='Connect Weather.com in Integrations.';}
-    if(status==='location_required'){title='Weather location needed';note='Add the academy ZIP and country.';}
+    let title='Weather temporarily unavailable',note='Live weather will retry automatically.';
+    if(status==='location_required'){title='Academy location needed';note='Add the academy city or ZIP in Academy Profile.';}
     return `<div class="cam-weather-primary cam-weather-muted"><span>Weather</span><strong>${esc(title)}</strong><small>${esc(note)}</small></div>
+      <div class="cam-weather-measure cam-weather-muted"><span>Feels Like</span><strong>—</strong><small>Pending</small></div>
       <div class="cam-weather-measure cam-weather-muted"><span>Heat Index</span><strong>—</strong><small>Pending</small></div>
-      <div class="cam-weather-measure cam-weather-muted"><span>UV</span><strong>—</strong><small>Pending</small></div>`;
+      <div class="cam-weather-measure cam-weather-muted"><span>UV Index</span><strong>—</strong><small>Pending</small></div>`;
   }
 
   async function ensureWeather(){
@@ -69,7 +80,7 @@
       card=document.createElement('section');
       card.className='cam-dashboard-current-weather';
       card.setAttribute('aria-label','Current academy weather');
-      card.innerHTML='<div class="cam-weather-primary cam-weather-muted"><span>Weather</span><strong>Loading…</strong><small>Current academy conditions</small></div><div class="cam-weather-measure cam-weather-muted"><span>Heat Index</span><strong>—</strong><small>Loading</small></div><div class="cam-weather-measure cam-weather-muted"><span>UV</span><strong>—</strong><small>Loading</small></div>';
+      card.innerHTML='<div class="cam-weather-primary cam-weather-muted"><span>Weather</span><strong>Loading…</strong><small>Current academy conditions</small></div><div class="cam-weather-measure cam-weather-muted"><span>Feels Like</span><strong>—</strong><small>Loading</small></div><div class="cam-weather-measure cam-weather-muted"><span>Heat Index</span><strong>—</strong><small>Loading</small></div><div class="cam-weather-measure cam-weather-muted"><span>UV Index</span><strong>—</strong><small>Loading</small></div>';
       actions.before(card);
     }
     if(card.dataset.weatherLoaded==='1')return;
