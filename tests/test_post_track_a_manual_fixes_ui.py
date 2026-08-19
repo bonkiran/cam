@@ -147,10 +147,10 @@ def test_dashboard_setup_batch_invoice_and_parent_payment_ui():
                 expect(page.locator('.academy-invoice-detail').get_by_role("heading",name=invoice['invoice_number'])).to_be_visible(timeout=10000)
                 expect(page.locator('.academy-invoice-detail')).to_contain_text("Balance")
 
-                page.evaluate("sessionStorage.setItem('cam-academy-session-v1', arguments[0])",parent_token)
+                page.evaluate("(token) => sessionStorage.setItem('cam-academy-session-v1', token)",parent_token)
                 page.goto(f"{BASE_URL}/#academy?tab=parent",wait_until="domcontentloaded")
                 expect(page.get_by_role("heading",name="Parent Portal")).to_be_visible(timeout=15000)
-                pay=page.locator(`[data-pay-invoice="${invoice['id']}"]`)
+                pay=page.locator(f'[data-pay-invoice="{invoice["id"]}"]')
                 expect(pay).to_be_visible(timeout=10000)
                 pay.click()
                 amount=page.locator('#academyParentPayForm [name="amount"]')
