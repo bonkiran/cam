@@ -204,12 +204,18 @@
 
   function normalizeAcademyUtilities(nav){
     const hide=isAcademyPage();
-    ['settings','integrations'].forEach(routeName=>{
-      qsa(`:scope > button[data-route="${routeName}"]`,nav).forEach(button=>{
-        button.hidden=hide;
-        button.setAttribute('aria-hidden',hide?'true':'false');
-        button.tabIndex=hide?-1:0;
-      });
+    // Keep Integrations globally reachable because it is the consolidated hub for
+    // external-service links. Only the duplicate global Settings entry is hidden
+    // while the Academy workspace is active.
+    qsa(':scope > button[data-route="settings"]',nav).forEach(button=>{
+      button.hidden=hide;
+      button.setAttribute('aria-hidden',hide?'true':'false');
+      button.tabIndex=hide?-1:0;
+    });
+    qsa(':scope > button[data-route="integrations"]',nav).forEach(button=>{
+      button.hidden=false;
+      button.setAttribute('aria-hidden','false');
+      button.tabIndex=0;
     });
   }
 
@@ -235,9 +241,6 @@
         if(groupedRoutes.has(btn.dataset.route) && !keepWorkspace) btn.remove();
       });
 
-      // Sidebar ownership lives here. Academy Settings and Integrations are exposed
-      // inside the Academy Settings workspace, so hide their global duplicates only
-      // while the Academy workspace is active.
       normalizeAcademyUtilities(nav);
     } finally {
       applying = false;
