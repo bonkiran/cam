@@ -57,8 +57,12 @@ def _temporary_admin_user() -> dict:
         user["role"] = "admin"
         user["permissions"] = list(ROLE_PERMISSIONS["admin"])
         return user
+    # The Render free pilot can restart with an empty ephemeral access table.
+    # Use a stable synthetic ID so read-only dashboard serialization does not
+    # fail on int(None). Write paths must continue to tolerate a non-persisted
+    # temporary user and Track B.0 will replace this bypass entirely.
     return {
-        "id": None,
+        "id": 0,
         "academy_id": None,
         "email": "admin@temporary.local",
         "display_name": "Admin",
