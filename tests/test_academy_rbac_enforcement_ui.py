@@ -192,10 +192,12 @@ def test_owner_browser_gets_session_aware_management_parent_does_not():
                 assert "academy?tab=programs" in anonymous_page.url
 
                 # A valid Parent session is still forbidden from generic
-                # management, but can use the dedicated Parent Portal.
+                # management, but can use the dedicated Parent Portal. Use a
+                # wording-stable substring so copy changes do not masquerade as
+                # RBAC failures while the actual authorization state is preserved.
                 _set_session(parent_page, parent_token)
                 parent_page.goto(f"{BASE_URL}/#academy?tab=programs", wait_until="domcontentloaded")
-                expect(parent_page.get_by_text("Owner or Admin access required", exact=True)).to_be_visible(timeout=15000)
+                expect(parent_page.get_by_text("Owner or admin access is required for Academy management", exact=True)).to_be_visible(timeout=15000)
                 parent_page.goto(f"{BASE_URL}/#academy?tab=parent", wait_until="domcontentloaded")
                 expect(parent_page.get_by_role("heading", name="Parent Portal")).to_be_visible(timeout=15000)
             except Exception:
