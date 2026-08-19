@@ -70,8 +70,7 @@ def _set_session(page, token: str) -> None:
     # Seed the Academy session before the app loads. This avoids coupling the
     # Reviews regression to whichever landing/dashboard view is configured.
     page.add_init_script(
-        "([key,value]) => sessionStorage.setItem(key,value)",
-        [SESSION_KEY, token],
+        f"sessionStorage.setItem({json.dumps(SESSION_KEY)}, {json.dumps(token)});"
     )
     page.goto(f"{BASE_URL}/#academy?tab=reviews", wait_until="domcontentloaded")
 
