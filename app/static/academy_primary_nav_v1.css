@@ -1,0 +1,83 @@
+/* Single visible owner of the Academy primary navigation.
+   academy_v3.js still mounts a historical .academy-tabs row as part of the
+   workspace shell. Keep it invisible until academy_primary_nav_v1.js converts
+   that same element into .academy-primary-nav. Feature modules never get a
+   visible legacy tab row to mutate. */
+#academyWorkspace > .academy-tabs {
+  visibility: hidden !important;
+  min-height: 52px;
+}
+
+#academyWorkspace > .academy-primary-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid rgba(25, 84, 59, .12);
+  border-radius: 14px;
+  background: rgba(247, 251, 249, .96);
+  box-shadow: 0 4px 18px rgba(25, 84, 59, .07);
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+  scrollbar-width: thin;
+}
+
+#academyWorkspace > .academy-primary-nav .academy-primary-nav-button {
+  appearance: none;
+  border: 1px solid rgba(25, 84, 59, .12);
+  border-radius: 999px;
+  background: #fff;
+  color: #244d3b;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: none;
+  outline: none;
+  position: relative;
+  z-index: 11;
+  pointer-events: auto;
+}
+
+#academyWorkspace > .academy-primary-nav .academy-primary-nav-button:hover {
+  border-color: rgba(25, 84, 59, .28);
+  background: #f7fbf9;
+}
+
+#academyWorkspace > .academy-primary-nav .academy-primary-nav-button.active {
+  border-color: #19543b;
+  background: #19543b;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(25, 84, 59, .18);
+}
+
+#academyWorkspace > .academy-primary-nav .academy-primary-nav-button.active::before,
+#academyWorkspace > .academy-primary-nav .academy-primary-nav-button.active::after {
+  content: none !important;
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  #academyWorkspace > .academy-primary-nav {
+    border-radius: 12px;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+  #academyWorkspace > .academy-primary-nav .academy-primary-nav-button {
+    min-height: 32px;
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+}
