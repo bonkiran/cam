@@ -67,12 +67,12 @@ def _reset_shared_postgres_state() -> None:
 
 
 def _set_session(page, token: str) -> None:
-    # The root Dashboard renders asynchronously after DOMContentLoaded. Wait for
-    # it to settle before switching to Academy so a slower PostgreSQL response
-    # cannot overwrite the requested Reviews workspace afterward.
-    page.goto(BASE_URL, wait_until="domcontentloaded")
-    expect(page.get_by_role("heading", name="Dashboard")).to_be_visible(timeout=15000)
-    page.evaluate("([key,value]) => sessionStorage.setItem(key,value)", [SESSION_KEY, token])
+    # Seed the Academy session before the app loads. This avoids coupling the
+    # Reviews regression to whichever landing/dashboard view is configured.
+    page.add_init_script(
+        f"sessionStorage.setItem({json.dumps(SESSION_KEY)}, {json.dumps(token)});"
+    )
+    page.goto(f"{BASE_URL}/#academy?tab=reviews", wait_until="domcontentloaded")
 
 
 def test_player_reviews_staff_to_parent_publish_flow():
@@ -153,7 +153,6 @@ def test_player_reviews_staff_to_parent_publish_flow():
             parent = browser.new_page(viewport={"width": 1400, "height": 1000})
             try:
                 _set_session(staff, owner_token)
-                staff.goto(f"{BASE_URL}/#academy?tab=reviews", wait_until="domcontentloaded")
                 expect(staff.get_by_role("heading", name="Player Reviews")).to_be_visible(timeout=15000)
                 expect(staff.get_by_text("Reviews UI Owner", exact=True)).to_be_visible()
                 expect(staff.locator("#academyNewReview")).to_be_visible()
@@ -183,7 +182,6 @@ def test_player_reviews_staff_to_parent_publish_flow():
 
                 # The linked parent should not see the staff-only draft.
                 _set_session(parent, parent_token)
-                parent.goto(f"{BASE_URL}/#academy?tab=reviews", wait_until="domcontentloaded")
                 expect(parent.get_by_role("heading", name="Player Reviews")).to_be_visible(timeout=15000)
                 expect(parent.get_by_text("No published report cards yet")).to_be_visible()
                 expect(parent.locator("#academyNewReview")).to_have_count(0)

@@ -18,6 +18,8 @@ from app.academy_fees_api import router as academy_fees_router
 from app.academy_payments_v2_api import router as academy_payments_router
 from app.academy_auth_api import router as academy_auth_router
 from app.academy_parent_billing_api import router as academy_parent_billing_router
+from app.academy_parent_payment_policy_api import router as academy_parent_payment_policy_router
+from app.academy_dashboard_api import router as academy_dashboard_router
 from app.academy_reviews_api import router as academy_reviews_router
 from app.academy_rbac_middleware import install_academy_management_rbac
 from app.biomechanics import router as biomechanics_router
@@ -42,6 +44,18 @@ academy_batches_router.routes[:] = [
     )
 ]
 
+# Parents/guardians pay invoices in full. Keep the original Parent Billing
+# surface, but replace only its first-version pay route with the stricter policy
+# router so partial amounts cannot be posted through UI or direct API calls.
+academy_parent_billing_router.routes[:] = [
+    route
+    for route in academy_parent_billing_router.routes
+    if not (
+        getattr(route, "path", None) == "/api/academy/parent/invoices/{invoice_id}/pay"
+        and "POST" in (getattr(route, "methods", set()) or set())
+    )
+]
+
 app.include_router(biomechanics_router)
 app.include_router(academy_router)
 app.include_router(academy_programs_router)
@@ -55,6 +69,8 @@ app.include_router(academy_fees_router)
 app.include_router(academy_payments_router)
 app.include_router(academy_auth_router)
 app.include_router(academy_parent_billing_router)
+app.include_router(academy_parent_payment_policy_router)
+app.include_router(academy_dashboard_router)
 app.include_router(academy_reviews_router)
 app.include_router(system_router)
 app.router.routes.extend(spa_routes)

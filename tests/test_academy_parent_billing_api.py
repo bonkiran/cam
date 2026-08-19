@@ -177,7 +177,7 @@ def _create_family(owner_token: str, suffix: str, amount_cents: int = 17500):
     }
 
 
-def test_parent_login_saved_test_card_partial_payment_receipt_and_family_isolation():
+def test_parent_login_saved_test_card_full_payment_receipt_and_family_isolation():
     _reset_shared_postgres_state()
 
     profile = client.put("/api/academy/profile", json={"name": "Parent Billing Test Academy"})
@@ -248,9 +248,11 @@ def test_parent_login_saved_test_card_partial_payment_receipt_and_family_isolati
     )
     assert declined_method["last4"] == "9995"
 
+    # Declined cards are still evaluated when the Parent submits the required
+    # full balance. The balance must remain unchanged after the decline.
     failed = client.post(
         f"/api/academy/parent/invoices/{family['invoice']['id']}/pay",
-        json={"payment_method_id": declined_method["id"], "amount_cents": 10000},
+        json={"payment_method_id": declined_method["id"], "amount_cents": 17500},
         headers=_auth(parent_token),
     )
     assert failed.status_code == 402
@@ -258,30 +260,36 @@ def test_parent_login_saved_test_card_partial_payment_receipt_and_family_isolati
     assert int(after_failed["accounts"][0]["invoices"][0]["balance_due_cents"]) == 17500
     assert after_failed["accounts"][0]["payments"] == []
 
+    # Parent/Guardian self-service cannot intentionally leave an outstanding
+    # balance. A partial request is rejected before any payment is posted.
     partial = client.post(
         f"/api/academy/parent/invoices/{family['invoice']['id']}/pay",
         json={"payment_method_id": success_method["id"], "amount_cents": 10000},
         headers=_auth(parent_token),
     )
-    assert partial.status_code == 200, partial.text
-    partial_json = partial.json()
-    assert int(partial_json["payment"]["amount_cents"]) == 10000
-    assert partial_json["payment"]["receipt_number"].startswith("RCT-")
-    assert int(partial_json["invoice"]["balance_due_cents"]) == 7500
-    payment_id = int(partial_json["payment"]["id"])
+    assert partial.status_code == 409
+    assert "full invoice balance" in partial.text
+    after_partial = client.get("/api/academy/parent/billing", headers=_auth(parent_token)).json()
+    assert int(after_partial["accounts"][0]["invoices"][0]["balance_due_cents"]) == 17500
+    assert after_partial["accounts"][0]["payments"] == []
+
+    full_payment = client.post(
+        f"/api/academy/parent/invoices/{family['invoice']['id']}/pay",
+        json={"payment_method_id": success_method["id"]},
+        headers=_auth(parent_token),
+    )
+    assert full_payment.status_code == 200, full_payment.text
+    full_json = full_payment.json()
+    assert int(full_json["payment"]["amount_cents"]) == 17500
+    assert full_json["payment"]["receipt_number"].startswith("RCT-")
+    assert int(full_json["invoice"]["balance_due_cents"]) == 0
+    assert full_json["invoice"]["status"] == "paid"
+    payment_id = int(full_json["payment"]["id"])
 
     receipt = client.get(f"/api/academy/parent/receipts/{payment_id}", headers=_auth(parent_token))
     assert receipt.status_code == 200, receipt.text
-    assert receipt.json()["receipt_number"] == partial_json["payment"]["receipt_number"]
-
-    final_payment = client.post(
-        f"/api/academy/parent/invoices/{family['invoice']['id']}/pay",
-        json={"payment_method_id": success_method["id"], "amount_cents": 7500},
-        headers=_auth(parent_token),
-    )
-    assert final_payment.status_code == 200, final_payment.text
-    assert int(final_payment.json()["invoice"]["balance_due_cents"]) == 0
-    assert final_payment.json()["invoice"]["status"] == "paid"
+    assert receipt.json()["receipt_number"] == full_json["payment"]["receipt_number"]
+    assert int(receipt.json()["amount_cents"]) == 17500
 
     paid_again = client.post(
         f"/api/academy/parent/invoices/{family['invoice']['id']}/pay",
@@ -292,7 +300,7 @@ def test_parent_login_saved_test_card_partial_payment_receipt_and_family_isolati
 
     cross_family = client.post(
         f"/api/academy/parent/invoices/{other_family['invoice']['id']}/pay",
-        json={"payment_method_id": success_method["id"], "amount_cents": 1000},
+        json={"payment_method_id": success_method["id"], "amount_cents": 12500},
         headers=_auth(parent_token),
     )
     assert cross_family.status_code == 403

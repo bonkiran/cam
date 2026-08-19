@@ -110,6 +110,7 @@
     if (button.id === 'academyProgramsTab') return 'programs';
     const label = (button.textContent || '').trim();
     const map = {
+      'Dashboard': 'overview',
       'Overview': 'overview',
       'Academy Setup': 'setup',
       'Players': 'players',
