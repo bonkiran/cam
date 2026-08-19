@@ -30,20 +30,164 @@
   function number(value,digits=0){
     const n=Number(value);
     if(!Number.isFinite(n))return '—';
-    return digits? n.toFixed(digits) : String(Math.round(n));
+    return digits?n.toFixed(digits):String(Math.round(n));
+  }
+
+  function countryCode(value){
+    const raw=String(value||'').trim();
+    const aliases={
+      'united states':'US','united states of america':'US','usa':'US','us':'US',
+      'canada':'CA','ca':'CA','india':'IN','in':'IN',
+      'united kingdom':'GB','uk':'GB','gb':'GB'
+    };
+    if(aliases[raw.toLowerCase()])return aliases[raw.toLowerCase()];
+    return raw.length===2?raw.toUpperCase():'';
+  }
+
+  function uvDescription(value){
+    const n=Number(value);
+    if(!Number.isFinite(n))return null;
+    if(n<=2)return 'Low';
+    if(n<=5)return 'Moderate';
+    if(n<=7)return 'High';
+    if(n<=10)return 'Very High';
+    return 'Extreme';
+  }
+
+  function weatherCodeLabel(value){
+    const labels={
+      0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',
+      51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',
+      71:'Light snow',73:'Snow',75:'Heavy snow',80:'Rain showers',81:'Rain showers',82:'Heavy rain showers',
+      95:'Thunderstorms',96:'Thunderstorms with hail',99:'Severe thunderstorms with hail'
+    };
+    const code=Number(value);
+    return Number.isFinite(code)?(labels[code]||'Current conditions'):'Current conditions';
+  }
+
+  function heatIndexF(tempF,humidity){
+    const t=Number(tempF),rh=Number(humidity);
+    if(!Number.isFinite(t)||!Number.isFinite(rh))return null;
+    if(t<80||rh<40)return Math.round(t*10)/10;
+    let hi=-42.379+2.04901523*t+10.14333127*rh-0.22475541*t*rh-0.00683783*t*t-0.05481717*rh*rh+0.00122874*t*t*rh+0.00085282*t*rh*rh-0.00000199*t*t*rh*rh;
+    if(rh<13&&t>=80&&t<=112){
+      hi-=((13-rh)/4)*Math.sqrt(Math.max(0,(17-Math.abs(t-95))/17));
+    }else if(rh>85&&t>=80&&t<=87){
+      hi+=((rh-85)/10)*((87-t)/5);
+    }
+    return Math.round(hi*10)/10;
+  }
+
+  async function jsonFetch(url){
+    const response=await fetch(url,{cache:'no-store'});
+    let data=null;
+    try{data=await response.json();}catch{}
+    if(!response.ok)throw new Error(data?.reason||data?.detail||`Request failed (${response.status})`);
+    return data||{};
+  }
+
+  async function academyProfile(){
+    const data=await jsonFetch('/api/academy/profile');
+    return data?.profile||null;
+  }
+
+  async function openMeteoLocation(profile){
+    const city=String(profile?.city||'').trim();
+    const state=String(profile?.state||'').trim();
+    const postal=String(profile?.postal_code||'').trim();
+    const code=countryCode(profile?.country);
+    const terms=[];
+    if(city&&state)terms.push(`${city}, ${state}`);
+    if(city)terms.push(city);
+    if(postal)terms.push(postal);
+
+    for(const term of [...new Set(terms)]){
+      const params=new URLSearchParams({name:term,count:'8',language:'en',format:'json'});
+      if(code)params.set('countryCode',code);
+      const data=await jsonFetch(`https://geocoding-api.open-meteo.com/v1/search?${params.toString()}`);
+      const results=Array.isArray(data?.results)?data.results:[];
+      if(!results.length)continue;
+      if(city){
+        const exact=results.find(item=>String(item?.name||'').trim().toLowerCase()===city.toLowerCase());
+        if(exact)return exact;
+      }
+      if(postal){
+        const byPostal=results.find(item=>Array.isArray(item?.postcodes)&&item.postcodes.map(String).includes(postal));
+        if(byPostal)return byPostal;
+      }
+      return results[0];
+    }
+    return null;
+  }
+
+  async function loadOpenMeteoWeather(){
+    const profile=await academyProfile();
+    if(!profile||(!profile.city&&!profile.postal_code)){
+      return {provider:'Open-Meteo',configured:true,status:'location_required',location:profile||{}};
+    }
+
+    const place=await openMeteoLocation(profile);
+    if(!place||place.latitude===undefined||place.longitude===undefined){
+      throw new Error('Open-Meteo could not resolve the academy location');
+    }
+
+    const params=new URLSearchParams({
+      latitude:String(place.latitude),
+      longitude:String(place.longitude),
+      current:'temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,uv_index,wind_speed_10m',
+      temperature_unit:'fahrenheit',
+      wind_speed_unit:'mph',
+      timezone:'auto',
+      forecast_days:'1'
+    });
+    const data=await jsonFetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`);
+    const current=data?.current||{};
+    if(current.temperature_2m===undefined||current.temperature_2m===null){
+      throw new Error('Open-Meteo did not return current temperature');
+    }
+
+    const humidity=current.relative_humidity_2m;
+    const uv=current.uv_index;
+    return {
+      provider:'Open-Meteo',
+      provider_mode:'browser_direct',
+      configured:true,
+      status:'ok',
+      location:{
+        city:profile.city||place.name,
+        state:profile.state||place.admin1,
+        postal_code:profile.postal_code||null,
+        country:profile.country||place.country
+      },
+      temperature_f:current.temperature_2m,
+      feels_like_f:current.apparent_temperature,
+      heat_index_f:heatIndexF(current.temperature_2m,humidity),
+      uv_index:uv,
+      uv_description:uvDescription(uv),
+      condition:weatherCodeLabel(current.weather_code),
+      humidity,
+      wind_mph:current.wind_speed_10m,
+      observed_at:current.time
+    };
   }
 
   async function currentWeather(){
     const now=Date.now();
-    if(weatherCache&&now-weatherCacheAt<10*60*1000)return weatherCache;
+    const cacheMs=weatherCache?.status==='ok'?10*60*1000:60*1000;
+    if(weatherCache&&now-weatherCacheAt<cacheMs)return weatherCache;
     if(weatherPromise)return weatherPromise;
-    weatherPromise=fetch('/api/academy/weather/current',{cache:'no-store'})
-      .then(async response=>{
-        let data=null;try{data=await response.json();}catch{}
-        if(!response.ok)throw new Error(data?.detail||`Weather request failed (${response.status})`);
-        weatherCache=data||{};weatherCacheAt=Date.now();return weatherCache;
+    weatherPromise=loadOpenMeteoWeather()
+      .then(data=>{
+        weatherCache=data||{configured:true,status:'unavailable'};
+        weatherCacheAt=Date.now();
+        return weatherCache;
       })
-      .catch(()=>({configured:true,status:'unavailable'}))
+      .catch(error=>{
+        console.warn('Direct Open-Meteo weather request failed:',error);
+        weatherCache={provider:'Open-Meteo',provider_mode:'browser_direct',configured:true,status:'unavailable'};
+        weatherCacheAt=Date.now();
+        return weatherCache;
+      })
       .finally(()=>{weatherPromise=null;});
     return weatherPromise;
   }
@@ -55,7 +199,7 @@
       const details=[];
       if(data.humidity!==null&&data.humidity!==undefined)details.push(`Humidity ${number(data.humidity)}%`);
       if(data.wind_mph!==null&&data.wind_mph!==undefined)details.push(`Wind ${number(data.wind_mph)} mph`);
-      const provider=data.provider_mode==='no_key_fallback'?'Live pilot feed':data.provider||'Live weather';
+      const provider=data.provider_mode==='browser_direct'?'Open-Meteo live':data.provider||'Live weather';
       return `<div class="cam-weather-primary"><span>Weather${location?` · ${esc(location)}`:''}</span><strong>${esc(degree(data.temperature_f))}</strong><small>${esc(data.condition||'Current conditions')}${details.length?` · ${esc(details.join(' · '))}`:''}</small><em>${esc(provider)}</em></div>
         <div class="cam-weather-measure"><span>Feels Like</span><strong>${esc(degree(data.feels_like_f))}</strong><small>Current comfort</small></div>
         <div class="cam-weather-measure"><span>Heat Index</span><strong>${esc(degree(data.heat_index_f))}</strong><small>${data.humidity!==null&&data.humidity!==undefined?`${esc(number(data.humidity))}% humidity`:'Current'}</small></div>
