@@ -54,8 +54,11 @@ def test_academy_setup_and_player_extended_ui():
                 expect(page.get_by_role("heading", name="Academy Setup")).to_be_visible(timeout=15000)
                 form = page.locator("#academyProfileForm")
 
-                # Default timezone.
-                expect(form.locator('[name="timezone"]')).to_have_value("America/New_York")
+                # Timezone remains an internal/default scheduling value but is no
+                # longer exposed as an Academy Setup field.
+                timezone = form.locator('[name="timezone"]')
+                expect(timezone).to_have_value("America/New_York")
+                expect(timezone).to_be_hidden()
 
                 # One-character academy name should be rejected by form validation.
                 name = form.locator('[name="name"]')
@@ -70,7 +73,7 @@ def test_academy_setup_and_player_extended_ui():
                 page.get_by_role("button", name="Save Academy Profile").click()
                 assert email.evaluate("el => el.validity.typeMismatch") is True
 
-                # Save primary location and custom timezone, then reopen and verify.
+                # Save primary location while the internal timezone remains unchanged.
                 email.fill("admin@example.com")
                 form.locator('[name="phone"]').fill("555-0100")
                 form.locator('[name="address_line1"]').fill("2345 Hello Dr")
@@ -79,7 +82,6 @@ def test_academy_setup_and_player_extended_ui():
                 form.locator('[name="state"]').fill("GA")
                 form.locator('[name="postal_code"]').fill("30005")
                 form.locator('[name="country"]').fill("United States")
-                form.locator('[name="timezone"]').fill("America/Chicago")
                 page.get_by_role("button", name="Save Academy Profile").click()
                 expect(page.get_by_role("heading", name="Academy Setup")).to_be_visible(timeout=10000)
                 form = page.locator("#academyProfileForm")
@@ -89,7 +91,8 @@ def test_academy_setup_and_player_extended_ui():
                 expect(form.locator('[name="state"]')).to_have_value("GA")
                 expect(form.locator('[name="postal_code"]')).to_have_value("30005")
                 expect(form.locator('[name="country"]')).to_have_value("United States")
-                expect(form.locator('[name="timezone"]')).to_have_value("America/Chicago")
+                expect(form.locator('[name="timezone"]')).to_have_value("America/New_York")
+                expect(form.locator('[name="timezone"]')).to_be_hidden()
 
                 # ----- Player extended cases -----
                 page.goto(f"{BASE_URL}/#academy?tab=players", wait_until="domcontentloaded")
