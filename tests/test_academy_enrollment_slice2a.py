@@ -124,9 +124,96 @@ def test_slice2a_approve_creates_secure_enrollment_and_tracks_status():
     assert admin.json()["status"] == "in_progress"
 
 
+def test_slice2b_test_documents_require_view_and_electronic_acceptance():
+    application_id = _submitted_registration()
+    approved = client.post(f"/api/academy/enrollments/from-registration/{application_id}", json={})
+    assert approved.status_code == 200, approved.text
+    enrollment_token = approved.json()["enrollment_url"].rstrip("/").split("/")[-1]
+
+    assert client.get(f"/api/public/enrollment/{enrollment_token}").status_code == 200
+    started = client.post(f"/api/public/enrollment/{enrollment_token}/start", json={})
+    assert started.status_code == 200, started.text
+
+    documents_response = client.get(f"/api/public/enrollment/{enrollment_token}/documents")
+    assert documents_response.status_code == 200, documents_response.text
+    documents = documents_response.json()["documents"]
+    assert len(documents) == 2
+    assert all(item["required"] for item in documents)
+    assert all(item["test_only"] for item in documents)
+    assert all(item["available"] for item in documents)
+    assert all(not item["accepted"] for item in documents)
+
+    first, second = documents
+    viewed_first = client.get(first["view_url"])
+    assert viewed_first.status_code == 200, viewed_first.text
+    assert viewed_first.headers["content-type"].startswith("application/pdf")
+
+    missing_view = client.post(
+        f"/api/public/enrollment/{enrollment_token}/agreements/accept",
+        json={
+            "document_ids": [first["id"], second["id"]],
+            "signer_name": "Ravi Kumar",
+            "electronic_signature_consent": True,
+        },
+    )
+    assert missing_view.status_code == 422, missing_view.text
+    assert "Open and review each required PDF" in missing_view.text
+
+    viewed_second = client.get(second["view_url"])
+    assert viewed_second.status_code == 200, viewed_second.text
+
+    short_name = client.post(
+        f"/api/public/enrollment/{enrollment_token}/agreements/accept",
+        json={
+            "document_ids": [first["id"], second["id"]],
+            "signer_name": "Ravi",
+            "electronic_signature_consent": True,
+        },
+    )
+    assert short_name.status_code == 422, short_name.text
+
+    no_consent = client.post(
+        f"/api/public/enrollment/{enrollment_token}/agreements/accept",
+        json={
+            "document_ids": [first["id"], second["id"]],
+            "signer_name": "Ravi Kumar",
+            "electronic_signature_consent": False,
+        },
+    )
+    assert no_consent.status_code == 422, no_consent.text
+
+    accepted = client.post(
+        f"/api/public/enrollment/{enrollment_token}/agreements/accept",
+        json={
+            "document_ids": [first["id"], second["id"]],
+            "signer_name": "Ravi Kumar",
+            "electronic_signature_consent": True,
+        },
+        headers={"user-agent": "CAM-Slice2B-Test"},
+    )
+    assert accepted.status_code == 200, accepted.text
+    accepted_body = accepted.json()
+    assert accepted_body["status"] == "documents_accepted"
+    assert accepted_body["next_step"] == "payment"
+    assert accepted_body["accepted_documents"] == 2
+    assert accepted_body["signer_name"] == "Ravi Kumar"
+
+    refreshed = client.get(f"/api/public/enrollment/{enrollment_token}")
+    assert refreshed.status_code == 200, refreshed.text
+    assert refreshed.json()["enrollment"]["status"] == "documents_accepted"
+    assert [step["status"] for step in refreshed.json()["steps"]] == ["done", "done", "current", "later"]
+
+    documents_after = client.get(f"/api/public/enrollment/{enrollment_token}/documents")
+    assert documents_after.status_code == 200, documents_after.text
+    assert all(item["viewed"] for item in documents_after.json()["documents"])
+    assert all(item["accepted"] for item in documents_after.json()["documents"])
+    assert all(item["signer_name"] == "Ravi Kumar" for item in documents_after.json()["documents"])
+
+
 def test_slice2a_admin_ui_removes_request_information_and_uses_enrollment_action():
     js = (REPO_ROOT / "app" / "static" / "academy_enrollment_slice2a_v1.js").read_text(encoding="utf-8")
     html = (REPO_ROOT / "app" / "static" / "academy_enrollment_public_v1.html").read_text(encoding="utf-8")
+    public_js = (REPO_ROOT / "app" / "static" / "academy_enrollment_public_v1.js").read_text(encoding="utf-8")
 
     assert "Approve & Send Enrollment Link" in js
     assert "[data-review-action=\"needs_information\"]" in js
@@ -134,3 +221,8 @@ def test_slice2a_admin_ui_removes_request_information_and_uses_enrollment_action
     assert "navigator.clipboard.writeText(enrollment.enrollment_url)" in js
     assert "Start Enrollment" in html
     assert "Agreements & Documents" in html
+    assert "Continue to Agreements &amp; Documents" in html
+    assert "TEST SAMPLES ONLY" in html
+    assert "Agree &amp; Continue" in html
+    assert "/documents" in public_js
+    assert "/agreements/accept" in public_js
