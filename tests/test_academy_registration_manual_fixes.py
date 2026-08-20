@@ -120,6 +120,27 @@ def test_optional_second_emergency_contact_must_be_complete_when_started():
     assert "Emergency contact 2 name, relationship and phone" in submitted.text
 
 
+def test_parent_phone_rejects_text_and_invalid_phone_format():
+    _, token = _new_token("invalid-parent-phone")
+    payload = _payload([_primary_emergency()])
+    payload["parent_phone"] = "call-me-now"
+    submitted = client.post(f"/api/public/registration/{token}/submit", json=payload)
+    assert submitted.status_code == 422, submitted.text
+    assert "Parent phone must be a valid phone number" in submitted.text
+
+
+def test_emergency_contact_phone_rejects_text_and_invalid_phone_format():
+    _, token = _new_token("invalid-emergency-phone")
+    invalid_contact = _primary_emergency()
+    invalid_contact["phone"] = "abc-1234"
+    submitted = client.post(
+        f"/api/public/registration/{token}/submit",
+        json=_payload([invalid_contact]),
+    )
+    assert submitted.status_code == 422, submitted.text
+    assert "Emergency contact 1 phone must be a valid phone number" in submitted.text
+
+
 def test_parent_pickup_authorization_is_applied_on_approval():
     _, token = _new_token("pickup-policy")
     submitted = client.post(
@@ -154,6 +175,7 @@ def test_copy_link_and_public_form_ui_match_current_policy():
     copy_patch = (REPO_ROOT / "app" / "static" / "academy_registration_copy_link_fix_v1.js").read_text(encoding="utf-8")
     review_patch = (REPO_ROOT / "app" / "static" / "academy_registration_review_policy_v2.js").read_text(encoding="utf-8")
     public_html = (REPO_ROOT / "app" / "static" / "academy_registration_public_v1.html").read_text(encoding="utf-8")
+    phone_validation = (REPO_ROOT / "app" / "static" / "academy_registration_phone_validation_v1.js").read_text(encoding="utf-8")
 
     assert "academy_registration_copy_link_fix_v1.js" in index
     assert "data-share=\"copy\"" in copy_patch
@@ -168,6 +190,13 @@ def test_copy_link_and_public_form_ui_match_current_policy():
     assert 'name="parent_pickup_authorized"' in public_html
     assert "Authorized to pick up player" in public_html
     assert "<h2>Guardian</h2>" not in public_html
+
+    assert 'name="parent_phone" type="tel"' in public_html
+    assert 'data-contact="phone" type="tel"' in public_html
+    assert 'pattern="\\+?[0-9 ()\\-.]{7,25}"' in public_html
+    assert "academy_registration_phone_validation_v1.js" in public_html
+    assert "digits.length >= 7 && digits.length <= 15" in phone_validation
+    assert "setCustomValidity" in phone_validation
 
     assert "academy_registration_review_policy_v2.js" in index
     assert "Emergency Contacts" in review_patch

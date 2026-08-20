@@ -63,7 +63,7 @@
           <label><span>Last Name *</span><input name="parent_last_name" required maxlength="100" autocomplete="family-name"></label>
           <label><span>Relationship to Player *</span><input name="parent_relationship" required maxlength="80" placeholder="Mother, Father, Parent…"></label>
           <label><span>Email *</span><input name="parent_email" type="email" required maxlength="200" autocomplete="email"></label>
-          <label><span>Phone *</span><input name="parent_phone" type="tel" required maxlength="60" autocomplete="tel"></label>
+          <label><span>Phone *</span><input name="parent_phone" type="tel" required maxlength="25" inputmode="tel" autocomplete="tel" pattern="\+?[0-9 ()\-.]{7,25}" title="Enter a valid phone number using 7–15 digits."></label>
           <label><span>Address *</span><input name="parent_address_line1" required maxlength="240" autocomplete="address-line1"></label>
           <label><span>Address Line 2</span><input name="parent_address_line2" maxlength="240" autocomplete="address-line2"></label>
           <label><span>City *</span><input name="parent_city" required maxlength="120" autocomplete="address-level2"></label>
@@ -79,12 +79,12 @@
         <div class="contact-grid">
           <fieldset class="contact-card" data-emergency="1"><legend>Emergency Contact 1 *</legend>
             <label><span>First Name</span><input data-contact="first_name" required></label><label><span>Last Name</span><input data-contact="last_name" required></label>
-            <label><span>Relationship</span><input data-contact="relationship" required></label><label><span>Phone</span><input data-contact="phone" type="tel" required></label>
+            <label><span>Relationship</span><input data-contact="relationship" required></label><label><span>Phone</span><input data-contact="phone" type="tel" required maxlength="25" inputmode="tel" pattern="\+?[0-9 ()\-.]{7,25}" title="Enter a valid phone number using 7–15 digits."></label>
             <label class="wide"><span>Email</span><input data-contact="email" type="email"></label>
           </fieldset>
           <fieldset class="contact-card" data-emergency="2"><legend>Emergency Contact 2</legend>
             <label><span>First Name</span><input data-contact="first_name"></label><label><span>Last Name</span><input data-contact="last_name"></label>
-            <label><span>Relationship</span><input data-contact="relationship"></label><label><span>Phone</span><input data-contact="phone" type="tel"></label>
+            <label><span>Relationship</span><input data-contact="relationship"></label><label><span>Phone</span><input data-contact="phone" type="tel" maxlength="25" inputmode="tel" pattern="\+?[0-9 ()\-.]{7,25}" title="Enter a valid phone number using 7–15 digits."></label>
             <label class="wide"><span>Email</span><input data-contact="email" type="email"></label>
           </fieldset>
         </div>
@@ -118,5 +118,6 @@
     </section>
   </main>
   <script src="/static/academy_registration_public_v1.js?v=3"></script>
+  <script src="/static/academy_registration_phone_validation_v1.js?v=1"></script>
 </body>
 </html>
