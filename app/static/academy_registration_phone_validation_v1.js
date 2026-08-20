@@ -90,8 +90,46 @@
     if (label) label.remove();
   }
 
+  function academyLabel(name) {
+    const clean = String(name || 'Academy').trim() || 'Academy';
+    return /academy$/i.test(clean) ? clean : `${clean} Academy`;
+  }
+
+  async function applyBranding() {
+    if (document.documentElement.dataset.registrationBrandingApplied === '1') return;
+    document.documentElement.dataset.registrationBrandingApplied = '1';
+    const token = decodeURIComponent(location.pathname.split('/').filter(Boolean).pop() || '');
+    if (!token) return;
+    try {
+      const response = await fetch(`/api/public/registration/${encodeURIComponent(token)}/branding`, {cache:'no-store'});
+      if (!response.ok) return;
+      const data = await response.json();
+      const title = `${academyLabel(data?.academy_name)} Player Registration`;
+      const heading = document.querySelector('.registration-intro h1');
+      if (heading) heading.textContent = title;
+      const brandSubtitle = document.querySelector('.registration-brand small');
+      if (brandSubtitle) brandSubtitle.textContent = title;
+      document.title = `${title} · CrickAnalysis`;
+    } catch (error) {
+      console.warn('Registration branding unavailable', error);
+    }
+  }
+
+  function addAddressVerificationNote(form) {
+    if (form.querySelector('[data-address-verification-note]')) return;
+    const parentSection = form.querySelector('[name="parent_address_line1"]')?.closest('.form-section');
+    const grid = parentSection?.querySelector('.form-grid');
+    if (!grid) return;
+    const note = document.createElement('p');
+    note.dataset.addressVerificationNote = '1';
+    note.className = 'save-state';
+    note.textContent = 'Address, city, state and ZIP are verified together as one U.S. address when you submit.';
+    grid.insertAdjacentElement('afterend', note);
+  }
+
   function apply() {
     const form = document.querySelector('#registrationForm');
+    applyBranding();
     if (!form) return;
 
     configurePhone(form.querySelector('[name="parent_phone"]'), true);
@@ -103,6 +141,7 @@
     configureState(state);
     configureZip(zip);
     hidePickupOption(form);
+    addAddressVerificationNote(form);
 
     if (form.dataset.registrationValidationSubmitBound !== '1') {
       form.dataset.registrationValidationSubmitBound = '1';
