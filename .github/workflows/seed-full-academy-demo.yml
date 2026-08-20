@@ -1,0 +1,42 @@
+name: Seed Full Academy Manual-Test Data
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/seed_full_academy_demo.py'
+      - '.github/workflows/seed-full-academy-demo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-full-academy-seeder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate seeder syntax
+        run: python -m py_compile scripts/seed_full_academy_demo.py
+
+  seed-full-academy-data:
+    if: github.event_name == 'workflow_dispatch'
+    needs: validate-full-academy-seeder
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Seed comprehensive academy manual-test dataset
+        env:
+          CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
+        run: python scripts/seed_full_academy_demo.py
