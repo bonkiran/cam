@@ -43,7 +43,7 @@
     try{
       const summary=await api(`/api/academy/finance/operations-summary?month=${encodeURIComponent(currentMonth())}`);
       grid.innerHTML=[
-        moneyCard('Coach Salary Paid','—',`${Number(summary.coach_rates_configured||0)} coach rates configured · payroll next`),
+        moneyCard('Coach Salary Paid',money(summary.coach_salary_paid_mtd_cents),`${Number(summary.coach_salary_payment_count||0)} coach payments · ${Number(summary.coach_rates_configured||0)} rates configured`),
         moneyCard('Facility Payments',money(summary.facility_payments_mtd_cents),`${Number(summary.facility_expense_count||0)} paid facility expenses`),
         moneyCard('Academy Expenses',money(summary.academy_expenses_mtd_cents),`${Number(summary.academy_expense_count||0)} paid operating expenses`),
       ].join('');
@@ -54,6 +54,10 @@
   }
   function rateRow(row){
     return `<div class="cam-finance-ops-row"><div><strong>${esc(row.coach_name||'Coach')}</strong><small>${esc(row.rate_type||'hourly')} · effective ${esc(row.effective_from||'—')}</small></div><b>${esc(rateMoney(row.rate_cents,row.rate_type))}</b></div>`;
+  }
+  function paymentRow(row){
+    const hours=row.hours_worked===null||row.hours_worked===undefined?'':` · ${Number(row.hours_worked)} hrs`;
+    return `<div class="cam-finance-ops-row"><div><strong>${esc(row.coach_name||'Coach')}</strong><small>${esc(row.paid_on||'—')} · ${esc(row.payment_method||'')}${esc(hours)}</small></div><b>${esc(money(row.amount_cents))}</b></div>`;
   }
   function expenseRow(row){
     const label=row.expense_type==='facility'?(row.facility_name||row.vendor):row.vendor;
@@ -67,9 +71,10 @@
     loading=true;
     try{
       const month=currentMonth();
-      const [summary,rates,expenses]=await Promise.all([
+      const [summary,rates,coachPayments,expenses]=await Promise.all([
         api(`/api/academy/finance/operations-summary?month=${encodeURIComponent(month)}`),
         api('/api/academy/coach-rates?status=active'),
+        api(`/api/academy/coach-payments?month=${encodeURIComponent(month)}&status=paid`),
         api(`/api/academy/expenses?month=${encodeURIComponent(month)}`),
       ]);
       if(route().tab!=='fees'||!content.isConnected)return;
@@ -79,12 +84,14 @@
       section.id='camFinanceOperations';
       section.className='cam-finance-ops';
       section.innerHTML=`<div class="cam-finance-ops-summary">
+          ${moneyCard('Coach Salary Paid',money(summary.coach_salary_paid_mtd_cents),`${Number(summary.coach_salary_payment_count||0)} payments this month`)}
           ${moneyCard('Coach Rates',String(Number(summary.coach_rates_configured||0)),'Active coach compensation rates')}
           ${moneyCard('Academy Expenses',money(summary.academy_expenses_mtd_cents),`${Number(summary.academy_expense_count||0)} paid this month`)}
           ${moneyCard('Facility Expenses',money(summary.facility_payments_mtd_cents),`${Number(summary.facility_expense_count||0)} paid this month`)}
         </div>
         <div class="cam-finance-ops-grid">
-          <article class="panel"><div class="panel-head"><div><h2>Coach Rates</h2><p>Current compensation rates used for future automated payroll calculation.</p></div></div><div class="cam-finance-ops-list">${rates.length?rates.map(rateRow).join(''):'<div class="academy-dash-empty">No coach rates configured.</div>'}</div></article>
+          <article class="panel"><div class="panel-head"><div><h2>Coach Salary Payments</h2><p>Recorded coach compensation paid during ${esc(month)}.</p></div></div><div class="cam-finance-ops-list">${coachPayments.length?coachPayments.map(paymentRow).join(''):'<div class="academy-dash-empty">No coach salary payments this month.</div>'}</div></article>
+          <article class="panel"><div class="panel-head"><div><h2>Coach Rates</h2><p>Current compensation rates used for payroll calculation.</p></div></div><div class="cam-finance-ops-list">${rates.length?rates.map(rateRow).join(''):'<div class="academy-dash-empty">No coach rates configured.</div>'}</div></article>
           <article class="panel"><div class="panel-head"><div><h2>Academy Expenses</h2><p>Operating expenses for ${esc(month)}.</p></div></div><div class="cam-finance-ops-list">${academyExpenses.length?academyExpenses.map(expenseRow).join(''):'<div class="academy-dash-empty">No academy expenses this month.</div>'}</div></article>
           <article class="panel"><div class="panel-head"><div><h2>Facility Expenses</h2><p>Ground, net and facility payments for ${esc(month)}.</p></div></div><div class="cam-finance-ops-list">${facilityExpenses.length?facilityExpenses.map(expenseRow).join(''):'<div class="academy-dash-empty">No facility expenses this month.</div>'}</div></article>
         </div>`;
