@@ -30,6 +30,11 @@
     return routeInfo().page==='academy';
   }
 
+  function isRegistrationPage(){
+    const info=routeInfo();
+    return info.page==='academy' && info.tab==='registration';
+  }
+
   function childTarget(group, route){
     return route;
   }
@@ -115,13 +120,36 @@
     button.dataset.route = 'academy';
     button.classList.remove('nav-group-child');
     normalizeButtonLabel(button,'▦','Academy');
-    button.classList.toggle('active', isAcademyPage());
+    button.classList.toggle('active', isAcademyPage() && !isRegistrationPage());
     button.onclick = () => { location.hash='academy'; };
 
     const analysis=qs(':scope > button[data-workspace-nav="analysis"]',nav);
     if(analysis && analysis.nextElementSibling!==button){
       analysis.after(button);
     } else if(!analysis && nav.firstElementChild!==button){
+      nav.prepend(button);
+    }
+    return button;
+  }
+
+  function ensureRegistrationEntry(nav){
+    let button=qs(':scope > button[data-workspace-nav="registration"]',nav);
+    if(!button){
+      button=document.createElement('button');
+      button.type='button';
+      button.dataset.route='academy?tab=registration';
+    }
+    button.dataset.workspaceNav='registration';
+    button.dataset.route='academy?tab=registration';
+    button.classList.remove('nav-group-child');
+    normalizeButtonLabel(button,'✎','Registration');
+    button.classList.toggle('active',isRegistrationPage());
+    button.onclick=()=>{location.hash='academy?tab=registration';};
+
+    const academy=qs(':scope > button[data-workspace-nav="academy"]',nav);
+    if(academy && academy.nextElementSibling!==button){
+      academy.after(button);
+    } else if(!academy){
       nav.prepend(button);
     }
     return button;
@@ -229,6 +257,7 @@
       cleanup(nav);
       ensureAnalysisEntry(nav);
       ensureAcademyEntry(nav);
+      ensureRegistrationEntry(nav);
       GROUPS.forEach(group => ensureGroup(nav, group));
 
       const groupedRoutes = new Set([
@@ -237,7 +266,7 @@
       ]);
       qsa(':scope > button[data-route]', nav).forEach(btn => {
         const workspace=btn.dataset.workspaceNav;
-        const keepWorkspace=workspace==='analysis' || workspace==='academy';
+        const keepWorkspace=workspace==='analysis' || workspace==='academy' || workspace==='registration';
         if(groupedRoutes.has(btn.dataset.route) && !keepWorkspace) btn.remove();
       });
 
