@@ -223,7 +223,7 @@ def test_slice2a_admin_ui_removes_request_information_and_uses_enrollment_action
     assert "/api/academy/enrollments/from-registration/" in js
     assert "navigator.clipboard.writeText(enrollment.enrollment_url)" in js
     assert "Start Enrollment" in html
-    assert "Agreements & Documents" in html
+    assert "Agreements &amp; Documents" in html
     assert "Continue to Agreements &amp; Documents" in html
     assert "TEST SAMPLES ONLY" in html
     assert "Agree &amp; Continue" in html
