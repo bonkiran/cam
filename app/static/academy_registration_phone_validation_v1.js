@@ -24,6 +24,7 @@
     input.dataset.phoneValidationBound = '1';
     input.inputMode = 'tel';
     input.autocomplete = 'tel';
+    input.title = PHONE_MESSAGE;
     const validate = () => {
       const value = input.value.trim();
       if (!value && !required) {
@@ -47,6 +48,7 @@
   function configureState(input) {
     if (!input || input.dataset.usStateValidationBound === '1') return;
     input.dataset.usStateValidationBound = '1';
+    input.title = STATE_MESSAGE;
     const validate = () => {
       const code = normalizeState(input.value);
       input.setCustomValidity(code ? '' : STATE_MESSAGE);
@@ -67,6 +69,8 @@
     input.dataset.usZipValidationBound = '1';
     input.inputMode = 'numeric';
     input.maxLength = 5;
+    input.pattern = '[0-9]{5}';
+    input.title = ZIP_MESSAGE;
     const validate = () => {
       const ok = /^[0-9]{5}$/.test(input.value.trim());
       input.setCustomValidity(ok ? '' : ZIP_MESSAGE);
@@ -83,7 +87,7 @@
     if (!pickup) return;
     pickup.checked = true;
     const label = pickup.closest('label');
-    if (label) label.hidden = true;
+    if (label) label.remove();
   }
 
   function apply() {
