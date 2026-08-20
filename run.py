@@ -38,8 +38,9 @@ from app.biomechanics import router as biomechanics_router
 from app.database import fetch_one
 from app.system_api import router as system_router
 
-# Registration process policy: emergency contacts are optional (0-2). If a
-# parent supplies one, the contact must still have the core safety fields.
+# Registration process policy: Emergency Contact 1 is required and Emergency
+# Contact 2 is optional. The separate Guardian section is removed from the
+# public form; the primary parent's pickup authorization is captured there.
 apply_registration_validation_policy()
 
 # Temporary controlled-pilot mode. While CAM_TEMP_ADMIN_MODE=1, the current web
