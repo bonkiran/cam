@@ -14,6 +14,7 @@ SELF_AUTHORIZED_PREFIXES = (
     "/api/academy/access",
     "/api/academy/parent",
     "/api/academy/reviews",
+    "/api/academy/registration",
 )
 
 
@@ -40,8 +41,8 @@ def install_academy_management_rbac(app) -> None:
       academy can create its initial profile/reference records and bootstrap the
       first owner without being locked out.
     - After bootstrap: generic Academy management APIs are Owner/Admin-only.
-    - Parent, Access/Roles and Player Reviews endpoints retain their dedicated
-      fine-grained authorization logic.
+    - Parent, Access/Roles, Registration and Player Reviews endpoints retain their
+      dedicated fine-grained authorization logic.
     - During the temporary controlled-pilot Admin mode, generic Academy APIs are
       intentionally left open so the current single-Admin web console can be
       manually validated without a browser session. Track B.0 will remove this.
