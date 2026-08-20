@@ -12,14 +12,25 @@ os.environ["CAM_TEMP_ADMIN_MODE"] = "1"
 
 from fastapi.testclient import TestClient
 from run import app
+from app.database import fetch_one
 
 client = TestClient(app)
 
 
-def _payload(emergency_contacts=None):
+def _primary_emergency():
     return {
-        "player_first_name": "Optional",
-        "player_last_name": "Contacts",
+        "first_name": "Priya",
+        "last_name": "Kumar",
+        "relationship": "Mother",
+        "phone": "404-555-0199",
+        "email": "priya.kumar@example.com",
+    }
+
+
+def _payload(emergency_contacts=None, *, pickup_authorized=True, player_first_name="Policy", player_last_name="Tester"):
+    return {
+        "player_first_name": player_first_name,
+        "player_last_name": player_last_name,
         "player_date_of_birth": "2013-01-01",
         "player_gender": "Male",
         "cricket_role": "Batter",
@@ -29,7 +40,7 @@ def _payload(emergency_contacts=None):
         "parent_first_name": "Ravi",
         "parent_last_name": "Kumar",
         "parent_relationship": "Father",
-        "parent_email": "optional.contacts@example.com",
+        "parent_email": "registration.policy@example.com",
         "parent_phone": "404-555-0101",
         "parent_address_line1": "1 Main Street",
         "parent_address_line2": None,
@@ -37,8 +48,10 @@ def _payload(emergency_contacts=None):
         "parent_state": "GA",
         "parent_postal_code": "30024",
         "parent_country": "United States",
-        "emergency_contacts": emergency_contacts or [],
-        "guardian_same_as_parent": True,
+        "emergency_contacts": emergency_contacts if emergency_contacts is not None else [_primary_emergency()],
+        # Current public-form policy reuses this legacy boolean as the primary
+        # parent's pickup authorization while the separate Guardian UI is retired.
+        "guardian_same_as_parent": pickup_authorized,
         "guardian": None,
         "injuries": None,
         "surgeries": None,
@@ -50,7 +63,7 @@ def _payload(emergency_contacts=None):
     }
 
 
-def _new_token():
+def _new_token(parent_suffix="policy"):
     client.put("/api/academy/profile", json={"name": "Registration Fix Test Academy"})
     created = client.post(
         "/api/academy/registration/invites",
@@ -58,7 +71,7 @@ def _new_token():
             "parent_first_name": "Ravi",
             "parent_last_name": "Kumar",
             "parent_phone": "404-555-0101",
-            "parent_email": "optional.contacts@example.com",
+            "parent_email": f"{parent_suffix}@example.com",
         },
     )
     assert created.status_code == 201, created.text
@@ -69,9 +82,19 @@ def _new_token():
     return int(invite["id"]), token
 
 
-def test_registration_can_submit_without_emergency_contacts():
-    invite_id, token = _new_token()
+def test_registration_requires_emergency_contact_1():
+    _, token = _new_token("missing-emergency")
     submitted = client.post(f"/api/public/registration/{token}/submit", json=_payload([]))
+    assert submitted.status_code == 422, submitted.text
+    assert "Emergency contact 1 name, relationship and phone" in submitted.text
+
+
+def test_registration_accepts_one_emergency_contact_without_contact_2():
+    invite_id, token = _new_token("one-emergency")
+    submitted = client.post(
+        f"/api/public/registration/{token}/submit",
+        json=_payload([_primary_emergency()]),
+    )
     assert submitted.status_code == 200, submitted.text
     assert submitted.json()["status"] == "submitted"
 
@@ -80,30 +103,72 @@ def test_registration_can_submit_without_emergency_contacts():
     assert invite["status"] == "submitted"
 
 
-def test_partially_entered_emergency_contact_must_be_complete():
-    _, token = _new_token()
-    partial = _payload([
+def test_optional_second_emergency_contact_must_be_complete_when_started():
+    _, token = _new_token("partial-second")
+    contacts = [
+        _primary_emergency(),
         {
-            "first_name": "Priya",
+            "first_name": "Anil",
             "last_name": None,
-            "relationship": "Mother",
+            "relationship": "Uncle",
             "phone": None,
             "email": None,
-        }
-    ])
-    submitted = client.post(f"/api/public/registration/{token}/submit", json=partial)
+        },
+    ]
+    submitted = client.post(f"/api/public/registration/{token}/submit", json=_payload(contacts))
     assert submitted.status_code == 422, submitted.text
-    assert "Emergency contact 1 name, relationship and phone" in submitted.text
+    assert "Emergency contact 2 name, relationship and phone" in submitted.text
 
 
-def test_copy_link_fix_is_loaded_and_does_not_call_sent_api():
+def test_parent_pickup_authorization_is_applied_on_approval():
+    _, token = _new_token("pickup-policy")
+    submitted = client.post(
+        f"/api/public/registration/{token}/submit",
+        json=_payload(
+            [_primary_emergency()],
+            pickup_authorized=False,
+            player_first_name="Pickup",
+            player_last_name="Policy",
+        ),
+    )
+    assert submitted.status_code == 200, submitted.text
+    application_id = int(submitted.json()["application_id"])
+
+    approved = client.post(
+        f"/api/academy/registration/applications/{application_id}/review",
+        json={"action": "approve", "note": "Pickup policy test"},
+    )
+    assert approved.status_code == 200, approved.text
+    player_id = int(approved.json()["approved_player_id"])
+
+    primary_link = fetch_one(
+        "SELECT pickup_authorized FROM player_guardians WHERE player_id=? AND is_primary=1",
+        (player_id,),
+    )
+    assert primary_link is not None
+    assert int(primary_link["pickup_authorized"]) == 0
+
+
+def test_copy_link_and_public_form_ui_match_current_policy():
     index = (REPO_ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
-    patch = (REPO_ROOT / "app" / "static" / "academy_registration_copy_link_fix_v1.js").read_text(encoding="utf-8")
+    copy_patch = (REPO_ROOT / "app" / "static" / "academy_registration_copy_link_fix_v1.js").read_text(encoding="utf-8")
+    review_patch = (REPO_ROOT / "app" / "static" / "academy_registration_review_policy_v2.js").read_text(encoding="utf-8")
     public_html = (REPO_ROOT / "app" / "static" / "academy_registration_public_v1.html").read_text(encoding="utf-8")
 
     assert "academy_registration_copy_link_fix_v1.js" in index
-    assert "data-share=\"copy\"" in patch
-    assert "/sent" not in patch
-    assert "Emergency Contact 1 *" not in public_html
+    assert "data-share=\"copy\"" in copy_patch
+    assert "/sent" not in copy_patch
+
+    assert '<span class="active">Player</span><span>Parent</span><span>Medical</span><span>Review</span>' in public_html
+    assert "1 · Player" not in public_html
+    assert "3 · Safety" not in public_html
+    assert "Emergency Contact 1 *" in public_html
     assert "Emergency Contact 2 *" not in public_html
-    assert "Optional: provide up to two additional people" in public_html
+    assert "Please provide one emergency contact. A second contact is optional." in public_html
+    assert 'name="parent_pickup_authorized"' in public_html
+    assert "Authorized to pick up player" in public_html
+    assert "<h2>Guardian</h2>" not in public_html
+
+    assert "academy_registration_review_policy_v2.js" in index
+    assert "Emergency Contacts" in review_patch
+    assert "Pickup Authorized" in review_patch
