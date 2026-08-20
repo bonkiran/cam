@@ -26,6 +26,7 @@ from app.academy_auth_api import (
     router as academy_auth_router,
 )
 from app.academy_registration_api import router as academy_registration_router
+from app.academy_registration_validation_policy import apply_registration_validation_policy
 from app.academy_parent_billing_api import router as academy_parent_billing_router
 from app.academy_parent_payment_policy_api import router as academy_parent_payment_policy_router
 from app.academy_dashboard_api import router as academy_dashboard_router
@@ -36,6 +37,10 @@ from app.academy_rbac_middleware import install_academy_management_rbac
 from app.biomechanics import router as biomechanics_router
 from app.database import fetch_one
 from app.system_api import router as system_router
+
+# Registration process policy: emergency contacts are optional (0-2). If a
+# parent supplies one, the contact must still have the core safety fields.
+apply_registration_validation_policy()
 
 # Temporary controlled-pilot mode. While CAM_TEMP_ADMIN_MODE=1, the current web
 # deployment behaves as a single Admin console so the Academy UX can be tested
