@@ -10,7 +10,7 @@ def test_payment_provider_integrations_ui_is_loaded_and_provider_neutral():
     css = (REPO_ROOT / "app" / "static" / "academy_payment_provider_integrations_v1.css").read_text(encoding="utf-8")
 
     assert "academy_payment_provider_integrations_v1.css?v=1" in index
-    assert "academy_payment_provider_integrations_v2.js?v=2" in index
+    assert "academy_payment_provider_integrations_v2.js?v=3" in index
     assert "academy_payment_provider_integrations_v1.js?v=1" not in index
 
     assert "/api/academy/payment-providers" in js
@@ -36,6 +36,20 @@ def test_integrations_v2_mount_is_non_destructive_and_does_not_replace_app_shell
     assert "document.createElement('section')" in js
     assert "insertAdjacentElement('afterend', host)" in js
     assert "document.querySelector(ROOT_SELECTOR)" in js
+
+
+def test_provider_feedback_survives_provider_grid_refresh():
+    js = (REPO_ROOT / "app" / "static" / "academy_payment_provider_integrations_v2.js").read_text(encoding="utf-8")
+
+    # Test Connection and provider selection refresh the provider grid so connection/
+    # selection status changes immediately. Feedback must be stored outside that grid
+    # and re-rendered into the replacement card rather than disappearing after ~1 sec.
+    assert "const feedbackByProvider = new Map();" in js
+    assert "feedbackByProvider.set(provider, {message, state});" in js
+    assert "feedbackByProvider.get(provider)" in js
+    assert "data-state=\"${esc(feedback.state || '')}\"" in js
+    assert "${esc(feedback.message || '')}</p>" in js
+    assert "sandbox connection successful." in js
 
 
 def test_payment_provider_ui_does_not_embed_secret_keys():
