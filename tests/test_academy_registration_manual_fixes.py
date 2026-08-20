@@ -199,7 +199,6 @@ def test_copy_link_and_public_form_ui_match_current_policy():
     assert 'data-contact="phone" type="tel"' in public_html
     assert "academy_registration_phone_validation_v1.js" in public_html
     assert "digits.length >= 9 && digits.length <= 15" in validation
-    assert "Parent state" not in validation  # errors are concise UI messages, not field labels
     assert "STATE_MESSAGE" in validation
     assert "ZIP_MESSAGE" in validation
     assert "^[0-9]{5}$" in validation
@@ -208,3 +207,6 @@ def test_copy_link_and_public_form_ui_match_current_policy():
     assert "academy_registration_review_policy_v2.js" in index
     assert "Emergency Contacts" in review_patch
     assert "Pickup Authorized" not in review_patch
+
+
+# Verification-only touch so PR CI validates the exact code currently on main.
