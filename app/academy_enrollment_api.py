@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
 from .academy_registration_api import _application, _approve, _clean, _require_admin
@@ -17,12 +17,41 @@ from .database import connection, fetch_all, fetch_one
 router = APIRouter(tags=["academy-enrollment"])
 
 PUBLIC_FORM = Path(__file__).resolve().parent / "static" / "academy_enrollment_public_v1.html"
+DOCUMENT_ROOT = Path(__file__).resolve().parent / "enrollment_documents"
 ENROLLMENT_LINK_DAYS = 14
 ACTIVE_STATUSES = {"created", "sent", "opened", "in_progress"}
+ELECTRONIC_CONSENT_VERSION = "cam-esign-v1"
+
+TEST_DOCUMENTS = (
+    {
+        "code": "test_parent_consent_packet",
+        "title": "CAM Cricket Academy Parent Registration & Consent Packet",
+        "version": "test-v1",
+        "file_name": "CAM_Cricket_Academy_Parent_Consent_Packet_TEST.pdf",
+        "required": 1,
+        "display_order": 10,
+        "test_only": 1,
+    },
+    {
+        "code": "test_payment_authorization",
+        "title": "CAM Parent Enrollment & Payment Authorization Agreement",
+        "version": "test-v1",
+        "file_name": "CAM_Parent_Enrollment_and_Payment_Authorization_Agreement_TEST.pdf",
+        "required": 1,
+        "display_order": 20,
+        "test_only": 1,
+    },
+)
 
 
 class EnrollmentSentPayload(BaseModel):
     channel: Literal["sms", "whatsapp", "email"]
+
+
+class AgreementAcceptancePayload(BaseModel):
+    document_ids: list[int]
+    signer_name: str
+    electronic_signature_consent: bool
 
 
 def _now() -> datetime:
@@ -35,6 +64,14 @@ def _iso(value: datetime) -> str:
 
 def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _ensure_tables() -> None:
@@ -69,9 +106,100 @@ def _ensure_tables() -> None:
         );
         CREATE INDEX IF NOT EXISTS idx_enrollment_invites_status ON academy_enrollment_invites(status);
         CREATE INDEX IF NOT EXISTS idx_enrollment_invites_player ON academy_enrollment_invites(player_id);
+
+        CREATE TABLE IF NOT EXISTS academy_enrollment_documents (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            academy_id BIGINT,
+            code TEXT NOT NULL UNIQUE,
+            title TEXT NOT NULL,
+            version TEXT NOT NULL,
+            file_name TEXT NOT NULL,
+            sha256 TEXT NOT NULL,
+            required INTEGER NOT NULL DEFAULT 1,
+            active INTEGER NOT NULL DEFAULT 1,
+            test_only INTEGER NOT NULL DEFAULT 0,
+            display_order INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP,
+            FOREIGN KEY(academy_id) REFERENCES academies(id) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_enrollment_documents_active ON academy_enrollment_documents(active,display_order);
+
+        CREATE TABLE IF NOT EXISTS academy_enrollment_document_acceptances (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            enrollment_id BIGINT NOT NULL,
+            document_id BIGINT NOT NULL,
+            document_title TEXT NOT NULL,
+            document_version TEXT NOT NULL,
+            document_sha256 TEXT NOT NULL,
+            viewed_at TEXT,
+            accepted_at TEXT,
+            signer_name TEXT,
+            electronic_consent_version TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP,
+            UNIQUE(enrollment_id,document_id),
+            FOREIGN KEY(enrollment_id) REFERENCES academy_enrollment_invites(id) ON DELETE CASCADE,
+            FOREIGN KEY(document_id) REFERENCES academy_enrollment_documents(id) ON DELETE RESTRICT
+        );
+        CREATE INDEX IF NOT EXISTS idx_enrollment_document_acceptances_enrollment
+            ON academy_enrollment_document_acceptances(enrollment_id);
     """
     with connection() as conn:
         conn.executescript(schema)
+
+
+def _seed_test_documents() -> None:
+    DOCUMENT_ROOT.mkdir(parents=True, exist_ok=True)
+    for spec in TEST_DOCUMENTS:
+        path = DOCUMENT_ROOT / str(spec["file_name"])
+        if not path.exists():
+            continue
+        sha256_value = _file_sha256(path)
+        existing = fetch_one(
+            "SELECT id FROM academy_enrollment_documents WHERE code=?",
+            (str(spec["code"]),),
+        )
+        with connection() as conn:
+            if existing:
+                conn.execute(
+                    """
+                    UPDATE academy_enrollment_documents
+                    SET title=?,version=?,file_name=?,sha256=?,required=?,active=1,test_only=?,display_order=?,
+                        updated_at=CURRENT_TIMESTAMP
+                    WHERE id=?
+                    """,
+                    (
+                        str(spec["title"]),
+                        str(spec["version"]),
+                        str(spec["file_name"]),
+                        sha256_value,
+                        int(spec["required"]),
+                        int(spec["test_only"]),
+                        int(spec["display_order"]),
+                        int(existing["id"]),
+                    ),
+                )
+            else:
+                conn.execute(
+                    """
+                    INSERT INTO academy_enrollment_documents(
+                        academy_id,code,title,version,file_name,sha256,required,active,test_only,display_order
+                    ) VALUES(NULL,?,?,?,?,?,?,1,?,?)
+                    """,
+                    (
+                        str(spec["code"]),
+                        str(spec["title"]),
+                        str(spec["version"]),
+                        str(spec["file_name"]),
+                        sha256_value,
+                        int(spec["required"]),
+                        int(spec["test_only"]),
+                        int(spec["display_order"]),
+                    ),
+                )
 
 
 def _enrollment(enrollment_id: int) -> dict:
@@ -88,7 +216,12 @@ def _enrollment(enrollment_id: int) -> dict:
         raise HTTPException(404, "Enrollment record not found")
     row["academy_name"] = _academy_name(int(row.get("academy_id") or 0) or None)
     row["player_name"] = " ".join(
-        part for part in [str(row.get("player_first_name") or "").strip(), str(row.get("player_last_name") or "").strip()] if part
+        part
+        for part in [
+            str(row.get("player_first_name") or "").strip(),
+            str(row.get("player_last_name") or "").strip(),
+        ]
+        if part
     )
     return row
 
@@ -157,8 +290,9 @@ def _create_or_rotate_enrollment(application: dict, player_id: int, user: dict, 
 
     with connection() as conn:
         if existing:
-            if str(existing.get("status")) == "completed":
-                raise HTTPException(409, "Enrollment is already complete")
+            existing_status = str(existing.get("status") or "")
+            if existing_status in {"documents_accepted", "completed"}:
+                raise HTTPException(409, "Enrollment has already progressed beyond link generation")
             conn.execute(
                 """
                 UPDATE academy_enrollment_invites
@@ -202,7 +336,142 @@ def _create_or_rotate_enrollment(application: dict, player_id: int, user: dict, 
     return result
 
 
+def _documents_for_enrollment(enrollment: dict, token: str) -> list[dict]:
+    rows = fetch_all(
+        """
+        SELECT d.*,
+               a.viewed_at AS acceptance_viewed_at,
+               a.accepted_at AS acceptance_accepted_at,
+               a.signer_name AS acceptance_signer_name
+        FROM academy_enrollment_documents d
+        LEFT JOIN academy_enrollment_document_acceptances a
+          ON a.document_id=d.id AND a.enrollment_id=?
+        WHERE d.active=1 AND (d.academy_id IS NULL OR d.academy_id=?)
+        ORDER BY d.display_order,d.id
+        """,
+        (int(enrollment["id"]), enrollment.get("academy_id")),
+    )
+    result = []
+    for row in rows:
+        file_path = DOCUMENT_ROOT / str(row["file_name"])
+        result.append(
+            {
+                "id": int(row["id"]),
+                "code": row.get("code"),
+                "title": row.get("title"),
+                "version": row.get("version"),
+                "sha256": row.get("sha256"),
+                "required": bool(row.get("required")),
+                "test_only": bool(row.get("test_only")),
+                "available": file_path.exists(),
+                "viewed": bool(row.get("acceptance_viewed_at")),
+                "accepted": bool(row.get("acceptance_accepted_at")),
+                "accepted_at": row.get("acceptance_accepted_at"),
+                "signer_name": row.get("acceptance_signer_name"),
+                "view_url": f"/api/public/enrollment/{token}/documents/{int(row['id'])}/view",
+                "download_url": f"/api/public/enrollment/{token}/documents/{int(row['id'])}/download",
+            }
+        )
+    return result
+
+
+def _document_for_enrollment(enrollment: dict, document_id: int) -> dict:
+    row = fetch_one(
+        """
+        SELECT *
+        FROM academy_enrollment_documents
+        WHERE id=? AND active=1 AND (academy_id IS NULL OR academy_id=?)
+        """,
+        (document_id, enrollment.get("academy_id")),
+    )
+    if not row:
+        raise HTTPException(404, "Enrollment document not found")
+    path = DOCUMENT_ROOT / str(row["file_name"])
+    if not path.exists():
+        raise HTTPException(503, "Enrollment document file is unavailable")
+    actual_sha = _file_sha256(path)
+    if actual_sha != str(row.get("sha256") or ""):
+        raise HTTPException(503, "Enrollment document integrity check failed")
+    row["path"] = path
+    return row
+
+
+def _record_view(enrollment: dict, document: dict) -> None:
+    now = _iso(_now())
+    existing = fetch_one(
+        "SELECT id,viewed_at FROM academy_enrollment_document_acceptances WHERE enrollment_id=? AND document_id=?",
+        (int(enrollment["id"]), int(document["id"])),
+    )
+    with connection() as conn:
+        if existing:
+            conn.execute(
+                """
+                UPDATE academy_enrollment_document_acceptances
+                SET viewed_at=COALESCE(viewed_at,?),updated_at=CURRENT_TIMESTAMP
+                WHERE id=?
+                """,
+                (now, int(existing["id"])),
+            )
+        else:
+            conn.execute(
+                """
+                INSERT INTO academy_enrollment_document_acceptances(
+                    enrollment_id,document_id,document_title,document_version,document_sha256,viewed_at
+                ) VALUES(?,?,?,?,?,?)
+                """,
+                (
+                    int(enrollment["id"]),
+                    int(document["id"]),
+                    str(document["title"]),
+                    str(document["version"]),
+                    str(document["sha256"]),
+                    now,
+                ),
+            )
+        conn.execute(
+            "UPDATE academy_enrollment_invites SET last_activity_at=?,updated_at=CURRENT_TIMESTAMP WHERE id=?",
+            (now, int(enrollment["id"])),
+        )
+
+
+def _safe_download_name(document: dict) -> str:
+    title = "".join(ch if ch.isalnum() or ch in {" ", "-", "_"} else "" for ch in str(document["title"])).strip()
+    return f"{title or 'Enrollment Document'} - {document['version']}.pdf"
+
+
+def _steps_for_status(status_value: str) -> list[dict]:
+    keys = [
+        ("summary", "Enrollment Summary"),
+        ("agreements", "Agreements & Documents"),
+        ("payment", "Fees & Payment"),
+        ("complete", "Complete"),
+    ]
+    current_index = 0
+    done_through = -1
+    if status_value == "in_progress":
+        current_index = 1
+        done_through = 0
+    elif status_value == "documents_accepted":
+        current_index = 2
+        done_through = 1
+    elif status_value == "completed":
+        current_index = 3
+        done_through = 3
+
+    steps = []
+    for index, (key, label) in enumerate(keys):
+        if index <= done_through:
+            step_status = "done"
+        elif index == current_index:
+            step_status = "current"
+        else:
+            step_status = "later"
+        steps.append({"key": key, "label": label, "status": step_status})
+    return steps
+
+
 _ensure_tables()
+_seed_test_documents()
 
 
 @router.post("/api/academy/enrollments/from-registration/{application_id}")
@@ -273,12 +542,7 @@ def public_enrollment(token: str):
             "parent_first_name": enrollment.get("parent_first_name"),
             "parent_last_name": enrollment.get("parent_last_name"),
         },
-        "steps": [
-            {"key": "summary", "label": "Enrollment Summary", "status": "available"},
-            {"key": "agreements", "label": "Agreements & Documents", "status": "next"},
-            {"key": "payment", "label": "Fees & Payment", "status": "later"},
-            {"key": "complete", "label": "Complete", "status": "later"},
-        ],
+        "steps": _steps_for_status(str(enrollment.get("status") or "")),
     }
 
 
@@ -298,6 +562,133 @@ def start_public_enrollment(token: str):
             (now, now, int(enrollment["id"])),
         )
     return {"status": "in_progress", "next_step": "agreements"}
+
+
+@router.get("/api/public/enrollment/{token}/documents")
+def public_enrollment_documents(token: str):
+    enrollment = _enrollment_for_token(token)
+    status_value = str(enrollment.get("status") or "")
+    if status_value not in {"in_progress", "documents_accepted", "completed"}:
+        raise HTTPException(409, "Start enrollment before reviewing agreements")
+    documents = _documents_for_enrollment(enrollment, token)
+    if not documents:
+        raise HTTPException(503, "No enrollment documents are configured")
+    return {
+        "status": status_value,
+        "electronic_consent_version": ELECTRONIC_CONSENT_VERSION,
+        "documents": documents,
+    }
+
+
+@router.get("/api/public/enrollment/{token}/documents/{document_id}/view")
+def view_public_enrollment_document(token: str, document_id: int):
+    enrollment = _enrollment_for_token(token)
+    if str(enrollment.get("status") or "") not in {"in_progress", "documents_accepted", "completed"}:
+        raise HTTPException(409, "Start enrollment before reviewing agreements")
+    document = _document_for_enrollment(enrollment, document_id)
+    _record_view(enrollment, document)
+    return FileResponse(
+        document["path"],
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{_safe_download_name(document)}"'},
+    )
+
+
+@router.get("/api/public/enrollment/{token}/documents/{document_id}/download")
+def download_public_enrollment_document(token: str, document_id: int):
+    enrollment = _enrollment_for_token(token)
+    if str(enrollment.get("status") or "") not in {"in_progress", "documents_accepted", "completed"}:
+        raise HTTPException(409, "Start enrollment before reviewing agreements")
+    document = _document_for_enrollment(enrollment, document_id)
+    _record_view(enrollment, document)
+    return FileResponse(
+        document["path"],
+        media_type="application/pdf",
+        filename=_safe_download_name(document),
+    )
+
+
+@router.post("/api/public/enrollment/{token}/agreements/accept")
+def accept_public_enrollment_agreements(
+    token: str,
+    payload: AgreementAcceptancePayload,
+    request: Request,
+):
+    enrollment = _enrollment_for_token(token)
+    status_value = str(enrollment.get("status") or "")
+    if status_value == "documents_accepted":
+        return {"status": "documents_accepted", "next_step": "payment"}
+    if status_value != "in_progress":
+        raise HTTPException(409, "Agreements can only be accepted after enrollment has started")
+
+    signer_name = " ".join(str(payload.signer_name or "").split())
+    if len(signer_name.split()) < 2:
+        raise HTTPException(422, "Enter the parent/guardian full legal name")
+    if not payload.electronic_signature_consent:
+        raise HTTPException(422, "Electronic signature consent is required")
+
+    documents = _documents_for_enrollment(enrollment, token)
+    required_ids = {int(item["id"]) for item in documents if item["required"]}
+    accepted_ids = {int(value) for value in payload.document_ids}
+    if not required_ids or not required_ids.issubset(accepted_ids):
+        raise HTTPException(422, "Accept each required enrollment document before continuing")
+
+    rows = fetch_all(
+        """
+        SELECT document_id,viewed_at
+        FROM academy_enrollment_document_acceptances
+        WHERE enrollment_id=?
+        """,
+        (int(enrollment["id"]),),
+    )
+    viewed_ids = {int(row["document_id"]) for row in rows if row.get("viewed_at")}
+    if required_ids - viewed_ids:
+        raise HTTPException(422, "Open and review each required PDF before accepting it")
+
+    now = _iso(_now())
+    ip_address = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
+    by_id = {int(item["id"]): item for item in documents}
+
+    with connection() as conn:
+        for document_id in sorted(required_ids):
+            document = by_id[document_id]
+            conn.execute(
+                """
+                UPDATE academy_enrollment_document_acceptances
+                SET document_title=?,document_version=?,document_sha256=?,accepted_at=?,signer_name=?,
+                    electronic_consent_version=?,ip_address=?,user_agent=?,updated_at=CURRENT_TIMESTAMP
+                WHERE enrollment_id=? AND document_id=?
+                """,
+                (
+                    str(document["title"]),
+                    str(document["version"]),
+                    str(document["sha256"]),
+                    now,
+                    signer_name,
+                    ELECTRONIC_CONSENT_VERSION,
+                    ip_address,
+                    user_agent,
+                    int(enrollment["id"]),
+                    document_id,
+                ),
+            )
+        conn.execute(
+            """
+            UPDATE academy_enrollment_invites
+            SET status='documents_accepted',last_activity_at=?,updated_at=CURRENT_TIMESTAMP
+            WHERE id=?
+            """,
+            (now, int(enrollment["id"])),
+        )
+
+    return {
+        "status": "documents_accepted",
+        "next_step": "payment",
+        "accepted_documents": len(required_ids),
+        "accepted_at": now,
+        "signer_name": signer_name,
+    }
 
 
 @router.get("/enroll/{token}", response_class=HTMLResponse)
