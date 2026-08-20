@@ -5,8 +5,10 @@ on:
     branches:
       - main
     paths:
+      - 'scripts/reset_demo_finance.py'
       - 'scripts/seed_full_academy_demo.py'
       - 'scripts/fix_full_demo_dashboard_data.py'
+      - 'scripts/verify_full_demo_dashboard.py'
       - '.github/workflows/seed-full-academy-demo.yml'
   workflow_dispatch:
 
@@ -24,7 +26,12 @@ jobs:
         with:
           python-version: '3.12'
       - name: Validate seeder syntax
-        run: python -m py_compile scripts/seed_full_academy_demo.py scripts/fix_full_demo_dashboard_data.py
+        run: >-
+          python -m py_compile
+          scripts/reset_demo_finance.py
+          scripts/seed_full_academy_demo.py
+          scripts/fix_full_demo_dashboard_data.py
+          scripts/verify_full_demo_dashboard.py
 
   seed-full-academy-data:
     if: github.event_name == 'workflow_dispatch'
@@ -37,6 +44,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Remove prior DEMO finance fixture records
+        env:
+          CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
+        run: python scripts/reset_demo_finance.py
       - name: Seed comprehensive academy manual-test dataset
         env:
           CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
@@ -45,3 +56,7 @@ jobs:
         env:
           CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
         run: python scripts/fix_full_demo_dashboard_data.py
+      - name: Reconcile dashboard totals
+        env:
+          CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
+        run: python scripts/verify_full_demo_dashboard.py
