@@ -108,6 +108,12 @@ def test_slice2a_approve_creates_secure_enrollment_and_tracks_status():
     assert body["enrollment"]["academy_name"] == "JKC"
     assert body["enrollment"]["player_name"] == "Slice TwoA"
     assert [step["key"] for step in body["steps"]] == ["summary", "agreements", "payment", "complete"]
+    assert [step["label"] for step in body["steps"]] == [
+        "Enrollment Summary",
+        "Agreements & Documents",
+        "Fees & Payment",
+        "Complete",
+    ]
 
     started = client.post(f"/api/public/enrollment/{enrollment_token}/start", json={})
     assert started.status_code == 200, started.text
@@ -128,4 +134,3 @@ def test_slice2a_admin_ui_removes_request_information_and_uses_enrollment_action
     assert "navigator.clipboard.writeText(enrollment.enrollment_url)" in js
     assert "Start Enrollment" in html
     assert "Agreements & Documents" in html
-    assert "Fees & Payment" in html
