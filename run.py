@@ -30,6 +30,7 @@ from app.academy_registration_api import router as academy_registration_router
 from app.academy_registration_branding_api import router as academy_registration_branding_router
 from app.academy_registration_validation_policy import apply_registration_validation_policy
 from app.academy_enrollment_api import router as academy_enrollment_router
+from app.academy_enrollment_payment_api import router as academy_enrollment_payment_router
 from app.academy_parent_billing_api import router as academy_parent_billing_router
 from app.academy_parent_payment_policy_api import router as academy_parent_payment_policy_router
 from app.academy_dashboard_api import router as academy_dashboard_router
@@ -141,6 +142,7 @@ app.include_router(academy_auth_router)
 app.include_router(academy_registration_router)
 app.include_router(academy_registration_branding_router)
 app.include_router(academy_enrollment_router)
+app.include_router(academy_enrollment_payment_router)
 app.include_router(academy_parent_billing_router)
 app.include_router(academy_parent_payment_policy_router)
 app.include_router(academy_dashboard_router)
