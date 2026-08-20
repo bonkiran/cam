@@ -50,7 +50,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install test dependencies
-        run: pip install -r requirements.txt pytest
+        run: pip install -r requirements.txt pytest httpx2
       - name: Compile payment provider modules
         run: >-
           python -m py_compile
