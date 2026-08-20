@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'scripts/seed_full_academy_demo.py'
+      - 'scripts/fix_full_demo_dashboard_data.py'
       - '.github/workflows/seed-full-academy-demo.yml'
   workflow_dispatch:
 
@@ -23,7 +24,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Validate seeder syntax
-        run: python -m py_compile scripts/seed_full_academy_demo.py
+        run: python -m py_compile scripts/seed_full_academy_demo.py scripts/fix_full_demo_dashboard_data.py
 
   seed-full-academy-data:
     if: github.event_name == 'workflow_dispatch'
@@ -40,3 +41,7 @@ jobs:
         env:
           CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
         run: python scripts/seed_full_academy_demo.py
+      - name: Correct dashboard registration dates and seed coach salary payments
+        env:
+          CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
+        run: python scripts/fix_full_demo_dashboard_data.py
