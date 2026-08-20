@@ -14,6 +14,9 @@ permissions:
 jobs:
   reset-seed-verify:
     runs-on: ubuntu-latest
+    env:
+      CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
+      DEMO_FINANCE_BASELINE_PATH: demo_finance_baseline.json
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,22 +28,17 @@ jobs:
         run: >-
           python -m py_compile
           scripts/reset_demo_finance.py
+          scripts/capture_demo_finance_baseline.py
           scripts/seed_full_academy_demo.py
           scripts/fix_full_demo_dashboard_data.py
           scripts/verify_full_demo_dashboard.py
-      - name: Remove legacy DEMO billing, invoice and payment records
-        env:
-          CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
+      - name: Remove legacy DEMO billing, invoice, payment and operating records
         run: python scripts/reset_demo_finance.py
+      - name: Capture preserved non-DEMO finance baseline
+        run: python scripts/capture_demo_finance_baseline.py
       - name: Re-seed deterministic 45-player academy dataset
-        env:
-          CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
         run: python scripts/seed_full_academy_demo.py
       - name: Apply five-registration and coach-payroll fixtures
-        env:
-          CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
         run: python scripts/fix_full_demo_dashboard_data.py
-      - name: Reconcile dashboard totals
-        env:
-          CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
+      - name: Reconcile DEMO contribution over preserved baseline
         run: python scripts/verify_full_demo_dashboard.py
