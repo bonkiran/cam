@@ -26,6 +26,7 @@ from app.academy_auth_api import (
     router as academy_auth_router,
 )
 from app.academy_registration_api import router as academy_registration_router
+from app.academy_registration_branding_api import router as academy_registration_branding_router
 from app.academy_registration_validation_policy import apply_registration_validation_policy
 from app.academy_parent_billing_api import router as academy_parent_billing_router
 from app.academy_parent_payment_policy_api import router as academy_parent_payment_policy_router
@@ -39,8 +40,8 @@ from app.database import fetch_one
 from app.system_api import router as system_router
 
 # Registration process policy: Emergency Contact 1 is required and Emergency
-# Contact 2 is optional. The separate Guardian section is removed from the
-# public form; the primary parent's pickup authorization is captured there.
+# Contact 2 is optional. Public registration validates phone and US address data,
+# and does not collect a separate Guardian/pickup-authorization section.
 apply_registration_validation_policy()
 
 # Temporary controlled-pilot mode. While CAM_TEMP_ADMIN_MODE=1, the current web
@@ -135,6 +136,7 @@ app.include_router(academy_finance_operations_router)
 app.include_router(academy_demo_cleanup_router)
 app.include_router(academy_auth_router)
 app.include_router(academy_registration_router)
+app.include_router(academy_registration_branding_router)
 app.include_router(academy_parent_billing_router)
 app.include_router(academy_parent_payment_policy_router)
 app.include_router(academy_dashboard_router)
