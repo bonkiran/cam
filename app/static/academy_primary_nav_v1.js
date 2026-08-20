@@ -1,6 +1,7 @@
 (() => {
   const TOP_TABS = [
     ['overview', 'Dashboard'],
+    ['registration', 'Registration'],
     ['players', 'Players'],
     ['programs', 'Programs'],
     ['coaches', 'Coaches'],
@@ -11,6 +12,7 @@
 
   const TOP_FOR_ROUTE = {
     overview: 'overview',
+    registration: 'registration',
     players: 'players',
     player360: 'players',
     reviews: 'players',
