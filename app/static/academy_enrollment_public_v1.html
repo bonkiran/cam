@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CAM Parent Enrollment</title>
-  <link rel="stylesheet" href="/static/academy_enrollment_public_v1.css?v=1" />
+  <link rel="stylesheet" href="/static/academy_enrollment_public_v1.css?v=2" />
 </head>
 <body>
   <main class="enrollment-shell">
@@ -55,11 +55,48 @@
       <section class="card next-card" id="nextCard" hidden>
         <span class="check">✓</span>
         <h2>Enrollment started</h2>
-        <p>Your secure enrollment session is active. Agreements & Documents will be the next CAM onboarding slice.</p>
-        <div class="coming-soon">Next: Agreements & Documents</div>
+        <p>Your secure enrollment session is active. Your agreements and documents are ready for review.</p>
+        <button id="openAgreements" type="button">Continue to Agreements &amp; Documents</button>
+      </section>
+
+      <section class="card agreements-card" id="agreementsCard" hidden>
+        <div class="agreements-head">
+          <div>
+            <span class="kicker light">SLICE 2B · TEST FLOW</span>
+            <h2>Agreements &amp; Documents</h2>
+            <p>Review each required document separately before providing your electronic signature.</p>
+          </div>
+          <span class="test-badge">TEST SAMPLES ONLY</span>
+        </div>
+        <div class="test-notice">
+          These two documents are sample/test documents for CAM workflow validation only. They are not production legal documents.
+        </div>
+        <div id="agreementDocuments" class="document-list"></div>
+
+        <section class="signature-panel" id="signaturePanel">
+          <h3>Electronic Signature</h3>
+          <p>After reviewing both documents, confirm each agreement and type your full legal name.</p>
+          <label class="signature-field">
+            <span>Parent / Guardian Full Legal Name *</span>
+            <input id="legalSignerName" type="text" autocomplete="name" maxlength="160" placeholder="Enter full legal name" />
+          </label>
+          <label class="consent-row">
+            <input id="electronicSignatureConsent" type="checkbox" />
+            <span>I agree to use electronic records and electronic signatures for this enrollment. I understand that typing my name and selecting “Agree &amp; Continue” constitutes my electronic signature.</span>
+          </label>
+          <button id="acceptAgreements" type="button">Agree &amp; Continue</button>
+          <p id="agreementError" class="inline-error" hidden></p>
+        </section>
+      </section>
+
+      <section class="card next-card" id="documentsAcceptedCard" hidden>
+        <span class="check">✓</span>
+        <h2>Agreements accepted</h2>
+        <p>Your document acceptance has been recorded. Fees &amp; Payment is the next CAM enrollment stage.</p>
+        <div class="coming-soon">Next: Fees &amp; Payment</div>
       </section>
     </section>
   </main>
-  <script src="/static/academy_enrollment_public_v1.js?v=1"></script>
+  <script src="/static/academy_enrollment_public_v1.js?v=2"></script>
 </body>
 </html>
