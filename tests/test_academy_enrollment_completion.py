@@ -23,9 +23,9 @@ client = TestClient(app)
 
 def _registration_payload():
     return {
-        "player_first_name": "Hari",
+        "player_first_name": "Nikhil",
         "player_last_name": "Kumar",
-        "player_date_of_birth": "2012-04-15",
+        "player_date_of_birth": "2011-09-17",
         "player_gender": "Male",
         "cricket_role": "Batter",
         "batting_order": "TO",
@@ -198,8 +198,8 @@ def test_slice2d_completion_finalizes_enrollment_and_builds_secure_package():
         assert "CAM Acceptance Summary.txt" in names
         assert len([name for name in names if name.lower().endswith(".pdf")]) == 2
         confirmation = archive.read("CAM Enrollment Confirmation.txt").decode("utf-8")
-        assert "Hari Kumar" in confirmation
-        assert "Sep" not in confirmation or "2026-09-01" in confirmation
+        assert "Nikhil Kumar" in confirmation
+        assert "2026-09-01" in confirmation
         assert "Program / Batch Assignment" in confirmation
         acceptance = archive.read("CAM Acceptance Summary.txt").decode("utf-8")
         assert "Ravi Kumar" in acceptance
@@ -223,6 +223,6 @@ def test_slice2d_parent_ui_exposes_explicit_completion_and_secure_package():
     assert "academy_enrollment_complete_v1.js" in html
     assert "Complete Enrollment" in js
     assert "/complete`" in js
-    assert "/completion/package" in js
+    assert "package_url" in js
     assert "Program / Batch Assignment" in js
     assert "No Program or Batch is assigned automatically" in js
