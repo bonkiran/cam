@@ -4,6 +4,7 @@
   let rendering=false;
   let scheduled=false;
   let roleCache=null;
+  let academyNameCache='Academy';
 
   function esc(v=''){
     return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -28,6 +29,10 @@
     try{const me=await requestJson('/api/auth/me');roleCache=me?.role||'coach';}catch{roleCache='coach';}
     return roleCache;
   }
+  async function registrationBranding(){
+    try{return await requestJson('/api/academy/registration/branding');}
+    catch{return {academy_name:'Academy'};}
+  }
   function fmtDate(v){
     if(!v)return '—';const d=new Date(v);if(Number.isNaN(d.getTime()))return String(v);
     return new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}).format(d);
@@ -38,9 +43,13 @@
     return map[v]||v;
   }
   function formObject(form){const out={};new FormData(form).forEach((v,k)=>out[k]=typeof v==='string'?v.trim():v);return out;}
+  function academyLabel(){
+    const name=String(academyNameCache||'Academy').trim()||'Academy';
+    return /academy$/i.test(name)?name:`${name} Academy`;
+  }
   function shareMessage(item,url){
     const parent=[item.parent_first_name,item.parent_last_name].filter(Boolean).join(' ')||'Parent';
-    return `Hi ${parent}, please complete the academy player registration form using this secure link: ${url}`;
+    return `Hi ${parent}, please complete the ${academyLabel()} player registration form using this secure link: ${url}`;
   }
   async function markSent(id,channel){
     try{await requestJson(`/api/academy/registration/invites/${id}/sent`,{method:'POST',body:JSON.stringify({channel})});}
@@ -51,7 +60,7 @@
     const message=shareMessage(item,url);const digits=phoneDigits(item.parent_phone);
     const whatsapp=`https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
     const sms=`sms:${digits}?body=${encodeURIComponent(message)}`;
-    const mailto=`mailto:${encodeURIComponent(item.parent_email||'')}?subject=${encodeURIComponent('Academy Player Registration')}&body=${encodeURIComponent(message)}`;
+    const mailto=`mailto:${encodeURIComponent(item.parent_email||'')}?subject=${encodeURIComponent(`${academyLabel()} Player Registration`)}&body=${encodeURIComponent(message)}`;
     host.innerHTML=`<div class="cam-share-box"><strong>Registration link ready for ${esc(item.parent_first_name)} ${esc(item.parent_last_name)}</strong><div class="cam-share-url">${esc(url)}</div><div class="cam-share-actions"><button data-share="sms">Text Message</button><button data-share="whatsapp">WhatsApp</button>${item.parent_email?'<button data-share="email">Email</button>':''}<button data-share="copy">Copy Link</button></div></div>`;
     $('[data-share="sms"]',host)?.addEventListener('click',async()=>{await markSent(item.id,'sms');location.href=sms;});
     $('[data-share="whatsapp"]',host)?.addEventListener('click',async()=>{await markSent(item.id,'whatsapp');window.open(whatsapp,'_blank','noopener');});
@@ -95,7 +104,8 @@
     if(!force&&content.dataset.registrationRendered==='1')return;
     rendering=true;content.dataset.registrationRendered='loading';content.innerHTML='<div class="panel academy-loading">Loading registration pipeline…</div>';
     try{
-      const [invites,summary,role]=await Promise.all([requestJson('/api/academy/registration/invites'),requestJson('/api/academy/registration/summary'),currentRole()]);
+      const [invites,summary,role,branding]=await Promise.all([requestJson('/api/academy/registration/invites'),requestJson('/api/academy/registration/summary'),currentRole(),registrationBranding()]);
+      academyNameCache=String(branding?.academy_name||'Academy').trim()||'Academy';
       if(!registrationActive())return;
       content.innerHTML=pageHtml(Array.isArray(invites)?invites:[],summary||{},role);
       content.dataset.registrationRendered='1';wirePage(Array.isArray(invites)?invites:[],role);
