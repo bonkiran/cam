@@ -39,8 +39,16 @@
     return match ? Number(match[1]) : null;
   }
 
-  function reviewValue(review, label) {
-    const dt = [...review.querySelectorAll('dt')].find(el => el.textContent.trim() === label);
+  function section(review, heading) {
+    return [...review.querySelectorAll('.cam-review-section')].find(
+      item => item.querySelector('h3')?.textContent?.trim() === heading
+    ) || null;
+  }
+
+  function sectionValue(review, heading, label) {
+    const root = section(review, heading);
+    if (!root) return '';
+    const dt = [...root.querySelectorAll('dt')].find(el => el.textContent.trim() === label);
     return dt?.nextElementSibling?.textContent?.trim() || '';
   }
 
@@ -49,15 +57,15 @@
   }
 
   function parentName(review) {
-    return reviewValue(review, 'Name') || 'Parent';
+    return sectionValue(review, 'Parent', 'Name') || 'Parent';
   }
 
   function parentPhone(review) {
-    return reviewValue(review, 'Phone');
+    return sectionValue(review, 'Parent', 'Phone');
   }
 
   function parentEmail(review) {
-    return reviewValue(review, 'Email');
+    return sectionValue(review, 'Parent', 'Email');
   }
 
   async function markSent(enrollmentId, channel) {
