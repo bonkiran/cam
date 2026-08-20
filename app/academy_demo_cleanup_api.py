@@ -18,12 +18,15 @@ def cleanup_demo_finance(
     payload: DemoFinanceCleanupPayload,
     _: dict = Depends(require_access_admin),
 ):
-    """Remove finance records belonging only to DEMO players.
+    """Remove finance records that belong to the repeatable DEMO fixture only.
 
-    This is deliberately narrow. It never deletes players, guardians, enrollments,
-    programs, coach data, academy expenses, facility expenses, or any billing
-    account that contains a non-DEMO player. It exists only to keep the repeatable
-    manual-test finance fixture deterministic.
+    Safety rules:
+    - Billing accounts are removable only when every actively linked player name
+      starts with ``DEMO ``.
+    - Coach rates/payments and operating/facility expenses are removable only
+      when their explicit external reference starts with ``DEMO-``.
+    - Players, guardians, enrollments, programs, sessions and any non-DEMO finance
+      records are never deleted here.
     """
     if payload.confirm != "RESET_DEMO_FINANCE":
         raise HTTPException(422, "Exact cleanup confirmation is required")
@@ -36,12 +39,32 @@ def cleanup_demo_finance(
         "invoices": 0,
         "billing_account_players": 0,
         "billing_accounts": 0,
+        "coach_payments": 0,
+        "coach_rates": 0,
+        "academy_expenses": 0,
     }
 
     with connection() as conn:
-        # Only accounts whose linked players are ALL DEMO players are eligible.
-        # This safely catches both the current DEMO Family xx accounts and older
-        # test accounts such as "Patel Family" that were linked only to DEMO players.
+        # Remove only explicitly tagged DEMO operating-finance records so the
+        # monthly dashboard can be rebuilt predictably while preserving real data.
+        cursor = conn.execute(
+            "DELETE FROM academy_coach_payments WHERE external_reference LIKE 'DEMO-%'"
+        )
+        deleted["coach_payments"] = max(0, int(cursor.rowcount or 0))
+
+        cursor = conn.execute(
+            "DELETE FROM academy_coach_rates WHERE external_reference LIKE 'DEMO-%'"
+        )
+        deleted["coach_rates"] = max(0, int(cursor.rowcount or 0))
+
+        cursor = conn.execute(
+            "DELETE FROM academy_expenses WHERE external_reference LIKE 'DEMO-%'"
+        )
+        deleted["academy_expenses"] = max(0, int(cursor.rowcount or 0))
+
+        # Only accounts whose actively linked players are ALL DEMO players are
+        # eligible. This includes current DEMO Family xx accounts and older test
+        # accounts that were linked exclusively to DEMO players.
         account_rows = conn.execute(
             """
             SELECT bap.account_id
@@ -55,67 +78,68 @@ def cleanup_demo_finance(
         ).fetchall()
         account_ids = [int(row["account_id"]) for row in account_rows]
 
-        if not account_ids:
-            return {"status": "ok", "demo_account_count": 0, "deleted": deleted}
+        if account_ids:
+            account_marks = ",".join("?" for _ in account_ids)
+            invoice_rows = conn.execute(
+                f"SELECT id FROM academy_invoices WHERE account_id IN ({account_marks})",
+                account_ids,
+            ).fetchall()
+            invoice_ids = [int(row["id"]) for row in invoice_rows]
 
-        account_marks = ",".join("?" for _ in account_ids)
-        invoice_rows = conn.execute(
-            f"SELECT id FROM academy_invoices WHERE account_id IN ({account_marks})",
-            account_ids,
-        ).fetchall()
-        invoice_ids = [int(row["id"]) for row in invoice_rows]
+            payment_rows = conn.execute(
+                f"SELECT id FROM academy_payments WHERE account_id IN ({account_marks})",
+                account_ids,
+            ).fetchall()
+            payment_ids = [int(row["id"]) for row in payment_rows]
 
-        payment_rows = conn.execute(
-            f"SELECT id FROM academy_payments WHERE account_id IN ({account_marks})",
-            account_ids,
-        ).fetchall()
-        payment_ids = [int(row["id"]) for row in payment_rows]
+            if payment_ids:
+                payment_marks = ",".join("?" for _ in payment_ids)
+                cursor = conn.execute(
+                    f"DELETE FROM academy_refunds WHERE payment_id IN ({payment_marks})",
+                    payment_ids,
+                )
+                deleted["refunds"] = max(0, int(cursor.rowcount or 0))
+                cursor = conn.execute(
+                    f"DELETE FROM academy_payment_allocations WHERE payment_id IN ({payment_marks})",
+                    payment_ids,
+                )
+                deleted["payment_allocations"] = max(0, int(cursor.rowcount or 0))
+                cursor = conn.execute(
+                    f"DELETE FROM academy_payments WHERE id IN ({payment_marks})",
+                    payment_ids,
+                )
+                deleted["payments"] = max(0, int(cursor.rowcount or 0))
 
-        if payment_ids:
-            payment_marks = ",".join("?" for _ in payment_ids)
-            cursor = conn.execute(
-                f"DELETE FROM academy_refunds WHERE payment_id IN ({payment_marks})",
-                payment_ids,
-            )
-            deleted["refunds"] = max(0, int(cursor.rowcount or 0))
-            cursor = conn.execute(
-                f"DELETE FROM academy_payment_allocations WHERE payment_id IN ({payment_marks})",
-                payment_ids,
-            )
-            deleted["payment_allocations"] = max(0, int(cursor.rowcount or 0))
-            cursor = conn.execute(
-                f"DELETE FROM academy_payments WHERE id IN ({payment_marks})",
-                payment_ids,
-            )
-            deleted["payments"] = max(0, int(cursor.rowcount or 0))
+            if invoice_ids:
+                invoice_marks = ",".join("?" for _ in invoice_ids)
+                cursor = conn.execute(
+                    f"DELETE FROM academy_invoice_items WHERE invoice_id IN ({invoice_marks})",
+                    invoice_ids,
+                )
+                deleted["invoice_items"] = max(0, int(cursor.rowcount or 0))
+                cursor = conn.execute(
+                    f"DELETE FROM academy_invoices WHERE id IN ({invoice_marks})",
+                    invoice_ids,
+                )
+                deleted["invoices"] = max(0, int(cursor.rowcount or 0))
 
-        if invoice_ids:
-            invoice_marks = ",".join("?" for _ in invoice_ids)
             cursor = conn.execute(
-                f"DELETE FROM academy_invoice_items WHERE invoice_id IN ({invoice_marks})",
-                invoice_ids,
+                f"DELETE FROM academy_billing_account_players WHERE account_id IN ({account_marks})",
+                account_ids,
             )
-            deleted["invoice_items"] = max(0, int(cursor.rowcount or 0))
+            deleted["billing_account_players"] = max(0, int(cursor.rowcount or 0))
             cursor = conn.execute(
-                f"DELETE FROM academy_invoices WHERE id IN ({invoice_marks})",
-                invoice_ids,
+                f"DELETE FROM academy_billing_accounts WHERE id IN ({account_marks})",
+                account_ids,
             )
-            deleted["invoices"] = max(0, int(cursor.rowcount or 0))
-
-        cursor = conn.execute(
-            f"DELETE FROM academy_billing_account_players WHERE account_id IN ({account_marks})",
-            account_ids,
-        )
-        deleted["billing_account_players"] = max(0, int(cursor.rowcount or 0))
-        cursor = conn.execute(
-            f"DELETE FROM academy_billing_accounts WHERE id IN ({account_marks})",
-            account_ids,
-        )
-        deleted["billing_accounts"] = max(0, int(cursor.rowcount or 0))
+            deleted["billing_accounts"] = max(0, int(cursor.rowcount or 0))
 
     return {
         "status": "ok",
         "demo_account_count": len(account_ids),
         "deleted": deleted,
-        "safety": "Only billing accounts linked exclusively to DEMO players were removed.",
+        "safety": (
+            "Only DEMO-tagged operating records and billing accounts linked "
+            "exclusively to DEMO players were removed."
+        ),
     }
