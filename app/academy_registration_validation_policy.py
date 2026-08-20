@@ -5,11 +5,66 @@ import re
 from fastapi import HTTPException
 
 from . import academy_registration_api as registration_api
-from .database import connection
 
 
-_ORIGINAL_APPROVE = registration_api._approve
 _PHONE_ALLOWED = re.compile(r"^\+?[0-9 ()\-.]+$")
+_ZIP_5 = re.compile(r"^[0-9]{5}$")
+
+_US_STATES = {
+    "AL": "Alabama",
+    "AK": "Alaska",
+    "AZ": "Arizona",
+    "AR": "Arkansas",
+    "CA": "California",
+    "CO": "Colorado",
+    "CT": "Connecticut",
+    "DE": "Delaware",
+    "FL": "Florida",
+    "GA": "Georgia",
+    "HI": "Hawaii",
+    "ID": "Idaho",
+    "IL": "Illinois",
+    "IN": "Indiana",
+    "IA": "Iowa",
+    "KS": "Kansas",
+    "KY": "Kentucky",
+    "LA": "Louisiana",
+    "ME": "Maine",
+    "MD": "Maryland",
+    "MA": "Massachusetts",
+    "MI": "Michigan",
+    "MN": "Minnesota",
+    "MS": "Mississippi",
+    "MO": "Missouri",
+    "MT": "Montana",
+    "NE": "Nebraska",
+    "NV": "Nevada",
+    "NH": "New Hampshire",
+    "NJ": "New Jersey",
+    "NM": "New Mexico",
+    "NY": "New York",
+    "NC": "North Carolina",
+    "ND": "North Dakota",
+    "OH": "Ohio",
+    "OK": "Oklahoma",
+    "OR": "Oregon",
+    "PA": "Pennsylvania",
+    "RI": "Rhode Island",
+    "SC": "South Carolina",
+    "SD": "South Dakota",
+    "TN": "Tennessee",
+    "TX": "Texas",
+    "UT": "Utah",
+    "VT": "Vermont",
+    "VA": "Virginia",
+    "WA": "Washington",
+    "WV": "West Virginia",
+    "WI": "Wisconsin",
+    "WY": "Wyoming",
+    "DC": "District of Columbia",
+}
+_STATE_LOOKUP = {code.lower(): code for code in _US_STATES}
+_STATE_LOOKUP.update({name.lower(): code for code, name in _US_STATES.items()})
 
 
 def _clean(value: str | None) -> str | None:
@@ -24,7 +79,19 @@ def _valid_phone(value: str | None) -> bool:
     if not text or not _PHONE_ALLOWED.fullmatch(text):
         return False
     digits = re.sub(r"\D", "", text)
-    return 7 <= len(digits) <= 15
+    return 9 <= len(digits) <= 15
+
+
+def _normalize_us_state(value: str | None) -> str | None:
+    text = _clean(value)
+    if not text:
+        return None
+    return _STATE_LOOKUP.get(text.lower())
+
+
+def _valid_us_zip(value: str | None) -> bool:
+    text = _clean(value)
+    return bool(text and _ZIP_5.fullmatch(text))
 
 
 def _contact_complete(contact) -> bool:
@@ -42,18 +109,16 @@ def _contact_complete(contact) -> bool:
 
 
 def _validate_submission(payload) -> None:
-    """Apply the current parent-registration rules.
+    """Apply the current public parent-registration rules.
 
-    Emergency Contact 1 is required. Emergency Contact 2 is optional, but if it
-    is supplied its core name/relationship/phone fields must be complete.
-
-    Parent and emergency-contact phone numbers accept normal phone formatting
-    characters, but must contain 7-15 digits and cannot contain letters.
-
-    The public form no longer collects a separate Guardian section. For the
-    current data model, guardian_same_as_parent is reused by that form as the
-    primary parent's pickup-authorization flag. Explicit legacy guardian
-    payloads remain supported for backward compatibility.
+    - Emergency Contact 1 is required; Emergency Contact 2 is optional.
+    - Parent and emergency-contact phone numbers use 9-15 digits and may use
+      ordinary phone formatting characters, but never letters.
+    - Parent state must be a valid US state/DC abbreviation or full name.
+    - Parent ZIP must be exactly five digits. It remains text so leading zeroes
+      are preserved.
+    - The public form does not collect a separate Guardian/pickup-authorized
+      field. Legacy API guardian payloads remain supported for compatibility.
     """
     required = {
         "Player first name": payload.player_first_name,
@@ -84,7 +149,16 @@ def _validate_submission(payload) -> None:
             problems.append(label)
 
     if _clean(payload.parent_phone) and not _valid_phone(payload.parent_phone):
-        problems.append("Parent phone must be a valid phone number")
+        problems.append("Parent phone must contain 9-15 digits and no letters")
+
+    normalized_state = _normalize_us_state(payload.parent_state)
+    if _clean(payload.parent_state) and not normalized_state:
+        problems.append("Parent state must be a valid US state name or 2-letter abbreviation")
+    elif normalized_state:
+        payload.parent_state = normalized_state
+
+    if _clean(payload.parent_postal_code) and not _valid_us_zip(payload.parent_postal_code):
+        problems.append("Parent ZIP must be a valid 5-digit US ZIP code")
 
     if payload.wicketkeeping is None:
         problems.append("Wicketkeeping")
@@ -93,22 +167,20 @@ def _validate_submission(payload) -> None:
     if not contacts or not _contact_complete(contacts[0]):
         problems.append("Emergency contact 1 name, relationship and phone")
     elif not _valid_phone(contacts[0].phone):
-        problems.append("Emergency contact 1 phone must be a valid phone number")
+        problems.append("Emergency contact 1 phone must contain 9-15 digits and no letters")
 
     if len(contacts) > 1:
         if not _contact_complete(contacts[1]):
             problems.append("Emergency contact 2 name, relationship and phone")
         elif not _valid_phone(contacts[1].phone):
-            problems.append("Emergency contact 2 phone must be a valid phone number")
+            problems.append("Emergency contact 2 phone must contain 9-15 digits and no letters")
 
     # Legacy API clients may still submit an explicit additional guardian.
-    # Validate it when present, but do not require one merely because the
-    # public-form pickup checkbox is unchecked.
     if payload.guardian is not None:
         if not _contact_complete(payload.guardian):
             problems.append("Guardian name, relationship and phone")
         elif not _valid_phone(payload.guardian.phone):
-            problems.append("Guardian phone must be a valid phone number")
+            problems.append("Guardian phone must contain 9-15 digits and no letters")
 
     if not payload.consent_confirmed:
         problems.append("Registration confirmation")
@@ -120,31 +192,5 @@ def _validate_submission(payload) -> None:
         )
 
 
-def _approve_with_parent_pickup(application: dict, user: dict) -> int:
-    """Preserve legacy guardians while applying the new primary-parent pickup flag."""
-    # An explicit guardian means this is an older/API-driven application. Keep
-    # the original approval behavior so existing registrations are not changed.
-    if application.get("guardian"):
-        return _ORIGINAL_APPROVE(application, user)
-
-    parent_pickup_authorized = bool(application.get("guardian_same_as_parent"))
-    normalized = dict(application)
-    normalized["guardian_same_as_parent"] = True
-    normalized["guardian"] = None
-
-    player_id = _ORIGINAL_APPROVE(normalized, user)
-    with connection() as conn:
-        conn.execute(
-            """
-            UPDATE player_guardians
-            SET pickup_authorized=?
-            WHERE player_id=? AND is_primary=1
-            """,
-            (1 if parent_pickup_authorized else 0, player_id),
-        )
-    return player_id
-
-
 def apply_registration_validation_policy() -> None:
     registration_api._validate_submission = _validate_submission
-    registration_api._approve = _approve_with_parent_pickup
