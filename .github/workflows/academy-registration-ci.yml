@@ -9,12 +9,17 @@ on:
       - 'app/academy_registration_validation_policy.py'
       - 'app/academy_registration_address_validation.py'
       - 'app/academy_registration_branding_api.py'
+      - 'app/academy_enrollment_api.py'
       - 'app/academy_rbac_middleware.py'
       - 'run.py'
       - 'app/static/academy_registration_v1.js'
       - 'app/static/academy_registration_copy_link_fix_v1.js'
       - 'app/static/academy_registration_review_policy_v2.js'
       - 'app/static/academy_registration_phone_validation_v1.js'
+      - 'app/static/academy_enrollment_slice2a_v1.js'
+      - 'app/static/academy_enrollment_public_v1.html'
+      - 'app/static/academy_enrollment_public_v1.js'
+      - 'app/static/academy_enrollment_public_v1.css'
       - 'app/static/academy_registration_v1.css'
       - 'app/static/academy_registration_public_v1.html'
       - 'app/static/academy_registration_public_v1.js'
@@ -25,6 +30,7 @@ on:
       - 'tests/test_academy_registration_api.py'
       - 'tests/test_academy_registration_manual_fixes.py'
       - 'tests/test_academy_registration_address_branding.py'
+      - 'tests/test_academy_enrollment_slice2a.py'
       - '.github/workflows/academy-registration-ci.yml'
   pull_request:
     paths:
@@ -32,12 +38,17 @@ on:
       - 'app/academy_registration_validation_policy.py'
       - 'app/academy_registration_address_validation.py'
       - 'app/academy_registration_branding_api.py'
+      - 'app/academy_enrollment_api.py'
       - 'app/academy_rbac_middleware.py'
       - 'run.py'
       - 'app/static/academy_registration_v1.js'
       - 'app/static/academy_registration_copy_link_fix_v1.js'
       - 'app/static/academy_registration_review_policy_v2.js'
       - 'app/static/academy_registration_phone_validation_v1.js'
+      - 'app/static/academy_enrollment_slice2a_v1.js'
+      - 'app/static/academy_enrollment_public_v1.html'
+      - 'app/static/academy_enrollment_public_v1.js'
+      - 'app/static/academy_enrollment_public_v1.css'
       - 'app/static/academy_registration_v1.css'
       - 'app/static/academy_registration_public_v1.html'
       - 'app/static/academy_registration_public_v1.js'
@@ -48,6 +59,7 @@ on:
       - 'tests/test_academy_registration_api.py'
       - 'tests/test_academy_registration_manual_fixes.py'
       - 'tests/test_academy_registration_address_branding.py'
+      - 'tests/test_academy_enrollment_slice2a.py'
       - '.github/workflows/academy-registration-ci.yml'
 
 permissions:
@@ -72,12 +84,15 @@ jobs:
           app/academy_registration_validation_policy.py
           app/academy_registration_address_validation.py
           app/academy_registration_branding_api.py
+          app/academy_enrollment_api.py
           tests/test_academy_registration_api.py
           tests/test_academy_registration_manual_fixes.py
           tests/test_academy_registration_address_branding.py
+          tests/test_academy_enrollment_slice2a.py
       - name: Run registration workflow tests
         run: >-
           pytest -q
           tests/test_academy_registration_api.py
           tests/test_academy_registration_manual_fixes.py
           tests/test_academy_registration_address_branding.py
+          tests/test_academy_enrollment_slice2a.py
