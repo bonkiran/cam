@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from fastapi import HTTPException
 
 from . import academy_registration_api as registration_api
@@ -7,6 +9,7 @@ from .database import connection
 
 
 _ORIGINAL_APPROVE = registration_api._approve
+_PHONE_ALLOWED = re.compile(r"^\+?[0-9 ()\-.]+$")
 
 
 def _clean(value: str | None) -> str | None:
@@ -14,6 +17,14 @@ def _clean(value: str | None) -> str | None:
         return None
     value = value.strip()
     return value or None
+
+
+def _valid_phone(value: str | None) -> bool:
+    text = _clean(value)
+    if not text or not _PHONE_ALLOWED.fullmatch(text):
+        return False
+    digits = re.sub(r"\D", "", text)
+    return 7 <= len(digits) <= 15
 
 
 def _contact_complete(contact) -> bool:
@@ -35,6 +46,9 @@ def _validate_submission(payload) -> None:
 
     Emergency Contact 1 is required. Emergency Contact 2 is optional, but if it
     is supplied its core name/relationship/phone fields must be complete.
+
+    Parent and emergency-contact phone numbers accept normal phone formatting
+    characters, but must contain 7-15 digits and cannot contain letters.
 
     The public form no longer collects a separate Guardian section. For the
     current data model, guardian_same_as_parent is reused by that form as the
@@ -61,36 +75,48 @@ def _validate_submission(payload) -> None:
         "Parent country": payload.parent_country,
     }
 
-    missing: list[str] = []
+    problems: list[str] = []
     for label, value in required.items():
         if isinstance(value, str):
             if not _clean(value):
-                missing.append(label)
+                problems.append(label)
         elif value is None:
-            missing.append(label)
+            problems.append(label)
+
+    if _clean(payload.parent_phone) and not _valid_phone(payload.parent_phone):
+        problems.append("Parent phone must be a valid phone number")
 
     if payload.wicketkeeping is None:
-        missing.append("Wicketkeeping")
+        problems.append("Wicketkeeping")
 
     contacts = list(payload.emergency_contacts or [])
     if not contacts or not _contact_complete(contacts[0]):
-        missing.append("Emergency contact 1 name, relationship and phone")
-    if len(contacts) > 1 and not _contact_complete(contacts[1]):
-        missing.append("Emergency contact 2 name, relationship and phone")
+        problems.append("Emergency contact 1 name, relationship and phone")
+    elif not _valid_phone(contacts[0].phone):
+        problems.append("Emergency contact 1 phone must be a valid phone number")
+
+    if len(contacts) > 1:
+        if not _contact_complete(contacts[1]):
+            problems.append("Emergency contact 2 name, relationship and phone")
+        elif not _valid_phone(contacts[1].phone):
+            problems.append("Emergency contact 2 phone must be a valid phone number")
 
     # Legacy API clients may still submit an explicit additional guardian.
     # Validate it when present, but do not require one merely because the
     # public-form pickup checkbox is unchecked.
-    if payload.guardian is not None and not _contact_complete(payload.guardian):
-        missing.append("Guardian name, relationship and phone")
+    if payload.guardian is not None:
+        if not _contact_complete(payload.guardian):
+            problems.append("Guardian name, relationship and phone")
+        elif not _valid_phone(payload.guardian.phone):
+            problems.append("Guardian phone must be a valid phone number")
 
     if not payload.consent_confirmed:
-        missing.append("Registration confirmation")
+        problems.append("Registration confirmation")
 
-    if missing:
+    if problems:
         raise HTTPException(
             422,
-            "Complete required registration fields: " + ", ".join(dict.fromkeys(missing)),
+            "Complete required registration fields: " + ", ".join(dict.fromkeys(problems)),
         )
 
 
