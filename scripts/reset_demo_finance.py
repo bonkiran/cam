@@ -13,7 +13,7 @@ BASE_URL = os.environ.get("CRICKANALYSIS_BASE_URL", "https://crickanalysis.onren
 def request(method: str, path: str, payload=None, *, retries: int = 5):
     url = BASE_URL + path
     data = None if payload is None else json.dumps(payload).encode("utf-8")
-    headers = {"User-Agent": "CrickAnalysis-Demo-Finance-Reset/1.0"}
+    headers = {"User-Agent": "CrickAnalysis-Demo-Finance-Reset/2.0"}
     if payload is not None:
         headers["Content-Type"] = "application/json"
     last = None
@@ -36,7 +36,10 @@ def request(method: str, path: str, payload=None, *, retries: int = 5):
 
 
 def wait_for_cleanup_api():
-    for attempt in range(1, 61):
+    # Render free deployments can queue/spin up slowly, especially when several
+    # commits land close together. Wait up to 20 minutes for the deployment that
+    # contains the cleanup endpoint rather than racing the web-service rollout.
+    for attempt in range(1, 121):
         try:
             storage = request("GET", "/api/system/storage")
             if storage and storage.get("database") == "postgresql":
@@ -49,10 +52,11 @@ def wait_for_cleanup_api():
                 print("DEMO_FINANCE_CLEANUP_COMPLETE")
                 print(json.dumps(result, indent=2))
                 return result
+            print(f"cleanup readiness attempt {attempt}: storage={storage}")
         except Exception as exc:
             print(f"cleanup endpoint readiness attempt {attempt}: {exc}")
         time.sleep(10)
-    raise RuntimeError("DEMO finance cleanup endpoint did not become available within 10 minutes")
+    raise RuntimeError("DEMO finance cleanup endpoint did not become available within 20 minutes")
 
 
 def main():
