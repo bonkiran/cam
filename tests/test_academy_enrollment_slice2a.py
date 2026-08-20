@@ -18,10 +18,10 @@ from run import app
 client = TestClient(app)
 
 
-def _registration_payload():
+def _registration_payload(player_last_name="TwoA", email_suffix="twoa"):
     return {
         "player_first_name": "Slice",
-        "player_last_name": "TwoA",
+        "player_last_name": player_last_name,
         "player_date_of_birth": "2013-02-02",
         "player_gender": "Male",
         "cricket_role": "Batter",
@@ -31,7 +31,7 @@ def _registration_payload():
         "parent_first_name": "Ravi",
         "parent_last_name": "Kumar",
         "parent_relationship": "Father",
-        "parent_email": "slice2a.parent@example.com",
+        "parent_email": f"slice2a.{email_suffix}@example.com",
         "parent_phone": "404-555-0134",
         "parent_address_line1": "123 Main Street",
         "parent_address_line2": None,
@@ -45,7 +45,7 @@ def _registration_payload():
                 "last_name": "Kumar",
                 "relationship": "Mother",
                 "phone": "404-555-0198",
-                "email": "priya.slice2a@example.com",
+                "email": f"priya.{email_suffix}@example.com",
             }
         ],
         "guardian_same_as_parent": True,
@@ -60,7 +60,7 @@ def _registration_payload():
     }
 
 
-def _submitted_registration():
+def _submitted_registration(player_last_name="TwoA", email_suffix="twoa"):
     profile = client.put("/api/academy/profile", json={"name": "JKC"})
     assert profile.status_code == 200, profile.text
     created = client.post(
@@ -69,19 +69,22 @@ def _submitted_registration():
             "parent_first_name": "Ravi",
             "parent_last_name": "Kumar",
             "parent_phone": "404-555-0134",
-            "parent_email": "slice2a.parent@example.com",
+            "parent_email": f"slice2a.{email_suffix}@example.com",
         },
     )
     assert created.status_code == 201, created.text
     token = created.json()["registration_url"].rstrip("/").split("/")[-1]
     assert client.get(f"/api/public/registration/{token}").status_code == 200
-    submitted = client.post(f"/api/public/registration/{token}/submit", json=_registration_payload())
+    submitted = client.post(
+        f"/api/public/registration/{token}/submit",
+        json=_registration_payload(player_last_name, email_suffix),
+    )
     assert submitted.status_code == 200, submitted.text
     return int(submitted.json()["application_id"])
 
 
 def test_slice2a_approve_creates_secure_enrollment_and_tracks_status():
-    application_id = _submitted_registration()
+    application_id = _submitted_registration("TwoA", "twoa")
 
     approved = client.post(f"/api/academy/enrollments/from-registration/{application_id}", json={})
     assert approved.status_code == 200, approved.text
@@ -125,7 +128,7 @@ def test_slice2a_approve_creates_secure_enrollment_and_tracks_status():
 
 
 def test_slice2b_test_documents_require_view_and_electronic_acceptance():
-    application_id = _submitted_registration()
+    application_id = _submitted_registration("TwoB", "twob")
     approved = client.post(f"/api/academy/enrollments/from-registration/{application_id}", json={})
     assert approved.status_code == 200, approved.text
     enrollment_token = approved.json()["enrollment_url"].rstrip("/").split("/")[-1]
