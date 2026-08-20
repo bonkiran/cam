@@ -20,6 +20,7 @@
   function boolRadio(name){const checked=$(`[name="${name}"]:checked`);if(!checked)return null;return checked.value==='yes';}
   function contactFrom(root,attr){
     const out={};
+    if(!root)return out;
     $$(`[${attr}]`,root).forEach(el=>{
       const key=el.getAttribute(attr);
       out[key]=el.type==='checkbox'?!!el.checked:(el.value.trim()||null);
@@ -27,13 +28,14 @@
     return out;
   }
   function contactHasValue(contact={}){
-    return Object.entries(contact).some(([key,val])=>key!=='pickup_authorized'&&val!==null&&val!==undefined&&String(val).trim()!=='');
+    return Object.values(contact).some(val=>val!==null&&val!==undefined&&String(val).trim()!=='');
   }
   function payload(){
-    const guardianSame=$('#guardianSameAsParent').checked;
-    const emergencyContacts=$$('[data-emergency]')
-      .map(card=>contactFrom(card,'data-contact'))
-      .filter(contactHasValue);
+    const cards=$$('[data-emergency]');
+    const firstContact=contactFrom(cards[0],'data-contact');
+    const secondContact=contactFrom(cards[1],'data-contact');
+    const emergencyContacts=[firstContact];
+    if(contactHasValue(secondContact))emergencyContacts.push(secondContact);
     return {
       player_first_name:value('player_first_name'),player_last_name:value('player_last_name'),
       player_date_of_birth:value('player_date_of_birth'),player_gender:value('player_gender'),
@@ -45,8 +47,10 @@
       parent_city:value('parent_city'),parent_state:value('parent_state'),parent_postal_code:value('parent_postal_code'),
       parent_country:value('parent_country'),
       emergency_contacts:emergencyContacts,
-      guardian_same_as_parent:guardianSame,
-      guardian:guardianSame?null:contactFrom($('#guardianFields'),'data-guardian'),
+      // The backend's legacy guardian_same_as_parent boolean is currently used
+      // as the primary-parent pickup authorization flag. Guardian UI is removed.
+      guardian_same_as_parent:!!$('[name="parent_pickup_authorized"]')?.checked,
+      guardian:null,
       injuries:value('injuries'),surgeries:value('surgeries'),medical_considerations:value('medical_considerations'),
       allergies:value('allergies'),physical_restrictions:value('physical_restrictions'),additional_notes:value('additional_notes'),
       consent_confirmed:!!$('[name="consent_confirmed"]')?.checked,
@@ -54,21 +58,26 @@
   }
   function setField(name,val){const el=$(`[name="${name}"]`);if(el&&val!==null&&val!==undefined)el.value=String(val);}
   function setContact(root,attr,data={}){
+    if(!root)return;
     $$(`[${attr}]`,root).forEach(el=>{
       const key=el.getAttribute(attr);const val=data?.[key];
       if(el.type==='checkbox')el.checked=val===undefined?true:!!val;else if(val!==null&&val!==undefined)el.value=String(val);
     });
   }
-  function makeEmergencyContactsOptional(){
+  function configureEmergencyContacts(){
     const cards=$$('[data-emergency]');
-    cards.forEach(card=>{
+    cards.forEach((card,index)=>{
+      const required=index===0;
       const legend=$('legend',card);
-      if(legend)legend.textContent=(legend.textContent||'').replace(/\s*\*\s*$/,'');
-      $$('[data-contact]',card).forEach(el=>{el.required=false;});
+      if(legend)legend.textContent=required?'Emergency Contact 1 *':'Emergency Contact 2';
+      $$('[data-contact]',card).forEach(el=>{
+        const key=el.getAttribute('data-contact');
+        el.required=required&&['first_name','last_name','relationship','phone'].includes(key);
+      });
     });
     const section=cards[0]?.closest('.form-section');
     const note=section?$('.section-heading p',section):null;
-    if(note)note.textContent='Optional: provide up to two additional people the academy can contact in an emergency.';
+    if(note)note.textContent='Please provide one emergency contact. A second contact is optional.';
   }
   function fill(data){
     const app=data?.application||{};
@@ -81,9 +90,12 @@
     if(app.wicketkeeping===false)$('[name="wicketkeeping"][value="no"]').checked=true;
     const emergency=app.emergency_contacts||[];
     $$('[data-emergency]').forEach((card,index)=>setContact(card,'data-contact',emergency[index]||{}));
-    $('#guardianSameAsParent').checked=app.guardian_same_as_parent!==false;
-    updateGuardianVisibility();
-    if(app.guardian)setContact($('#guardianFields'),'data-guardian',app.guardian);
+    const pickup=$('[name="parent_pickup_authorized"]');
+    if(pickup){
+      // Explicit legacy guardian data came from the removed Guardian section;
+      // keep the primary parent authorized when such an older draft is reopened.
+      pickup.checked=app.guardian?true:app.guardian_same_as_parent!==false;
+    }
     $('[name="consent_confirmed"]').checked=!!app.consent_confirmed;
     if(app.review_note){const note=$('#reviewNote');note.hidden=false;note.innerHTML=`<strong>Academy requested more information:</strong><br>${esc(app.review_note)}`;}
     const invite=data?.invite||{};
@@ -93,11 +105,6 @@
     if(!app.parent_last_name)setField('parent_last_name',invite.parent_last_name);
     if(!app.parent_phone)setField('parent_phone',invite.parent_phone);
     if(!app.parent_email)setField('parent_email',invite.parent_email);
-  }
-  function updateGuardianVisibility(){
-    const same=$('#guardianSameAsParent').checked;
-    $('#guardianFields').hidden=same;
-    $$('[data-guardian="first_name"],[data-guardian="last_name"],[data-guardian="relationship"],[data-guardian="phone"]').forEach(el=>el.required=!same);
   }
   function draftStatus(text){const el=$('#draftStatus');if(el)el.textContent=text;}
   function scheduleSave(){
@@ -114,10 +121,9 @@
   function wireAutosave(){
     $('#registrationForm').addEventListener('input',scheduleSave);
     $('#registrationForm').addEventListener('change',scheduleSave);
-    $('#guardianSameAsParent').addEventListener('change',()=>{updateGuardianVisibility();scheduleSave();});
   }
   async function load(){
-    makeEmergencyContactsOptional();
+    configureEmergencyContacts();
     if(!token){showError('The registration link is incomplete.');return;}
     try{
       loaded=await request(`/api/public/registration/${encodeURIComponent(token)}`);
