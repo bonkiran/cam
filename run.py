@@ -31,6 +31,7 @@ from app.academy_registration_branding_api import router as academy_registration
 from app.academy_registration_validation_policy import apply_registration_validation_policy
 from app.academy_enrollment_api import router as academy_enrollment_router
 from app.academy_enrollment_payment_api import router as academy_enrollment_payment_router
+from app.academy_enrollment_completion_api import router as academy_enrollment_completion_router
 from app.academy_parent_billing_api import router as academy_parent_billing_router
 from app.academy_parent_payment_policy_api import router as academy_parent_payment_policy_router
 from app.academy_dashboard_api import router as academy_dashboard_router
@@ -125,6 +126,9 @@ academy_parent_billing_router.routes[:] = [
 ]
 
 app.include_router(biomechanics_router)
+# Register exact Slice 2D completion routes before broader Academy routers so
+# /api/academy/enrollments/completed cannot be captured by an integer ID route.
+app.include_router(academy_enrollment_completion_router)
 app.include_router(academy_router)
 app.include_router(academy_programs_router)
 app.include_router(academy_coaches_router)
