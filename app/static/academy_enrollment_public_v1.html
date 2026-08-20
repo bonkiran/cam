@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CAM Parent Enrollment</title>
-  <link rel="stylesheet" href="/static/academy_enrollment_public_v1.css?v=2" />
+  <link rel="stylesheet" href="/static/academy_enrollment_public_v1.css?v=3" />
 </head>
 <body>
   <main class="enrollment-shell">
@@ -93,10 +93,83 @@
         <span class="check">✓</span>
         <h2>Agreements accepted</h2>
         <p>Your document acceptance has been recorded. Fees &amp; Payment is the next CAM enrollment stage.</p>
-        <div class="coming-soon">Next: Fees &amp; Payment</div>
+        <button id="openPayment" type="button">Continue to Fees &amp; Payment</button>
+      </section>
+
+      <section class="card payment-card" id="paymentCard" hidden>
+        <div class="agreements-head">
+          <div>
+            <span class="kicker light">SLICE 2C · SANDBOX PAYMENT SETUP</span>
+            <h2>Fees &amp; Payment</h2>
+            <p>Review the monthly tuition schedule, authorize recurring billing, and securely save a payment method.</p>
+          </div>
+          <span class="test-badge" id="paymentEnvironmentBadge">SANDBOX</span>
+        </div>
+
+        <div class="payment-summary-grid">
+          <div><span>Fee Plan</span><strong id="paymentFeePlan">—</strong></div>
+          <div><span>Monthly Tuition</span><strong id="paymentMonthlyAmount">—</strong></div>
+          <div><span>Due Today</span><strong id="paymentDueToday">—</strong></div>
+          <div><span>First Charge</span><strong id="paymentFirstCharge">—</strong></div>
+        </div>
+        <div class="payment-scope-note">
+          Tournament, match, camp, travel, equipment and other variable charges are not included in this monthly authorization. CAM will require separate parent approval for those charges.
+        </div>
+
+        <section class="payment-section">
+          <h3>Billing Address</h3>
+          <label class="consent-row compact">
+            <input id="useParentBillingAddress" type="checkbox" checked />
+            <span>Use the verified parent address from registration.</span>
+          </label>
+          <div class="saved-address" id="parentBillingAddress">Loading address…</div>
+          <div id="alternateBillingAddress" class="billing-address-grid" hidden>
+            <label class="field full"><span>Street Address *</span><input id="billingAddress1" autocomplete="address-line1" /></label>
+            <label class="field full"><span>Address Line 2</span><input id="billingAddress2" autocomplete="address-line2" /></label>
+            <label class="field"><span>City *</span><input id="billingCity" autocomplete="address-level2" /></label>
+            <label class="field"><span>State *</span><input id="billingState" autocomplete="address-level1" maxlength="30" /></label>
+            <label class="field"><span>ZIP *</span><input id="billingZip" autocomplete="postal-code" inputmode="numeric" maxlength="5" /></label>
+          </div>
+        </section>
+
+        <section class="payment-section authorization-box">
+          <h3>Recurring Payment Authorization</h3>
+          <p id="recurringConsentText">Loading recurring-payment terms…</p>
+          <label class="consent-row">
+            <input id="recurringPaymentConsent" type="checkbox" />
+            <span>I authorize the recurring monthly tuition schedule shown above and understand that the first charge date is shown before I save my payment method.</span>
+          </label>
+        </section>
+
+        <section class="payment-section secure-payment-box">
+          <div class="secure-payment-head">
+            <div>
+              <h3>Secure Payment Method</h3>
+              <p>Card details are entered directly into the selected payment provider's secure component. CAM does not store full card numbers or CVC/CVV.</p>
+            </div>
+            <strong id="paymentProviderName">—</strong>
+          </div>
+          <button id="beginPaymentSetup" type="button">Continue to Secure Payment Method</button>
+          <div id="providerPaymentPanel" hidden>
+            <div id="paymentElement" class="payment-element-host"></div>
+            <button id="confirmPaymentSetup" type="button">Save Payment Method &amp; Continue</button>
+          </div>
+          <p id="paymentError" class="inline-error" hidden></p>
+        </section>
+      </section>
+
+      <section class="card next-card" id="paymentCompleteCard" hidden>
+        <span class="check">✓</span>
+        <h2>Payment method added</h2>
+        <p>Your monthly tuition authorization and secure payment method have been recorded.</p>
+        <div class="payment-complete-summary">
+          <div><span>Saved Method</span><strong id="savedPaymentMethod">—</strong></div>
+          <div><span>First Payment</span><strong id="savedFirstPayment">—</strong></div>
+        </div>
+        <div class="coming-soon">Next: Complete Enrollment</div>
       </section>
     </section>
   </main>
-  <script src="/static/academy_enrollment_public_v1.js?v=2"></script>
+  <script src="/static/academy_enrollment_public_v1.js?v=3"></script>
 </body>
 </html>
