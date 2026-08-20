@@ -22,6 +22,19 @@ class CoachRatePayload(BaseModel):
     notes: str | None = Field(default=None, max_length=1000)
 
 
+class CoachPaymentPayload(BaseModel):
+    coach_id: int = Field(gt=0)
+    amount_cents: int = Field(gt=0, le=100_000_000)
+    paid_on: str
+    payment_method: Literal["card", "cash", "check", "bank", "other"] = "bank"
+    hours_worked: float | None = Field(default=None, ge=0, le=1000)
+    period_start: str | None = None
+    period_end: str | None = None
+    status: Literal["paid", "pending"] = "paid"
+    external_reference: str | None = Field(default=None, max_length=160)
+    notes: str | None = Field(default=None, max_length=1500)
+
+
 class ExpensePayload(BaseModel):
     expense_type: Literal["academy", "facility"]
     category: str = Field(min_length=2, max_length=120)
@@ -78,6 +91,30 @@ def _ensure_tables() -> None:
         CREATE UNIQUE INDEX IF NOT EXISTS idx_academy_coach_rates_external_ref
             ON academy_coach_rates(external_reference);
 
+        CREATE TABLE IF NOT EXISTS academy_coach_payments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            academy_id BIGINT,
+            coach_id BIGINT NOT NULL,
+            amount_cents INTEGER NOT NULL,
+            paid_on TEXT NOT NULL,
+            payment_method TEXT NOT NULL DEFAULT 'bank',
+            hours_worked REAL,
+            period_start TEXT,
+            period_end TEXT,
+            status TEXT NOT NULL DEFAULT 'paid',
+            external_reference TEXT,
+            notes TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP,
+            FOREIGN KEY(academy_id) REFERENCES academies(id) ON DELETE SET NULL,
+            FOREIGN KEY(coach_id) REFERENCES coaches(id) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_academy_coach_payments_coach ON academy_coach_payments(coach_id);
+        CREATE INDEX IF NOT EXISTS idx_academy_coach_payments_date ON academy_coach_payments(paid_on);
+        CREATE INDEX IF NOT EXISTS idx_academy_coach_payments_status ON academy_coach_payments(status);
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_academy_coach_payments_external_ref
+            ON academy_coach_payments(external_reference);
+
         CREATE TABLE IF NOT EXISTS academy_expenses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             academy_id BIGINT,
@@ -118,6 +155,25 @@ def _coach_rate(rate_id: int) -> dict:
     )
     if not row:
         raise HTTPException(404, "Coach rate not found")
+    row["coach_name"] = (
+        row.get("coach_preferred_name")
+        or f"{row.get('coach_first_name') or ''} {row.get('coach_last_name') or ''}".strip()
+    )
+    return row
+
+
+def _coach_payment(payment_id: int) -> dict:
+    row = fetch_one(
+        """
+        SELECT p.*,c.first_name AS coach_first_name,c.last_name AS coach_last_name,c.preferred_name AS coach_preferred_name
+        FROM academy_coach_payments p
+        JOIN coaches c ON c.id=p.coach_id
+        WHERE p.id=?
+        """,
+        (payment_id,),
+    )
+    if not row:
+        raise HTTPException(404, "Coach payment not found")
     row["coach_name"] = (
         row.get("coach_preferred_name")
         or f"{row.get('coach_first_name') or ''} {row.get('coach_last_name') or ''}".strip()
@@ -172,6 +228,14 @@ def operations_summary_for_month(month: str | None = None) -> dict:
     coach_rates = fetch_one(
         "SELECT COUNT(DISTINCT coach_id) AS count FROM academy_coach_rates WHERE status='active'"
     ) or {"count": 0}
+    coach_paid = fetch_one(
+        """
+        SELECT COALESCE(SUM(amount_cents),0) AS total,COUNT(*) AS count
+        FROM academy_coach_payments
+        WHERE status='paid' AND paid_on>=? AND paid_on<?
+        """,
+        (start, end),
+    ) or {"total": 0, "count": 0}
     pending = fetch_one(
         """
         SELECT COALESCE(SUM(amount_cents),0) AS total,COUNT(*) AS count
@@ -183,14 +247,15 @@ def operations_summary_for_month(month: str | None = None) -> dict:
     return {
         "month": month,
         "coach_rates_configured": int(coach_rates.get("count") or 0),
+        "coach_salary_payment_count": int(coach_paid.get("count") or 0),
+        "coach_salary_tracking_configured": int(coach_rates.get("count") or 0) > 0,
+        "coach_salary_paid_mtd_cents": int(coach_paid.get("total") or 0),
         "academy_expense_count": int(academy_paid.get("count") or 0),
         "academy_expenses_mtd_cents": int(academy_paid.get("total") or 0),
         "facility_expense_count": int(facility_paid.get("count") or 0),
         "facility_payments_mtd_cents": int(facility_paid.get("total") or 0),
         "pending_expense_count": int(pending.get("count") or 0),
         "pending_expenses_cents": int(pending.get("total") or 0),
-        "coach_salary_tracking_configured": False,
-        "coach_salary_paid_mtd_cents": 0,
     }
 
 
@@ -248,6 +313,69 @@ def create_coach_rate(payload: CoachRatePayload):
         ).fetchone()
         rate_id = int(row["id"])
     return _coach_rate(rate_id)
+
+
+@router.get("/coach-payments")
+def coach_payments(coach_id: int | None = None, month: str | None = None, status: str | None = None):
+    sql = "SELECT id FROM academy_coach_payments WHERE 1=1"
+    params: list[object] = []
+    if coach_id is not None:
+        sql += " AND coach_id=?"
+        params.append(coach_id)
+    if month is not None:
+        _, start, end = _month_bounds(month)
+        sql += " AND paid_on>=? AND paid_on<?"
+        params.extend([start, end])
+    if status is not None:
+        if status not in {"paid", "pending"}:
+            raise HTTPException(422, "status must be paid or pending")
+        sql += " AND status=?"
+        params.append(status)
+    sql += " ORDER BY paid_on DESC,id DESC"
+    return [_coach_payment(int(row["id"])) for row in fetch_all(sql, params)]
+
+
+@router.post("/coach-payments", status_code=201)
+def create_coach_payment(payload: CoachPaymentPayload):
+    _iso_date(payload.paid_on, "Paid on")
+    if payload.period_start:
+        _iso_date(payload.period_start, "Period start")
+    if payload.period_end:
+        _iso_date(payload.period_end, "Period end")
+    if payload.period_start and payload.period_end:
+        if _iso_date(payload.period_end, "Period end") < _iso_date(payload.period_start, "Period start"):
+            raise HTTPException(422, "Period end cannot be before period start")
+    ref = _clean(payload.external_reference)
+    if ref:
+        existing = fetch_one("SELECT id FROM academy_coach_payments WHERE external_reference=?", (ref,))
+        if existing:
+            row = _coach_payment(int(existing["id"]))
+            if (
+                int(row["coach_id"]) == payload.coach_id
+                and int(row["amount_cents"]) == payload.amount_cents
+                and str(row["paid_on"]) == payload.paid_on
+            ):
+                return row
+            raise HTTPException(409, "External reference is already used by a different coach payment")
+    with connection() as conn:
+        coach = conn.execute("SELECT id FROM coaches WHERE id=?", (payload.coach_id,)).fetchone()
+        if not coach:
+            raise HTTPException(404, "Coach not found")
+        row = conn.execute(
+            """
+            INSERT INTO academy_coach_payments(
+                academy_id,coach_id,amount_cents,paid_on,payment_method,hours_worked,
+                period_start,period_end,status,external_reference,notes
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?) RETURNING id
+            """,
+            (
+                _academy_id(conn), payload.coach_id, payload.amount_cents, payload.paid_on,
+                payload.payment_method, payload.hours_worked, _clean(payload.period_start),
+                _clean(payload.period_end), payload.status, ref, _clean(payload.notes),
+            ),
+        ).fetchone()
+        payment_id = int(row["id"])
+    return _coach_payment(payment_id)
 
 
 @router.get("/expenses")
