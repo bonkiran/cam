@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Academy Player Registration · CrickAnalysis</title>
+  <link rel="stylesheet" href="/static/academy_registration_public_v1.css?v=1" />
+</head>
+<body>
+  <main class="registration-shell">
+    <header class="registration-brand">
+      <div class="registration-mark">🏏</div>
+      <div><strong>CRICK<span>ANALYSIS</span></strong><small>Academy Player Registration</small></div>
+    </header>
+
+    <section id="registrationLoading" class="registration-card registration-loading">
+      <div class="spinner"></div>
+      <h1>Loading registration…</h1>
+      <p>Please wait while we open your secure academy registration form.</p>
+    </section>
+
+    <section id="registrationError" class="registration-card registration-error" hidden>
+      <h1>Registration link unavailable</h1>
+      <p id="registrationErrorText">This link may have expired or been cancelled.</p>
+    </section>
+
+    <form id="registrationForm" class="registration-form" hidden>
+      <section class="registration-intro">
+        <div>
+          <span class="eyebrow">PLAYER ONBOARDING · STEP 1</span>
+          <h1>Academy Player Registration</h1>
+          <p>Complete the information below. Your application will be reviewed by the academy before the player is added to the active roster.</p>
+        </div>
+        <div class="invite-summary">
+          <span>Registration for</span>
+          <strong id="inviteParentName">Parent</strong>
+          <small id="inviteSentBy"></small>
+        </div>
+      </section>
+
+      <nav class="registration-progress" aria-label="Registration sections">
+        <span class="active">1 · Player</span><span>2 · Parent</span><span>3 · Safety</span><span>4 · Review</span>
+      </nav>
+
+      <section class="registration-card form-section">
+        <div class="section-heading"><span>1</span><div><h2>Player Information</h2><p>Player identity and initial cricket profile.</p></div></div>
+        <div class="form-grid two">
+          <label><span>First Name *</span><input name="player_first_name" required maxlength="100" autocomplete="given-name"></label>
+          <label><span>Last Name *</span><input name="player_last_name" required maxlength="100" autocomplete="family-name"></label>
+          <label><span>Date of Birth *</span><input name="player_date_of_birth" type="date" required></label>
+          <label><span>Gender *</span><select name="player_gender" required><option value="">Select</option><option>Female</option><option>Male</option><option>Non-binary</option><option>Prefer not to say</option></select></label>
+          <label><span>Primary Cricket Role *</span><select name="cricket_role" required><option value="">Select</option><option>Batter</option><option>Bowler</option><option>All-Rounder</option><option>Wicketkeeper</option></select></label>
+          <label><span>Batting Order *</span><select name="batting_order" required><option value="">Select</option><option value="TO">Top Order (TO)</option><option value="MO">Middle Order (MO)</option><option value="LO">Lower Order (LO)</option><option value="N/A">N/A</option></select></label>
+          <label><span>Bowling Type *</span><select name="bowling_type" required><option value="">Select</option><option>Pace</option><option>Medium</option><option>Spin</option><option value="N/A">N/A</option></select></label>
+          <fieldset class="radio-field"><legend>Wicketkeeping *</legend><label><input type="radio" name="wicketkeeping" value="yes" required> Yes</label><label><input type="radio" name="wicketkeeping" value="no" required> No</label></fieldset>
+        </div>
+      </section>
+
+      <section class="registration-card form-section">
+        <div class="section-heading"><span>2</span><div><h2>Parent Information</h2><p>Primary parent/contact information for this registration.</p></div></div>
+        <div class="form-grid two">
+          <label><span>First Name *</span><input name="parent_first_name" required maxlength="100" autocomplete="given-name"></label>
+          <label><span>Last Name *</span><input name="parent_last_name" required maxlength="100" autocomplete="family-name"></label>
+          <label><span>Relationship to Player *</span><input name="parent_relationship" required maxlength="80" placeholder="Mother, Father, Parent…"></label>
+          <label><span>Email *</span><input name="parent_email" type="email" required maxlength="200" autocomplete="email"></label>
+          <label><span>Phone *</span><input name="parent_phone" type="tel" required maxlength="60" autocomplete="tel"></label>
+          <label><span>Address *</span><input name="parent_address_line1" required maxlength="240" autocomplete="address-line1"></label>
+          <label><span>Address Line 2</span><input name="parent_address_line2" maxlength="240" autocomplete="address-line2"></label>
+          <label><span>City *</span><input name="parent_city" required maxlength="120" autocomplete="address-level2"></label>
+          <label><span>State *</span><input name="parent_state" required maxlength="120" autocomplete="address-level1"></label>
+          <label><span>ZIP / Postal Code *</span><input name="parent_postal_code" required maxlength="30" autocomplete="postal-code"></label>
+          <label><span>Country *</span><input name="parent_country" required maxlength="120" value="United States" autocomplete="country-name"></label>
+        </div>
+      </section>
+
+      <section class="registration-card form-section">
+        <div class="section-heading"><span>3</span><div><h2>Emergency Contacts</h2><p>Please provide two people the academy can contact in an emergency.</p></div></div>
+        <div class="contact-grid">
+          <fieldset class="contact-card" data-emergency="1"><legend>Emergency Contact 1 *</legend>
+            <label><span>First Name</span><input data-contact="first_name" required></label><label><span>Last Name</span><input data-contact="last_name" required></label>
+            <label><span>Relationship</span><input data-contact="relationship" required></label><label><span>Phone</span><input data-contact="phone" type="tel" required></label>
+            <label class="wide"><span>Email</span><input data-contact="email" type="email"></label>
+          </fieldset>
+          <fieldset class="contact-card" data-emergency="2"><legend>Emergency Contact 2 *</legend>
+            <label><span>First Name</span><input data-contact="first_name" required></label><label><span>Last Name</span><input data-contact="last_name" required></label>
+            <label><span>Relationship</span><input data-contact="relationship" required></label><label><span>Phone</span><input data-contact="phone" type="tel" required></label>
+            <label class="wide"><span>Email</span><input data-contact="email" type="email"></label>
+          </fieldset>
+        </div>
+      </section>
+
+      <section class="registration-card form-section">
+        <div class="section-heading"><span>4</span><div><h2>Guardian</h2><p>Provide an additional guardian if different from the primary parent.</p></div></div>
+        <label class="check-row"><input id="guardianSameAsParent" name="guardian_same_as_parent" type="checkbox" checked> Guardian is the same as the primary parent</label>
+        <div id="guardianFields" class="form-grid two guardian-fields" hidden>
+          <label><span>First Name *</span><input data-guardian="first_name"></label><label><span>Last Name *</span><input data-guardian="last_name"></label>
+          <label><span>Relationship *</span><input data-guardian="relationship"></label><label><span>Email</span><input data-guardian="email" type="email"></label>
+          <label><span>Phone *</span><input data-guardian="phone" type="tel"></label><label><span>Address</span><input data-guardian="address_line1"></label>
+          <label><span>Address Line 2</span><input data-guardian="address_line2"></label><label><span>City</span><input data-guardian="city"></label>
+          <label><span>State</span><input data-guardian="state"></label><label><span>ZIP / Postal Code</span><input data-guardian="postal_code"></label>
+          <label><span>Country</span><input data-guardian="country" value="United States"></label>
+          <label class="check-row compact"><input data-guardian="pickup_authorized" type="checkbox" checked> Authorized to pick up player</label>
+        </div>
+      </section>
+
+      <section class="registration-card form-section sensitive-section">
+        <div class="section-heading"><span>5</span><div><h2>Medical & Additional Information</h2><p>Provide information relevant to safe participation. These details are handled as restricted registration information.</p></div></div>
+        <div class="form-grid two">
+          <label><span>Known Injuries</span><textarea name="injuries" rows="3" placeholder="Current or recurring injuries"></textarea></label>
+          <label><span>Previous Surgeries</span><textarea name="surgeries" rows="3"></textarea></label>
+          <label><span>Medical Considerations</span><textarea name="medical_considerations" rows="3"></textarea></label>
+          <label><span>Allergies</span><textarea name="allergies" rows="3"></textarea></label>
+          <label><span>Physical Restrictions</span><textarea name="physical_restrictions" rows="3"></textarea></label>
+          <label><span>Other Notes for the Academy</span><textarea name="additional_notes" rows="3"></textarea></label>
+        </div>
+      </section>
+
+      <section class="registration-card form-section review-section">
+        <div class="section-heading"><span>6</span><div><h2>Review & Submit</h2><p>Your registration becomes an application for academy review; it does not create an active player until approved.</p></div></div>
+        <div id="reviewNote" class="review-note" hidden></div>
+        <label class="check-row consent"><input name="consent_confirmed" type="checkbox" required> I confirm the information provided is accurate and consent to its use for academy registration and player administration. *</label>
+        <div class="save-state"><span id="draftStatus">Changes save automatically.</span></div>
+        <div class="submit-row"><button type="submit" id="submitRegistration">Submit Registration</button></div>
+      </section>
+    </form>
+
+    <section id="registrationSuccess" class="registration-card registration-success" hidden>
+      <div class="success-icon">✓</div>
+      <h1>Registration submitted</h1>
+      <p>Your application has been sent to the academy for review. The academy will contact you with the next steps.</p>
+    </section>
+  </main>
+  <script src="/static/academy_registration_public_v1.js?v=1"></script>
+</body>
+</html>
