@@ -1,0 +1,44 @@
+name: Academy Finance Operations CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/academy_finance_operations_api.py'
+      - 'app/static/academy_finance_operations_v1.js'
+      - 'app/static/academy_finance_operations_v1.css'
+      - 'app/static/index.html'
+      - 'tests/test_academy_finance_operations_api.py'
+      - 'run.py'
+      - '.github/workflows/academy-finance-operations-ci.yml'
+  pull_request:
+    paths:
+      - 'app/academy_finance_operations_api.py'
+      - 'app/static/academy_finance_operations_v1.js'
+      - 'app/static/academy_finance_operations_v1.css'
+      - 'app/static/index.html'
+      - 'tests/test_academy_finance_operations_api.py'
+      - 'run.py'
+      - '.github/workflows/academy-finance-operations-ci.yml'
+
+jobs:
+  finance-operations-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest httpx
+      - name: Compile and JavaScript syntax check
+        run: |
+          python -m compileall -q app run.py tests/test_academy_finance_operations_api.py
+          node --check app/static/academy_finance_operations_v1.js
+      - name: Finance operations API tests
+        run: pytest -q tests/test_academy_finance_operations_api.py
