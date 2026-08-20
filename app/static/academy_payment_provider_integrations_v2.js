@@ -3,6 +3,7 @@
   const ROOT_SELECTOR = '[data-cam-payment-integrations]';
   let mounting = false;
   let scheduled = false;
+  const feedbackByProvider = new Map();
 
   function activeRoute() {
     return (location.hash.replace(/^#/, '').split('?')[0] || 'dashboard').trim();
@@ -56,6 +57,7 @@
     const clientMarker = provider === 'stripe'
       ? (safeClient.publishable_key ? `${String(safeClient.publishable_key).slice(0, 8)}…` : '—')
       : (safeClient.application_id ? `${String(safeClient.application_id).slice(0, 12)}…` : '—');
+    const feedback = feedbackByProvider.get(provider) || {};
 
     return `<article class="panel cam-provider-card" data-provider="${esc(provider)}">
       <div class="cam-provider-card-head">
@@ -78,7 +80,7 @@
         <button type="button" class="secondary" data-provider-test="${esc(provider)}" ${configured ? '' : 'disabled'}>Test Connection</button>
         <button type="button" class="primary" data-provider-select="${esc(provider)}" ${connected && !selected ? '' : 'disabled'}>${selected ? 'Selected' : 'Use This Provider'}</button>
       </div>
-      <p class="cam-provider-result" data-provider-result="${esc(provider)}"></p>
+      <p class="cam-provider-result" data-provider-result="${esc(provider)}" data-state="${esc(feedback.state || '')}">${esc(feedback.message || '')}</p>
     </article>`;
   }
 
@@ -101,6 +103,7 @@
   }
 
   function setResult(host, provider, message, state = '') {
+    feedbackByProvider.set(provider, {message, state});
     const result = host.querySelector(`[data-provider-result="${provider}"]`);
     if (!result) return;
     result.textContent = message;
