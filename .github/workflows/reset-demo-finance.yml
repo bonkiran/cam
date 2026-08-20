@@ -1,0 +1,46 @@
+name: Reset and Reconcile DEMO Finance Data
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/reset-demo-finance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reset-seed-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate fixture scripts
+        run: >-
+          python -m py_compile
+          scripts/reset_demo_finance.py
+          scripts/seed_full_academy_demo.py
+          scripts/fix_full_demo_dashboard_data.py
+          scripts/verify_full_demo_dashboard.py
+      - name: Remove legacy DEMO billing, invoice and payment records
+        env:
+          CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
+        run: python scripts/reset_demo_finance.py
+      - name: Re-seed deterministic 45-player academy dataset
+        env:
+          CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
+        run: python scripts/seed_full_academy_demo.py
+      - name: Apply five-registration and coach-payroll fixtures
+        env:
+          CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
+        run: python scripts/fix_full_demo_dashboard_data.py
+      - name: Reconcile dashboard totals
+        env:
+          CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
+        run: python scripts/verify_full_demo_dashboard.py
