@@ -7,23 +7,33 @@ on:
     paths:
       - 'app/payment_providers.py'
       - 'app/academy_payment_provider_api.py'
+      - 'app/academy_enrollment_payment_api.py'
       - 'app/static/academy_payment_provider_integrations_v1.js'
       - 'app/static/academy_payment_provider_integrations_v1.css'
+      - 'app/static/academy_enrollment_public_v1.html'
+      - 'app/static/academy_enrollment_public_v1.js'
+      - 'app/static/academy_enrollment_public_v1.css'
       - 'app/static/index.html'
       - 'run.py'
       - 'tests/test_payment_provider_abstraction.py'
       - 'tests/test_payment_provider_integrations_ui.py'
+      - 'tests/test_academy_enrollment_payment.py'
       - '.github/workflows/academy-payment-provider-ci.yml'
   pull_request:
     paths:
       - 'app/payment_providers.py'
       - 'app/academy_payment_provider_api.py'
+      - 'app/academy_enrollment_payment_api.py'
       - 'app/static/academy_payment_provider_integrations_v1.js'
       - 'app/static/academy_payment_provider_integrations_v1.css'
+      - 'app/static/academy_enrollment_public_v1.html'
+      - 'app/static/academy_enrollment_public_v1.js'
+      - 'app/static/academy_enrollment_public_v1.css'
       - 'app/static/index.html'
       - 'run.py'
       - 'tests/test_payment_provider_abstraction.py'
       - 'tests/test_payment_provider_integrations_ui.py'
+      - 'tests/test_academy_enrollment_payment.py'
       - '.github/workflows/academy-payment-provider-ci.yml'
 
 permissions:
@@ -46,11 +56,16 @@ jobs:
           python -m py_compile
           app/payment_providers.py
           app/academy_payment_provider_api.py
+          app/academy_enrollment_payment_api.py
           tests/test_payment_provider_abstraction.py
           tests/test_payment_provider_integrations_ui.py
+          tests/test_academy_enrollment_payment.py
           run.py
-      - name: Run Stripe Square contract and integrations UI tests
+      - name: JavaScript syntax check
+        run: node --check app/static/academy_enrollment_public_v1.js
+      - name: Run Stripe Square contract and Slice 2C tests
         run: >-
           pytest -q
           tests/test_payment_provider_abstraction.py
           tests/test_payment_provider_integrations_ui.py
+          tests/test_academy_enrollment_payment.py
