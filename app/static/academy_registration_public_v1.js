@@ -26,8 +26,14 @@
     });
     return out;
   }
+  function contactHasValue(contact={}){
+    return Object.entries(contact).some(([key,val])=>key!=='pickup_authorized'&&val!==null&&val!==undefined&&String(val).trim()!=='');
+  }
   function payload(){
     const guardianSame=$('#guardianSameAsParent').checked;
+    const emergencyContacts=$$('[data-emergency]')
+      .map(card=>contactFrom(card,'data-contact'))
+      .filter(contactHasValue);
     return {
       player_first_name:value('player_first_name'),player_last_name:value('player_last_name'),
       player_date_of_birth:value('player_date_of_birth'),player_gender:value('player_gender'),
@@ -38,7 +44,7 @@
       parent_address_line1:value('parent_address_line1'),parent_address_line2:value('parent_address_line2'),
       parent_city:value('parent_city'),parent_state:value('parent_state'),parent_postal_code:value('parent_postal_code'),
       parent_country:value('parent_country'),
-      emergency_contacts:$$('[data-emergency]').map(card=>contactFrom(card,'data-contact')),
+      emergency_contacts:emergencyContacts,
       guardian_same_as_parent:guardianSame,
       guardian:guardianSame?null:contactFrom($('#guardianFields'),'data-guardian'),
       injuries:value('injuries'),surgeries:value('surgeries'),medical_considerations:value('medical_considerations'),
@@ -52,6 +58,17 @@
       const key=el.getAttribute(attr);const val=data?.[key];
       if(el.type==='checkbox')el.checked=val===undefined?true:!!val;else if(val!==null&&val!==undefined)el.value=String(val);
     });
+  }
+  function makeEmergencyContactsOptional(){
+    const cards=$$('[data-emergency]');
+    cards.forEach(card=>{
+      const legend=$('legend',card);
+      if(legend)legend.textContent=(legend.textContent||'').replace(/\s*\*\s*$/,'');
+      $$('[data-contact]',card).forEach(el=>{el.required=false;});
+    });
+    const section=cards[0]?.closest('.form-section');
+    const note=section?$('.section-heading p',section):null;
+    if(note)note.textContent='Optional: provide up to two additional people the academy can contact in an emergency.';
   }
   function fill(data){
     const app=data?.application||{};
@@ -100,6 +117,7 @@
     $('#guardianSameAsParent').addEventListener('change',()=>{updateGuardianVisibility();scheduleSave();});
   }
   async function load(){
+    makeEmergencyContactsOptional();
     if(!token){showError('The registration link is incomplete.');return;}
     try{
       loaded=await request(`/api/public/registration/${encodeURIComponent(token)}`);
