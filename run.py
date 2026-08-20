@@ -16,6 +16,7 @@ from app.academy_matches_api import router as academy_matches_router
 from app.academy_tournaments_api import router as academy_tournaments_router
 from app.academy_fees_api import router as academy_fees_router
 from app.academy_payments_v2_api import router as academy_payments_router
+from app.academy_payment_provider_api import router as academy_payment_provider_router
 from app.academy_finance_operations_api import router as academy_finance_operations_router
 from app.academy_demo_cleanup_api import router as academy_demo_cleanup_router
 from app.academy_auth_api import (
@@ -133,6 +134,7 @@ app.include_router(academy_matches_router)
 app.include_router(academy_tournaments_router)
 app.include_router(academy_fees_router)
 app.include_router(academy_payments_router)
+app.include_router(academy_payment_provider_router)
 app.include_router(academy_finance_operations_router)
 app.include_router(academy_demo_cleanup_router)
 app.include_router(academy_auth_router)

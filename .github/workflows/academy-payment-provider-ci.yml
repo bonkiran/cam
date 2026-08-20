@@ -1,0 +1,44 @@
+name: Academy Payment Provider CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/payment_providers.py'
+      - 'app/academy_payment_provider_api.py'
+      - 'run.py'
+      - 'tests/test_payment_provider_abstraction.py'
+      - '.github/workflows/academy-payment-provider-ci.yml'
+  pull_request:
+    paths:
+      - 'app/payment_providers.py'
+      - 'app/academy_payment_provider_api.py'
+      - 'run.py'
+      - 'tests/test_payment_provider_abstraction.py'
+      - '.github/workflows/academy-payment-provider-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  provider-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: pip install -r requirements.txt pytest
+      - name: Compile payment provider modules
+        run: >-
+          python -m py_compile
+          app/payment_providers.py
+          app/academy_payment_provider_api.py
+          tests/test_payment_provider_abstraction.py
+          run.py
+      - name: Run Stripe Square contract tests
+        run: pytest -q tests/test_payment_provider_abstraction.py
