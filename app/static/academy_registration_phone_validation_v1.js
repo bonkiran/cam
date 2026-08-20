@@ -1,19 +1,19 @@
 (() => {
   const PHONE_CHARS = /^\+?[0-9 ()\-.]+$/;
-  const MESSAGE = 'Enter a valid phone number using 7–15 digits. You may use spaces, parentheses, +, - or periods.';
+  const MESSAGE = 'Enter a valid phone number using 9–15 digits. You may use spaces, parentheses, +, - or periods.';
 
   function validPhone(value) {
     const text = String(value || '').trim();
     if (!text || !PHONE_CHARS.test(text)) return false;
     const digits = text.replace(/\D/g, '');
-    return digits.length >= 7 && digits.length <= 15;
+    return digits.length >= 9 && digits.length <= 15;
   }
 
   function configure(input, required) {
     if (!input || input.dataset.phoneValidationBound === '1') return;
     input.dataset.phoneValidationBound = '1';
     input.inputMode = 'tel';
-    input.autocomplete = input.name === 'parent_phone' ? 'tel' : 'tel';
+    input.autocomplete = 'tel';
 
     const validate = () => {
       const value = input.value.trim();
@@ -51,9 +51,6 @@
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', apply);
-  } else {
-    apply();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+  else apply();
 })();
