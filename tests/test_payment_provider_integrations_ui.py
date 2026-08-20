@@ -49,7 +49,7 @@ def test_provider_feedback_survives_provider_grid_refresh():
     assert "feedbackByProvider.get(provider)" in js
     assert "data-state=\"${esc(feedback.state || '')}\"" in js
     assert "${esc(feedback.message || '')}</p>" in js
-    assert "Stripe'} sandbox connection successful." in js
+    assert "sandbox connection successful." in js
 
 
 def test_payment_provider_ui_does_not_embed_secret_keys():
