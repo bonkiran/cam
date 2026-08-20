@@ -15,10 +15,12 @@ os.environ["CAM_ENROLLMENT_FIRST_CHARGE_DATE"] = "2026-09-01"
 
 from fastapi.testclient import TestClient
 
+# Import run first so app.main creates the core schema (academies, players, etc.)
+# before enrollment/payment modules create tables with foreign keys to it.
+from run import app
 from app import academy_enrollment_payment_api as enrollment_payment_api
 from app.database import connection, fetch_one
 from app.payment_providers import ProviderDescriptor
-from run import app
 
 client = TestClient(app)
 
