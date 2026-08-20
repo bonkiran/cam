@@ -12,22 +12,21 @@ os.environ["CAM_TEMP_ADMIN_MODE"] = "1"
 
 from fastapi.testclient import TestClient
 from run import app
-from app.database import fetch_one
 
 client = TestClient(app)
 
 
-def _primary_emergency():
+def _primary_emergency(phone="404-555-0199"):
     return {
         "first_name": "Priya",
         "last_name": "Kumar",
         "relationship": "Mother",
-        "phone": "404-555-0199",
+        "phone": phone,
         "email": "priya.kumar@example.com",
     }
 
 
-def _payload(emergency_contacts=None, *, pickup_authorized=True, player_first_name="Policy", player_last_name="Tester"):
+def _payload(emergency_contacts=None, *, player_first_name="Policy", player_last_name="Tester"):
     return {
         "player_first_name": player_first_name,
         "player_last_name": player_last_name,
@@ -49,9 +48,7 @@ def _payload(emergency_contacts=None, *, pickup_authorized=True, player_first_na
         "parent_postal_code": "30024",
         "parent_country": "United States",
         "emergency_contacts": emergency_contacts if emergency_contacts is not None else [_primary_emergency()],
-        # Current public-form policy reuses this legacy boolean as the primary
-        # parent's pickup authorization while the separate Guardian UI is retired.
-        "guardian_same_as_parent": pickup_authorized,
+        "guardian_same_as_parent": True,
         "guardian": None,
         "injuries": None,
         "surgeries": None,
@@ -107,67 +104,79 @@ def test_optional_second_emergency_contact_must_be_complete_when_started():
     _, token = _new_token("partial-second")
     contacts = [
         _primary_emergency(),
-        {
-            "first_name": "Anil",
-            "last_name": None,
-            "relationship": "Uncle",
-            "phone": None,
-            "email": None,
-        },
+        {"first_name": "Anil", "last_name": None, "relationship": "Uncle", "phone": None, "email": None},
     ]
     submitted = client.post(f"/api/public/registration/{token}/submit", json=_payload(contacts))
     assert submitted.status_code == 422, submitted.text
     assert "Emergency contact 2 name, relationship and phone" in submitted.text
 
 
-def test_parent_phone_rejects_text_and_invalid_phone_format():
+def test_parent_phone_rejects_text_and_too_few_digits():
     _, token = _new_token("invalid-parent-phone")
-    payload = _payload([_primary_emergency()])
+    payload = _payload()
     payload["parent_phone"] = "call-me-now"
     submitted = client.post(f"/api/public/registration/{token}/submit", json=payload)
     assert submitted.status_code == 422, submitted.text
-    assert "Parent phone must be a valid phone number" in submitted.text
+    assert "Parent phone must contain 9-15 digits and no letters" in submitted.text
+
+    payload["parent_phone"] = "12345678"
+    submitted = client.post(f"/api/public/registration/{token}/submit", json=payload)
+    assert submitted.status_code == 422, submitted.text
 
 
-def test_emergency_contact_phone_rejects_text_and_invalid_phone_format():
+def test_nine_digit_phone_is_accepted():
+    _, token = _new_token("nine-digit-phone")
+    payload = _payload([_primary_emergency("123-456-789")])
+    payload["parent_phone"] = "123-456-789"
+    submitted = client.post(f"/api/public/registration/{token}/submit", json=payload)
+    assert submitted.status_code == 200, submitted.text
+
+
+def test_emergency_contact_phone_rejects_text():
     _, token = _new_token("invalid-emergency-phone")
-    invalid_contact = _primary_emergency()
-    invalid_contact["phone"] = "abc-1234"
     submitted = client.post(
         f"/api/public/registration/{token}/submit",
-        json=_payload([invalid_contact]),
+        json=_payload([_primary_emergency("abc-123456789")]),
     )
     assert submitted.status_code == 422, submitted.text
-    assert "Emergency contact 1 phone must be a valid phone number" in submitted.text
+    assert "Emergency contact 1 phone must contain 9-15 digits and no letters" in submitted.text
 
 
-def test_parent_pickup_authorization_is_applied_on_approval():
-    _, token = _new_token("pickup-policy")
-    submitted = client.post(
-        f"/api/public/registration/{token}/submit",
-        json=_payload(
-            [_primary_emergency()],
-            pickup_authorized=False,
-            player_first_name="Pickup",
-            player_last_name="Policy",
-        ),
-    )
+def test_state_rejects_invalid_text_and_accepts_full_name():
+    _, token = _new_token("invalid-state")
+    payload = _payload()
+    payload["parent_state"] = "Atlantis"
+    submitted = client.post(f"/api/public/registration/{token}/submit", json=payload)
+    assert submitted.status_code == 422, submitted.text
+    assert "Parent state must be a valid US state name or 2-letter abbreviation" in submitted.text
+
+    _, token = _new_token("full-state")
+    payload = _payload(player_first_name="FullState")
+    payload["parent_state"] = "Georgia"
+    submitted = client.post(f"/api/public/registration/{token}/submit", json=payload)
     assert submitted.status_code == 200, submitted.text
     application_id = int(submitted.json()["application_id"])
+    application = client.get(f"/api/academy/registration/applications/{application_id}")
+    assert application.status_code == 200, application.text
+    assert application.json()["parent_state"] == "GA"
 
-    approved = client.post(
-        f"/api/academy/registration/applications/{application_id}/review",
-        json={"action": "approve", "note": "Pickup policy test"},
-    )
-    assert approved.status_code == 200, approved.text
-    player_id = int(approved.json()["approved_player_id"])
 
-    primary_link = fetch_one(
-        "SELECT pickup_authorized FROM player_guardians WHERE player_id=? AND is_primary=1",
-        (player_id,),
-    )
-    assert primary_link is not None
-    assert int(primary_link["pickup_authorized"]) == 0
+def test_zip_requires_exactly_five_digits_and_preserves_leading_zero():
+    _, token = _new_token("invalid-zip")
+    payload = _payload()
+    payload["parent_postal_code"] = "30O24"
+    submitted = client.post(f"/api/public/registration/{token}/submit", json=payload)
+    assert submitted.status_code == 422, submitted.text
+    assert "Parent ZIP must be a valid 5-digit US ZIP code" in submitted.text
+
+    _, token = _new_token("leading-zero-zip")
+    payload = _payload(player_first_name="LeadingZero")
+    payload["parent_postal_code"] = "02108"
+    submitted = client.post(f"/api/public/registration/{token}/submit", json=payload)
+    assert submitted.status_code == 200, submitted.text
+    application_id = int(submitted.json()["application_id"])
+    application = client.get(f"/api/academy/registration/applications/{application_id}")
+    assert application.json()["parent_postal_code"] == "02108"
 
 
 def test_copy_link_and_public_form_ui_match_current_policy():
@@ -175,29 +184,27 @@ def test_copy_link_and_public_form_ui_match_current_policy():
     copy_patch = (REPO_ROOT / "app" / "static" / "academy_registration_copy_link_fix_v1.js").read_text(encoding="utf-8")
     review_patch = (REPO_ROOT / "app" / "static" / "academy_registration_review_policy_v2.js").read_text(encoding="utf-8")
     public_html = (REPO_ROOT / "app" / "static" / "academy_registration_public_v1.html").read_text(encoding="utf-8")
-    phone_validation = (REPO_ROOT / "app" / "static" / "academy_registration_phone_validation_v1.js").read_text(encoding="utf-8")
+    validation = (REPO_ROOT / "app" / "static" / "academy_registration_phone_validation_v1.js").read_text(encoding="utf-8")
 
     assert "academy_registration_copy_link_fix_v1.js" in index
     assert "data-share=\"copy\"" in copy_patch
     assert "/sent" not in copy_patch
 
-    assert '<span class="active">Player</span><span>Parent</span><span>Medical</span><span>Review</span>' in public_html
-    assert "1 · Player" not in public_html
-    assert "3 · Safety" not in public_html
     assert "Emergency Contact 1 *" in public_html
     assert "Emergency Contact 2 *" not in public_html
     assert "Please provide one emergency contact. A second contact is optional." in public_html
-    assert 'name="parent_pickup_authorized"' in public_html
-    assert "Authorized to pick up player" in public_html
     assert "<h2>Guardian</h2>" not in public_html
 
     assert 'name="parent_phone" type="tel"' in public_html
     assert 'data-contact="phone" type="tel"' in public_html
-    assert 'pattern="\\+?[0-9 ()\\-.]{7,25}"' in public_html
     assert "academy_registration_phone_validation_v1.js" in public_html
-    assert "digits.length >= 7 && digits.length <= 15" in phone_validation
-    assert "setCustomValidity" in phone_validation
+    assert "digits.length >= 9 && digits.length <= 15" in validation
+    assert "Parent state" not in validation  # errors are concise UI messages, not field labels
+    assert "STATE_MESSAGE" in validation
+    assert "ZIP_MESSAGE" in validation
+    assert "^[0-9]{5}$" in validation
+    assert "label.remove()" in validation
 
     assert "academy_registration_review_policy_v2.js" in index
     assert "Emergency Contacts" in review_patch
-    assert "Pickup Authorized" in review_patch
+    assert "Pickup Authorized" not in review_patch
