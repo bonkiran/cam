@@ -7,6 +7,8 @@ on:
     paths:
       - 'app/academy_registration_api.py'
       - 'app/academy_registration_validation_policy.py'
+      - 'app/academy_registration_address_validation.py'
+      - 'app/academy_registration_branding_api.py'
       - 'app/academy_rbac_middleware.py'
       - 'run.py'
       - 'app/static/academy_registration_v1.js'
@@ -19,13 +21,17 @@ on:
       - 'app/static/academy_registration_public_v1.css'
       - 'app/static/academy_primary_nav_v1.js'
       - 'app/static/index.html'
+      - 'tests/conftest.py'
       - 'tests/test_academy_registration_api.py'
       - 'tests/test_academy_registration_manual_fixes.py'
+      - 'tests/test_academy_registration_address_branding.py'
       - '.github/workflows/academy-registration-ci.yml'
   pull_request:
     paths:
       - 'app/academy_registration_api.py'
       - 'app/academy_registration_validation_policy.py'
+      - 'app/academy_registration_address_validation.py'
+      - 'app/academy_registration_branding_api.py'
       - 'app/academy_rbac_middleware.py'
       - 'run.py'
       - 'app/static/academy_registration_v1.js'
@@ -38,8 +44,10 @@ on:
       - 'app/static/academy_registration_public_v1.css'
       - 'app/static/academy_primary_nav_v1.js'
       - 'app/static/index.html'
+      - 'tests/conftest.py'
       - 'tests/test_academy_registration_api.py'
       - 'tests/test_academy_registration_manual_fixes.py'
+      - 'tests/test_academy_registration_address_branding.py'
       - '.github/workflows/academy-registration-ci.yml'
 
 permissions:
@@ -62,7 +70,14 @@ jobs:
           python -m py_compile
           app/academy_registration_api.py
           app/academy_registration_validation_policy.py
+          app/academy_registration_address_validation.py
+          app/academy_registration_branding_api.py
           tests/test_academy_registration_api.py
           tests/test_academy_registration_manual_fixes.py
+          tests/test_academy_registration_address_branding.py
       - name: Run registration workflow tests
-        run: pytest -q tests/test_academy_registration_api.py tests/test_academy_registration_manual_fixes.py
+        run: >-
+          pytest -q
+          tests/test_academy_registration_api.py
+          tests/test_academy_registration_manual_fixes.py
+          tests/test_academy_registration_address_branding.py
