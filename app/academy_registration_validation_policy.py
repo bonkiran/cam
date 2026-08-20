@@ -4,6 +4,7 @@ import re
 
 from fastapi import HTTPException
 
+from . import academy_registration_address_validation as address_validation
 from . import academy_registration_api as registration_api
 
 
@@ -65,6 +66,7 @@ _US_STATES = {
 }
 _STATE_LOOKUP = {code.lower(): code for code in _US_STATES}
 _STATE_LOOKUP.update({name.lower(): code for code, name in _US_STATES.items()})
+_US_COUNTRY_NAMES = {"united states", "united states of america", "usa", "us", "u.s.", "u.s.a."}
 
 
 def _clean(value: str | None) -> str | None:
@@ -94,6 +96,11 @@ def _valid_us_zip(value: str | None) -> bool:
     return bool(text and _ZIP_5.fullmatch(text))
 
 
+def _valid_us_country(value: str | None) -> bool:
+    text = _clean(value)
+    return bool(text and text.lower() in _US_COUNTRY_NAMES)
+
+
 def _contact_complete(contact) -> bool:
     return bool(
         contact
@@ -114,9 +121,10 @@ def _validate_submission(payload) -> None:
     - Emergency Contact 1 is required; Emergency Contact 2 is optional.
     - Parent and emergency-contact phone numbers use 9-15 digits and may use
       ordinary phone formatting characters, but never letters.
-    - Parent state must be a valid US state/DC abbreviation or full name.
-    - Parent ZIP must be exactly five digits. It remains text so leading zeroes
-      are preserved.
+    - Parent country/state/ZIP are US-only in Process 1.
+    - Parent street/city/state/ZIP are verified together against the U.S.
+      Census Geocoder at submit time so arbitrary or mismatched address data is
+      not accepted for the primary/billing contact.
     - The public form does not collect a separate Guardian/pickup-authorized
       field. Legacy API guardian payloads remain supported for compatibility.
     """
@@ -160,6 +168,9 @@ def _validate_submission(payload) -> None:
     if _clean(payload.parent_postal_code) and not _valid_us_zip(payload.parent_postal_code):
         problems.append("Parent ZIP must be a valid 5-digit US ZIP code")
 
+    if _clean(payload.parent_country) and not _valid_us_country(payload.parent_country):
+        problems.append("Parent country must be United States")
+
     if payload.wicketkeeping is None:
         problems.append("Wicketkeeping")
 
@@ -184,6 +195,35 @@ def _validate_submission(payload) -> None:
 
     if not payload.consent_confirmed:
         problems.append("Registration confirmation")
+
+    # Run external address verification only after local validation succeeds so
+    # obviously malformed submissions do not consume an external lookup.
+    address_fields_ready = all(
+        [
+            _clean(payload.parent_address_line1),
+            _clean(payload.parent_city),
+            normalized_state,
+            _valid_us_zip(payload.parent_postal_code),
+            _valid_us_country(payload.parent_country),
+        ]
+    )
+    if not problems and address_fields_ready:
+        try:
+            verified = address_validation.verify_us_address(
+                street=str(payload.parent_address_line1),
+                city=str(payload.parent_city),
+                state=str(normalized_state),
+                zip_code=str(payload.parent_postal_code),
+            )
+        except address_validation.AddressVerificationUnavailable as exc:
+            raise HTTPException(
+                503,
+                "Address verification is temporarily unavailable. Please try submitting again shortly.",
+            ) from exc
+        if not bool(verified.get("verified")):
+            problems.append(
+                "Parent address, city, state and ZIP could not be verified as one valid US address"
+            )
 
     if problems:
         raise HTTPException(
