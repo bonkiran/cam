@@ -106,3 +106,40 @@ def test_dashboard_v3_api_attendance_does_not_expose_excused_column():
     assert '"attended"' in source
     assert '"attendance_percent"' in source
     assert '"excused"' not in source
+
+
+def test_dashboard_v3_degrades_one_section_without_blank_page(monkeypatch):
+    monkeypatch.setattr(
+        dashboard_v3,
+        "_academy_for_user",
+        lambda user: {
+            "id": 1,
+            "name": "CAM Academy",
+            "city": "Johns Creek",
+            "state": "GA",
+            "postal_code": "30022",
+            "country": "US",
+            "timezone": "America/New_York",
+        },
+    )
+    monkeypatch.setattr(dashboard_v3, "_local_today", lambda profile: date(2026, 8, 21))
+
+    def fail_program_counts():
+        raise RuntimeError("simulated production query failure")
+
+    monkeypatch.setattr(dashboard_v3, "_program_counts", fail_program_counts)
+    monkeypatch.setattr(dashboard_v3, "_new_enrollments", lambda profile, today: {"count": 1, "players": [{"player_id": 7}]})
+    monkeypatch.setattr(dashboard_v3, "_registration_tracker", lambda profile, today: {"links_sent_count": 2, "tracker_count": 2, "rows": []})
+    monkeypatch.setattr(dashboard_v3, "_today_sessions", lambda today: {"group": [], "private": [], "count": 0})
+    monkeypatch.setattr(dashboard_v3, "_fee_receipts", lambda today: {"group_session_fee_received_cents": 0, "group_session_fee_pending_cents": 0})
+    monkeypatch.setattr(dashboard_v3, "_academy_payments", lambda today: {"coach_salary_payments_cents": 0, "facility_payments_cents": 0, "academy_expenses_cents": 0})
+    monkeypatch.setattr(dashboard_v3, "_upcoming_events", lambda today: {"matches": [], "programs": [], "tournaments": []})
+    monkeypatch.setattr(dashboard_v3, "_attendance_by_batch", lambda today: {"date": None, "latest_time": None, "total_scheduled": 0, "batches": []})
+
+    result = dashboard_v3.academy_dashboard_v3({"id": 1, "display_name": "Admin", "role": "admin", "academy_id": 1})
+
+    assert result["new_enrollments"]["count"] == 1
+    assert result["registration_tracker"]["links_sent_count"] == 2
+    assert result["program_counts"]["total_players"] == 0
+    assert result["program_counts"]["buckets"] == {"Beginners": 0, "U11": 0, "U13": 0, "U14": 0, "U15": 0}
+    assert result["degraded_sections"] == ["program_counts"]

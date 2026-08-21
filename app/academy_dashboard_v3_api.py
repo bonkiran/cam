@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -9,6 +10,7 @@ from .academy_auth_api import current_access_user
 from .database import fetch_all, fetch_one
 
 router = APIRouter(prefix="/api/academy/dashboard", tags=["academy-dashboard-v3"])
+logger = logging.getLogger(__name__)
 
 PROGRAM_BUCKETS = ("Beginners", "U11", "U13", "U14", "U15")
 
@@ -429,11 +431,70 @@ def _attendance_by_batch(today: date) -> dict:
     }
 
 
+def _safe_section(name: str, fallback: dict, loader) -> tuple[dict, str | None]:
+    """Return one dashboard section without allowing a single query to blank the whole page."""
+    try:
+        return loader(), None
+    except Exception:
+        logger.exception("Academy Dashboard v3 section failed: %s", name)
+        return fallback, name
+
+
 @router.get("/v3")
 def academy_dashboard_v3(user: dict = Depends(current_access_user)):
     profile = _academy_for_user(user)
     today = _local_today(profile)
     academy_name = str((profile or {}).get("name") or "CAM Academy")
+
+    warnings: list[str] = []
+
+    def load(name: str, fallback: dict, loader) -> dict:
+        value, warning = _safe_section(name, fallback, loader)
+        if warning:
+            warnings.append(warning)
+        return value
+
+    program_counts = load(
+        "program_counts",
+        {"buckets": {name: 0 for name in PROGRAM_BUCKETS}, "total_players": 0},
+        _program_counts,
+    )
+    new_enrollments = load(
+        "new_enrollments",
+        {"count": 0, "players": []},
+        lambda: _new_enrollments(profile, today),
+    )
+    registration_tracker = load(
+        "registration_tracker",
+        {"links_sent_count": 0, "tracker_count": 0, "rows": []},
+        lambda: _registration_tracker(profile, today),
+    )
+    sessions = load(
+        "sessions",
+        {"group": [], "private": [], "count": 0},
+        lambda: _today_sessions(today),
+    )
+    receipts = load(
+        "receipts",
+        {"group_session_fee_received_cents": 0, "group_session_fee_pending_cents": 0, "scope": "unavailable"},
+        lambda: _fee_receipts(today),
+    )
+    payments = load(
+        "payments",
+        {"coach_salary_payments_cents": 0, "facility_payments_cents": 0, "academy_expenses_cents": 0},
+        lambda: _academy_payments(today),
+    )
+    events = load(
+        "events",
+        {"matches": [], "programs": [], "tournaments": []},
+        lambda: _upcoming_events(today),
+    )
+    attendance = load(
+        "attendance",
+        {"date": None, "latest_time": None, "total_scheduled": 0, "batches": []},
+        lambda: _attendance_by_batch(today),
+    )
+
     return {
         "user": {
             "id": int(user.get("id") or 0),
@@ -451,12 +512,13 @@ def academy_dashboard_v3(user: dict = Depends(current_access_user)):
         },
         "as_of": today.isoformat(),
         "month_label": today.strftime("%B %Y"),
-        "program_counts": _program_counts(),
-        "new_enrollments": _new_enrollments(profile, today),
-        "registration_tracker": _registration_tracker(profile, today),
-        "sessions": _today_sessions(today),
-        "receipts": _fee_receipts(today),
-        "payments": _academy_payments(today),
-        "events": _upcoming_events(today),
-        "attendance": _attendance_by_batch(today),
+        "program_counts": program_counts,
+        "new_enrollments": new_enrollments,
+        "registration_tracker": registration_tracker,
+        "sessions": sessions,
+        "receipts": receipts,
+        "payments": payments,
+        "events": events,
+        "attendance": attendance,
+        "degraded_sections": warnings,
     }
