@@ -2,6 +2,10 @@
 html.c17-overview-first-paint #app .main>.topbar{display:none!important}
 html.c17-overview-first-paint:not(.c17-overview-ready) #academyWorkspace{display:none!important}
 html.c17-overview-ready #c17DashboardFirstPaint{display:none!important}
+/* While the base shell is being upgraded to C17, hide only its legacy brand/nav
+   pieces. The final C17 brand and generated c17-sidebar-nav are revealed in-place. */
+html.c17-overview-first-paint #app .sidebar .brand:not([data-c17-brand="1"]){visibility:hidden!important}
+html.c17-overview-first-paint #app .sidebar .nav>:not(.c17-sidebar-nav){display:none!important}
 #c17DashboardFirstPaint{padding:0 0 24px}
 .c17-fp-dashboard{display:flex;flex-direction:column;gap:10px;color:#143b28}
 .c17-fp-hero,.c17-fp-card{background:#fff;border:1px solid #d9e6de;border-radius:12px;box-shadow:0 5px 18px rgba(22,66,45,.055)}
