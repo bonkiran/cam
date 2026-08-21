@@ -13,6 +13,7 @@
     {label:'Finance', icon:'$', target:'academy?tab=fees', active:r => r.page==='academy' && r.tab==='fees'},
     {label:'Reports', icon:'▥', target:'academy?tab=reports', active:r => r.page==='academy' && r.tab==='reports'},
     {label:'Settings', icon:'⚙', target:'academy?tab=setup', active:r => r.page==='academy' && r.tab==='setup'},
+    {label:'Integrations', icon:'↔', target:'integrations', active:r => r.page==='integrations'},
     {label:'Insights', icon:'⌁', target:'insights', active:r => r.page==='insights'},
     {label:'Help & Support', icon:'?', target:'help', active:r => r.page==='help'}
   ];
@@ -24,7 +25,10 @@
     return {page:page || 'dashboard', tab:new URLSearchParams(query).get('tab') || 'overview'};
   }
 
-  function academyMode() { return route().page === 'academy'; }
+  function academyMode() {
+    const page = route().page;
+    return page === 'academy' || page === 'integrations';
+  }
 
   function brandMarkup() {
     return `<img class="c17-brand-logo" src="/static/c17_academy_logo.png" alt="C17 Cricket Academy"><div class="c17-brand-copy"><strong>C17</strong><span>CRICKET ACADEMY</span></div>`;
@@ -89,10 +93,6 @@
       nav.appendChild(holder);
     }
 
-    // Important: do not rebuild the nav on every DOM mutation. The dashboard
-    // prototype-polish layer replaces icon markup in-place; repeatedly replacing
-    // holder.innerHTML created a MutationObserver feedback loop that continuously
-    // destroyed/recreated the buttons and made clicks unreliable.
     if (holder.dataset.c17Signature !== NAV_SIGNATURE || holder.querySelectorAll('[data-c17-target]').length !== ITEMS.length) {
       buildAcademyNav(holder);
     }
