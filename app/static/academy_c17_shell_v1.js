@@ -5,8 +5,7 @@
   let originalBrand = null;
 
   const ITEMS = [
-    {label:'Dashboard', icon:'⌂', target:'dashboard', active:r => r.page==='dashboard'},
-    {label:'Academy', icon:'▦', target:'academy', active:r => r.page==='academy' && r.tab==='overview'},
+    {label:'Dashboard', icon:'⌂', target:'academy', active:r => r.page==='academy' && r.tab==='overview'},
     {label:'Registration', icon:'✎', target:'academy?tab=registration', active:r => r.page==='academy' && r.tab==='registration'},
     {label:'Players', icon:'♙', target:'academy?tab=players', active:r => r.page==='academy' && r.tab==='players'},
     {label:'Programs', icon:'▤', target:'academy?tab=programs', active:r => r.page==='academy' && r.tab==='programs'},
@@ -22,7 +21,7 @@
   function route() {
     const raw = location.hash.replace(/^#/, '');
     const [page, query=''] = raw.split('?');
-    return {page:page || 'dashboard', tab:new URLSearchParams(query).get('tab') || 'overview'};
+    return {page:page || 'academy', tab:new URLSearchParams(query).get('tab') || 'overview'};
   }
 
   function academyMode() { return route().page === 'academy'; }
@@ -90,10 +89,6 @@
       nav.appendChild(holder);
     }
 
-    // Important: do not rebuild the nav on every DOM mutation. The dashboard
-    // prototype-polish layer replaces icon markup in-place; repeatedly replacing
-    // holder.innerHTML created a MutationObserver feedback loop that continuously
-    // destroyed/recreated the buttons and made clicks unreliable.
     if (holder.dataset.c17Signature !== NAV_SIGNATURE || holder.querySelectorAll('[data-c17-target]').length !== ITEMS.length) {
       buildAcademyNav(holder);
     }
