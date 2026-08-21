@@ -1,14 +1,28 @@
-/* C17 academy core: one opaque workspace and one active content surface. */
+/* C17 academy core: one clean workspace and one active content surface. */
 body.c17-academy-mode .main {
-  background: #eef4f1 !important;
+  background-image:
+    linear-gradient(180deg, rgba(231,239,233,.46) 0%, rgba(238,244,241,.58) 38%, rgba(244,247,245,.68) 100%),
+    var(--ground-photo) !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  background-color: #eef4f1 !important;
   overflow-x: hidden;
+}
+
+/* cricket_theme.css normally paints the stadium only as a shallow header hero.
+   C17 uses the same real photograph as the full-page background instead. */
+body.c17-academy-mode .main::before,
+body.c17-academy-mode .main::after {
+  display: none !important;
 }
 
 body.c17-academy-mode #academyWorkspace {
   position: relative;
   isolation: isolate;
   min-height: 100vh;
-  background: #eef4f1;
+  background: transparent !important;
   overflow: hidden;
 }
 
@@ -17,12 +31,21 @@ body.c17-academy-mode #academyWorkspace > .academy-content {
   z-index: 1;
   min-height: 100vh;
   box-sizing: border-box;
-  background: #eef4f1;
+  background: transparent !important;
 }
 
 body.c17-academy-mode #academyWorkspace > .academy-content > * {
   position: relative;
   z-index: 1;
+}
+
+/* Keep dashboard and operational cards readable while allowing the ground to
+   remain visible around and between panels. */
+body.c17-academy-mode .c17-card,
+body.c17-academy-mode .c17-hero,
+body.c17-academy-mode #academyWorkspace .panel {
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
 }
 
 .c17-route-loading {
@@ -32,8 +55,8 @@ body.c17-academy-mode #academyWorkspace > .academy-content > * {
   justify-content: flex-start;
   box-sizing: border-box;
   padding: 24px;
-  background: #eef4f1;
-  color: #567268;
+  background: rgba(238,244,241,.72);
+  color: #456657;
   font-size: 12px;
   font-weight: 700;
 }
@@ -42,4 +65,11 @@ body.c17-academy-mode #academyWorkspace > .academy-content > * {
 body.c17-academy-mode #academyWorkspace > .academy-tabs,
 body.c17-academy-mode #academyWorkspace > .academy-primary-nav {
   display: none !important;
+}
+
+@media (max-width: 900px) {
+  body.c17-academy-mode .main {
+    background-attachment: scroll !important;
+    background-position: center top !important;
+  }
 }
