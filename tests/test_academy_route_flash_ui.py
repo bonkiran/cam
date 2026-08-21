@@ -40,6 +40,7 @@ def _watch_transition(page, target_hash: str) -> dict:
             sawLoadingState: false,
             guardVersion: null,
             adapterVersion: null,
+            finalHash: null,
           };
           const hadWorkspace = !!document.querySelector('#academyWorkspace');
           const isVisible = (el) => {
@@ -48,22 +49,18 @@ def _watch_transition(page, target_hash: str) -> dict:
             const rect = el.getBoundingClientRect();
             return style.visibility !== 'hidden' && style.display !== 'none' && style.opacity !== '0' && rect.width > 0 && rect.height > 0;
           };
-          const targetRaw = targetHash.replace(/^#/, '');
-          const [targetPage, targetQuery = ''] = targetRaw.split('?');
-          const targetTab = targetPage === 'academy' ? (new URLSearchParams(targetQuery).get('tab') || 'overview') : null;
           const frame = () => new Promise(resolve => requestAnimationFrame(resolve));
           location.hash = targetHash;
           for (let i = 0; i < 1200; i++) {
             await frame();
             result.frames += 1;
+            result.finalHash = location.hash;
             result.guardVersion = document.documentElement.dataset.academyRouteGuard || null;
             result.adapterVersion = document.documentElement.dataset.academyRouterAdapter || null;
             const pending = document.documentElement.classList.contains('academy-route-pending');
             result.sawLoadingState = result.sawLoadingState || pending;
 
-            if (hadWorkspace && !document.querySelector('#academyWorkspace')) {
-              result.workspaceMissingFrames += 1;
-            }
+            if (hadWorkspace && !document.querySelector('#academyWorkspace')) result.workspaceMissingFrames += 1;
 
             const genericTextNodes = [...document.querySelectorAll('#app .main *')].filter(el => {
               const text = (el.textContent || '').trim();
@@ -73,9 +70,9 @@ def _watch_transition(page, target_hash: str) -> dict:
             });
             if (genericTextNodes.some(isVisible)) result.badPlaceholderFrames += 1;
 
-            const legacy = [
-              ...document.querySelectorAll('#academyWorkspace .academy-hero, #academyWorkspace .academy-stats, #academyWorkspace .academy-dashboard-grid')
-            ];
+            const legacy = [...document.querySelectorAll(
+              '#academyWorkspace .academy-hero, #academyWorkspace .academy-stats, #academyWorkspace .academy-dashboard-grid, .page-head + .stats'
+            )];
             if (legacy.some(isVisible)) result.legacyOverviewFrames += 1;
 
             const firstPaint = document.querySelector('#c17DashboardFirstPaint');
@@ -93,7 +90,10 @@ def _watch_transition(page, target_hash: str) -> dict:
             }
 
             const workspace = document.querySelector('#academyWorkspace .academy-content');
-            if (targetTab === 'overview') {
+            const raw = location.hash.replace(/^#/, '');
+            const [pageName, query = ''] = raw.split('?');
+            const tab = pageName === 'academy' ? (new URLSearchParams(query).get('tab') || 'overview') : null;
+            if (tab === 'overview') {
               if (workspace?.dataset.dashboardV4 === '1' && isVisible(workspace)) break;
             } else if (workspace && !pending && isVisible(workspace)) {
               break;
@@ -115,7 +115,7 @@ def _assert_clean(result: dict) -> None:
     assert result["workspaceMissingFrames"] == 0, result
 
 
-def test_academy_routes_never_paint_generic_placeholder_or_reload_between_tabs():
+def test_dashboard_is_canonical_academy_overview_without_legacy_flash():
     data_dir = tempfile.mkdtemp(prefix="crickanalysis-route-flash-")
     env = os.environ.copy()
     env["CRICKANALYSIS_DATA_DIR"] = data_dir
@@ -136,32 +136,42 @@ def test_academy_routes_never_paint_generic_placeholder_or_reload_between_tabs()
             browser = playwright.chromium.launch(headless=True)
             page = browser.new_page(viewport={"width": 1778, "height": 832})
             try:
-                page.goto(f"{BASE_URL}/#academy", wait_until="domcontentloaded")
-
-                # Depending on local API speed, the prototype-shaped first-paint shell
-                # may already have handed off by DOMContentLoaded. What must never be
-                # visible is the generic route loader or legacy Academy overview.
+                # Legacy/default Dashboard entry is normalized before app.js can paint
+                # the old video-analysis dashboard.
+                page.goto(f"{BASE_URL}/#dashboard", wait_until="domcontentloaded")
+                expect(page).to_have_url(f"{BASE_URL}/#academy", timeout=5000)
                 assert page.evaluate("document.documentElement.dataset.academyRouteGuard") == "4"
                 assert page.evaluate("document.documentElement.dataset.academyRouterAdapter") == "1"
-                assert page.evaluate("document.documentElement.classList.contains('academy-route-pending')") is False
                 expect(page.locator("#academyWorkspace .academy-hero")).to_be_hidden(timeout=5000)
                 expect(page.locator("#academyWorkspace .academy-stats")).to_be_hidden(timeout=5000)
                 expect(page.locator("#academyWorkspace .academy-dashboard-grid")).to_be_hidden(timeout=5000)
 
                 owned = page.locator('#academyWorkspace .academy-content[data-dashboard-v4="1"]')
                 expect(owned).to_be_visible(timeout=30000)
-                expect(page.locator("#c17DashboardFirstPaint")).to_be_hidden(timeout=5000)
-                expect(page.locator("#academyWorkspace .academy-hero")).to_be_hidden(timeout=5000)
 
+                # The C17 menu exposes one Dashboard concept; there is no separate
+                # Academy menu item competing for the selected state.
+                expect(page.locator('.c17-sidebar-nav [data-c17-target="academy"]')).to_have_count(1)
+                expect(page.locator('.c17-sidebar-nav [data-c17-target="academy"] b')).to_have_text('Dashboard')
+                expect(page.locator('.c17-sidebar-nav b', has_text='Academy')).to_have_count(0)
+                expect(page.locator('.c17-sidebar-nav [data-c17-target="academy"]')).to_have_attribute('aria-current', 'page')
+
+                # Players -> Dashboard must return directly to the prototype.
                 players = _watch_transition(page, "academy?tab=players")
                 expect(page.get_by_role("heading", name="Academy Players")).to_be_visible(timeout=15000)
                 _assert_clean(players)
-                assert players["sawLoadingState"] is False, players
 
-                back_overview = _watch_transition(page, "academy")
+                back = _watch_transition(page, "dashboard")
+                _assert_clean(back)
+                assert back["finalHash"] == "#academy", back
                 expect(page.locator('#academyWorkspace .academy-content[data-dashboard-v4="1"]')).to_be_visible(timeout=30000)
-                _assert_clean(back_overview)
-                assert back_overview["sawLoadingState"] is False, back_overview
+
+                # Clicking Dashboard again while already on Dashboard must not replay
+                # the legacy dashboard or disturb the selected state.
+                repeated = _watch_transition(page, "dashboard")
+                _assert_clean(repeated)
+                assert repeated["finalHash"] == "#academy", repeated
+                expect(page.locator('.c17-sidebar-nav [data-c17-target="academy"]')).to_have_attribute('aria-current', 'page')
             finally:
                 browser.close()
     finally:
