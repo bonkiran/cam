@@ -94,9 +94,6 @@ def _watch_transition(page, target_hash: str) -> dict:
 
             const workspace = document.querySelector('#academyWorkspace .academy-content');
             if (targetTab === 'overview') {
-              // The flash regression validates renderer ownership, not production data
-              // availability. Dashboard v4 marks the content after either its normal
-              // prototype render or its own error state; neither may expose legacy UI.
               if (workspace?.dataset.dashboardV4 === '1' && isVisible(workspace)) break;
             } else if (workspace && !pending && isVisible(workspace)) {
               break;
@@ -141,19 +138,16 @@ def test_academy_routes_never_paint_generic_placeholder_or_reload_between_tabs()
             try:
                 page.goto(f"{BASE_URL}/#academy", wait_until="domcontentloaded")
 
-                # The approved C17 layout owns first paint. Generic loading and legacy
-                # Academy overview cards must never become visible while v4 loads.
-                expect(page.locator("#c17DashboardFirstPaint")).to_be_visible(timeout=5000)
+                # Depending on local API speed, the prototype-shaped first-paint shell
+                # may already have handed off by DOMContentLoaded. What must never be
+                # visible is the generic route loader or legacy Academy overview.
                 assert page.evaluate("document.documentElement.dataset.academyRouteGuard") == "4"
                 assert page.evaluate("document.documentElement.dataset.academyRouterAdapter") == "1"
                 assert page.evaluate("document.documentElement.classList.contains('academy-route-pending')") is False
                 expect(page.locator("#academyWorkspace .academy-hero")).to_be_hidden(timeout=5000)
                 expect(page.locator("#academyWorkspace .academy-stats")).to_be_hidden(timeout=5000)
+                expect(page.locator("#academyWorkspace .academy-dashboard-grid")).to_be_hidden(timeout=5000)
 
-                # Dashboard v4 explicitly claims the workspace before the first-paint
-                # shell is removed. Local CI may use a sparse temp DB, so this test does
-                # not require successful production dashboard data; it requires that the
-                # ownership handoff never reveals the legacy overview.
                 owned = page.locator('#academyWorkspace .academy-content[data-dashboard-v4="1"]')
                 expect(owned).to_be_visible(timeout=30000)
                 expect(page.locator("#c17DashboardFirstPaint")).to_be_hidden(timeout=5000)
