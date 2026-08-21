@@ -33,6 +33,7 @@ def _watch_transition(page, target_hash: str) -> dict:
           const result = {
             badPlaceholderFrames: 0,
             badInterimVisibleFrames: 0,
+            legacyOverviewFrames: 0,
             workspaceMissingFrames: 0,
             frames: 0,
             sawLoadingState: false,
@@ -68,6 +69,13 @@ def _watch_transition(page, target_hash: str) -> dict:
             });
             if (genericTextNodes.some(isVisible)) result.badPlaceholderFrames += 1;
 
+            // The retired Academy overview must never become a painted transition state.
+            // This is the exact view that appeared for several seconds in the production video.
+            const legacyHero = document.querySelector('#academyWorkspace .academy-content > .academy-hero');
+            if (isVisible(legacyHero) && (legacyHero.textContent || '').includes('ACADEMY + PERFORMANCE INTELLIGENCE')) {
+              result.legacyOverviewFrames += 1;
+            }
+
             if (pending) {
               const main = document.querySelector('#app .main');
               if (main) {
@@ -93,6 +101,7 @@ def _assert_clean(result: dict) -> None:
     assert result["adapterVersion"] == "1", result
     assert result["badPlaceholderFrames"] == 0, result
     assert result["badInterimVisibleFrames"] == 0, result
+    assert result["legacyOverviewFrames"] == 0, result
     assert result["workspaceMissingFrames"] == 0, result
 
 
@@ -127,10 +136,13 @@ def test_academy_routes_never_paint_generic_placeholder_or_reload_between_tabs()
                 assert page.evaluate("document.documentElement.dataset.academyRouteGuard") == "3"
                 assert page.evaluate("document.documentElement.dataset.academyRouterAdapter") == "1"
 
+                # The legacy dashboard is retired from the visible Academy overview.
+                expect(page.locator("#academyWorkspace .academy-content > .academy-hero")).to_have_count(0)
+
                 # Academy -> Academy navigation must preserve the mounted workspace
                 # and must never re-enable the full-page Loading Academy overlay.
                 players = _watch_transition(page, "academy?tab=players")
-                expect(page.get_by_role("heading", name="Academy Players")).to_be_visible(timeout=15000)
+                expect(page.get_by_role("heading", name="Players", exact=True)).to_be_visible(timeout=15000)
                 _assert_clean(players)
                 assert players["sawLoadingState"] is False, players
 
