@@ -147,6 +147,48 @@ body.cam-academy-context #academyWorkspace .academy-reports-shell{
   content:'—';
 }
 
+/* Navigation transitions use a temporary fixed snapshot to hide slow API work.
+   The old implementation visually cloned the previous page into that snapshot,
+   so when Dashboard and Registration swapped, pieces of the outgoing cards could
+   appear behind the incoming cards. Keep the transition cover fully opaque and
+   never paint the cloned page surface. */
+#academyTransitionSnapshot{
+  background:#f7fbf9 !important;
+  isolation:isolate;
+}
+
+#academyTransitionSnapshot > .academy-content{
+  display:none !important;
+}
+
+#academyTransitionSnapshot .academy-transition-progress{
+  display:none !important;
+}
+
+#academyTransitionSnapshot::before{
+  content:'';
+  position:absolute;
+  inset:18px;
+  z-index:1;
+  border:1px solid rgba(24,77,58,.10);
+  border-radius:14px;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.98) 0 100%) padding-box;
+  box-shadow:0 5px 18px rgba(0,55,35,.04);
+}
+
+#academyTransitionSnapshot::after{
+  content:'Loading…';
+  position:absolute;
+  left:38px;
+  top:34px;
+  z-index:2;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.01em;
+  color:#567268;
+}
+
 @media (max-width:1100px){
   #academyWorkspace .cam-owner-dashboard-polished .academy-owner-dashboard-snapshot,
   #academyWorkspace .cam-owner-dashboard-polished .academy-dashboard-grid{
