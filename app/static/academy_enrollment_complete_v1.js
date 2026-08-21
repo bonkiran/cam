@@ -17,8 +17,18 @@
 
   function dateLabel(value) {
     if (!value) return '—';
-    const dateOnly = String(value).slice(0, 10);
-    const date = new Date(`${dateOnly}T12:00:00`);
+    const raw = String(value);
+    let date;
+    if (/T\d{2}:\d{2}/.test(raw)) {
+      // Full timestamps are stored in UTC. Render them in the parent's browser
+      // timezone so a late-evening local completion does not appear as tomorrow.
+      date = new Date(raw);
+    } else {
+      // Date-only business values (for example the first billing date) should
+      // remain calendar dates and must not shift across timezones.
+      const dateOnly = raw.slice(0, 10);
+      date = new Date(`${dateOnly}T12:00:00`);
+    }
     if (Number.isNaN(date.getTime())) return value;
     return date.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
   }
