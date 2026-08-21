@@ -91,12 +91,14 @@ def test_dashboard_v4_matches_approved_c17_prototype_contract():
     for label in ["Dashboard", "Registration", "Players", "Programs", "Coaches", "Finance", "Reports", "Settings", "Insights", "Help & Support"]:
         assert label in shell_js
     assert "label:'Academy'" not in shell_js
+    assert "{label:'Dashboard', icon:'⌂', target:'academy'" in shell_js
+    assert "active:r => r.page==='academy' && r.tab==='overview'" in shell_js
     assert "C17" in shell_js and "CRICKET ACADEMY" in shell_js
     assert "/static/c17_academy_logo.png" in shell_js
 
     assert "academy_c17_shell_v1.css?v=1" in html
     assert "academy_dashboard_v4.css?v=1" in html
-    assert "academy_c17_shell_v1.js?v=3" in html
+    assert "academy_c17_shell_v1.js?v=4" in html
     assert "academy_dashboard_v4.js?v=1" in html
     assert "academy_dashboard_v3.js" not in html
     assert "academy_dashboard_v3_refinement_v1.js" not in html

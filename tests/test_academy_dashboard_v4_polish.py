@@ -77,8 +77,9 @@ def test_c17_left_navigation_is_stable_and_clickable():
     assert "button.classList.toggle('active', selected)" in shell
     assert "aria-current" in shell
 
-    # The Academy overview is not exposed as a duplicate left-nav item.
+    # The Academy overview is not exposed as a duplicate left-nav item. Dashboard owns it.
     assert "label:'Academy'" not in shell
+    assert "{label:'Dashboard', icon:'⌂', target:'academy'" in shell
 
     # Cache-bust the repaired navigation script in production.
-    assert '/static/academy_c17_shell_v1.js?v=3' in html
+    assert '/static/academy_c17_shell_v1.js?v=4' in html

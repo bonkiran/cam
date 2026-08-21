@@ -41,7 +41,7 @@ def test_c17_dashboard_v4_matches_approved_followup():
     # Left-side academy nav replaces the horizontal academy tabs.
     assert "academy-tabs{display:none!important}" in shell_css
     assert "c17-sidebar-nav" in shell_js
-    assert "academy_c17_shell_v1.js?v=3" in html
+    assert "academy_c17_shell_v1.js?v=4" in html
     assert "academy_dashboard_v4.js?v=1" in html
     assert "academy_dashboard_v3_refinement_v1.js" not in html
 
@@ -51,3 +51,4 @@ def test_c17_shell_navigation_contains_all_approved_items():
     for label in ["Dashboard", "Registration", "Players", "Programs", "Coaches", "Finance", "Reports", "Settings", "Insights", "Help & Support"]:
         assert label in js
     assert "label:'Academy'" not in js
+    assert "{label:'Dashboard', icon:'⌂', target:'academy'" in js
