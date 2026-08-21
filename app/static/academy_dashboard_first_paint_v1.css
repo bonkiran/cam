@@ -1,0 +1,24 @@
+/* C17 Dashboard first-paint contract: never expose the legacy Academy overview. */
+html.c17-overview-first-paint #app .main>.topbar{display:none!important}
+html.c17-overview-first-paint:not(.c17-overview-ready) #academyWorkspace{display:none!important}
+html.c17-overview-ready #c17DashboardFirstPaint{display:none!important}
+#c17DashboardFirstPaint{padding:0 0 24px}
+.c17-fp-dashboard{display:flex;flex-direction:column;gap:10px;color:#143b28}
+.c17-fp-hero,.c17-fp-card{background:#fff;border:1px solid #d9e6de;border-radius:12px;box-shadow:0 5px 18px rgba(22,66,45,.055)}
+.c17-fp-hero{display:grid;grid-template-columns:minmax(230px,.58fr) minmax(620px,1.8fr);gap:18px;padding:12px 16px;min-height:108px}
+.c17-fp-welcome{display:flex;flex-direction:column;justify-content:center;gap:10px;padding:10px 6px}
+.c17-fp-weather{display:grid;grid-template-columns:minmax(230px,.8fr) minmax(0,2.2fr);border:1px solid #dce8e0;border-radius:12px;background:linear-gradient(135deg,#fbfefc,#f3faf6);overflow:hidden}
+.c17-fp-weather-now{display:grid;grid-template-columns:52px 1fr;align-content:center;gap:8px 12px;padding:12px 16px;border-right:1px solid #dde8e1}.c17-fp-weather-now .c17-fp-bar{grid-column:2}
+.c17-fp-circle{grid-row:1/4;width:46px;height:46px;border-radius:50%;background:#e8f0eb}
+.c17-fp-days{display:grid;grid-template-columns:repeat(7,1fr);align-items:center}.c17-fp-days span{height:60px;margin:0 8px;border-radius:8px;background:#edf3ef}
+.c17-fp-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.c17-fp-two.compact{grid-template-columns:1fr 1fr;margin-top:8px}.c17-fp-three{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.c17-fp-card{padding:14px 16px;min-height:92px}.c17-fp-title{display:block;width:180px;height:15px;border-radius:7px;background:#e5eee8;margin-bottom:12px}.c17-fp-title.lg{width:260px}
+.c17-fp-programs{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}.c17-fp-programs i,.c17-fp-three i,.c17-fp-money i{display:block;height:66px;border-radius:10px;border:1px solid #e0e8e2;background:#f1f6f3}.c17-fp-programs i:nth-child(2){background:#f1f5fb}.c17-fp-programs i:nth-child(3){background:#fbf5ec}.c17-fp-programs i:nth-child(4){background:#f6f2fb}.c17-fp-programs i:nth-child(5){background:#fbf1f3}
+.c17-fp-table{display:flex;flex-direction:column;gap:8px;padding:8px 0}.c17-fp-bar{display:block;height:10px;border-radius:999px;background:#e7efea;width:var(--w,70%)}.c17-fp-bar.wide{height:12px}.c17-fp-table.rows-4{min-height:70px}
+.c17-fp-money{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.c17-fp-money.three{grid-template-columns:repeat(3,1fr)}
+.c17-fp-dashboard .c17-fp-line{display:block;border-radius:999px;background:#e5eee8}.c17-fp-line.xl{width:210px;height:23px}.c17-fp-line.md{width:150px;height:12px}
+.c17-fp-dashboard .c17-fp-line,.c17-fp-dashboard .c17-fp-title,.c17-fp-dashboard .c17-fp-bar,.c17-fp-dashboard .c17-fp-circle,.c17-fp-dashboard .c17-fp-days span,.c17-fp-dashboard i{background-size:220% 100%;background-image:linear-gradient(90deg,#edf3ef 20%,#f8fbf9 45%,#edf3ef 70%);animation:c17FirstPaintShimmer 1.25s ease-in-out infinite}
+@keyframes c17FirstPaintShimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+@media(max-width:1250px){.c17-fp-hero{grid-template-columns:1fr}.c17-fp-weather{grid-template-columns:1fr}.c17-fp-programs{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:980px){.c17-fp-two,.c17-fp-two.compact{grid-template-columns:1fr}.c17-fp-three{grid-template-columns:1fr}.c17-fp-days{grid-template-columns:repeat(4,1fr)}}
+@media(prefers-reduced-motion:reduce){.c17-fp-dashboard *{animation:none!important}}
