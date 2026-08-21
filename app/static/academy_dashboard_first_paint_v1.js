@@ -4,10 +4,23 @@
   const SHELL_ID = 'c17DashboardFirstPaint';
   let scheduled = false;
 
+  function canonicalizeDashboardRoute() {
+    const raw = location.hash.replace(/^#/, '');
+    if (raw === '' || raw === 'dashboard') {
+      history.replaceState(history.state, '', `${location.pathname}${location.search}#academy`);
+      return true;
+    }
+    return false;
+  }
+
+  // This script loads before app.js. Normalize the old generic Dashboard route
+  // synchronously so the legacy video-analysis dashboard never gets a first paint.
+  canonicalizeDashboardRoute();
+
   function route() {
     const raw = location.hash.replace(/^#/, '');
     const [page, query = ''] = raw.split('?');
-    return {page: page || 'dashboard', tab: new URLSearchParams(query).get('tab') || 'overview'};
+    return {page: page || 'academy', tab: new URLSearchParams(query).get('tab') || 'overview'};
   }
 
   function active() {
@@ -54,9 +67,6 @@
 
   function dashboardV4OwnsWorkspace() {
     const content = document.querySelector('#academyWorkspace .academy-content');
-    // Dashboard v4 sets this marker after either a successful prototype render or
-    // its own error state. Either way, the legacy Academy overview no longer owns
-    // the visible workspace and the first-paint shell can safely hand off.
     return Boolean(content && content.dataset.dashboardV4 === '1');
   }
 
@@ -88,7 +98,12 @@
     queueMicrotask(apply);
   }
 
-  window.addEventListener('hashchange', schedule, true);
+  window.addEventListener('hashchange', () => {
+    // Capture legacy #dashboard clicks before later app-level listeners can render
+    // the old generic dashboard. They will observe the canonical #academy route.
+    canonicalizeDashboardRoute();
+    schedule();
+  }, true);
   document.addEventListener('DOMContentLoaded', schedule);
   new MutationObserver(schedule).observe(document.documentElement, {childList:true, subtree:true});
   schedule();
