@@ -1,10 +1,21 @@
 (() => {
   const CLASS_NAME = 'academy-route-pending';
   const STYLE_ID = 'academyRouteGuardStyle';
-  const VERSION = '3';
+  const VERSION = '4';
+
+  function routeInfo() {
+    const raw = location.hash.replace(/^#/, '');
+    const [page, query = ''] = raw.split('?');
+    return {page, tab: new URLSearchParams(query).get('tab') || 'overview'};
+  }
 
   function isAcademyRoute() {
-    return location.hash.replace(/^#/, '').split('?')[0] === 'academy';
+    return routeInfo().page === 'academy';
+  }
+
+  function isAcademyOverviewRoute() {
+    const r = routeInfo();
+    return r.page === 'academy' && r.tab === 'overview';
   }
 
   function ensureStyle() {
@@ -48,6 +59,12 @@
   }
 
   function setPending() {
+    // The C17 Dashboard overview has its own prototype-shaped first-paint shell.
+    // Do not show the old generic "Loading Academy…" card on that route.
+    if (isAcademyOverviewRoute()) {
+      clearPending();
+      return;
+    }
     ensureStyle();
     document.documentElement.classList.add(CLASS_NAME);
   }
@@ -57,7 +74,7 @@
   }
 
   function releaseWhenAcademyMounted() {
-    if (!isAcademyRoute()) {
+    if (!isAcademyRoute() || isAcademyOverviewRoute()) {
       clearPending();
       return;
     }
@@ -66,39 +83,38 @@
     const content = workspace && workspace.querySelector('.academy-content');
     if (workspace && content) {
       requestAnimationFrame(() => {
-        if (isAcademyRoute() && document.getElementById('academyWorkspace')) {
+        if (isAcademyRoute() && !isAcademyOverviewRoute() && document.getElementById('academyWorkspace')) {
           clearPending();
         }
       });
     }
   }
 
-  // The full-page loading guard is needed only when ENTERING Academy from a
-  // different top-level route (or on a direct #academy page load). Switching
-  // between Academy tabs must keep the mounted Academy workspace visible.
+  // The full-page generic loading guard is retained for direct entry to non-overview
+  // Academy tabs. The C17 overview uses academy_dashboard_first_paint_v1 instead.
   let wasAcademyRoute = isAcademyRoute();
   window.addEventListener('hashchange', () => {
     const nowAcademyRoute = isAcademyRoute();
-    if (nowAcademyRoute && !wasAcademyRoute) {
+    if (isAcademyOverviewRoute()) {
+      clearPending();
+    } else if (nowAcademyRoute && !wasAcademyRoute) {
       setPending();
     } else if (!nowAcademyRoute) {
       clearPending();
     } else {
-      // Academy -> Academy navigation: never blank/hide the existing workspace.
       releaseWhenAcademyMounted();
     }
     wasAcademyRoute = nowAcademyRoute;
     queueMicrotask(releaseWhenAcademyMounted);
   });
 
-  // Observer can only release an entry guard after the real Academy workspace
-  // mounts. It never activates the guard during normal Academy DOM updates.
   const observer = new MutationObserver(() => {
     releaseWhenAcademyMounted();
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
 
   ensureStyle();
-  if (wasAcademyRoute) setPending();
+  if (wasAcademyRoute && !isAcademyOverviewRoute()) setPending();
+  else clearPending();
   document.addEventListener('DOMContentLoaded', releaseWhenAcademyMounted);
 })();
