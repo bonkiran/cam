@@ -52,7 +52,32 @@ def _monthly_enrollments(profile: dict | None, today: date) -> dict:
 
     rows = fetch_all(
         f"""
-        SELECT c.enrollment_id,c.completed_at,e.player_id,p.name AS player_name
+        SELECT c.enrollment_id,c.completed_at,e.player_id,p.name AS player_name,
+               (SELECT bp.id
+                  FROM batch_players bp
+                 WHERE bp.player_id=e.player_id AND bp.status IN ('active','waitlisted')
+                 ORDER BY CASE WHEN bp.status='active' THEN 0 ELSE 1 END,bp.id DESC
+                 LIMIT 1) AS batch_membership_id,
+               (SELECT bp.batch_id
+                  FROM batch_players bp
+                 WHERE bp.player_id=e.player_id AND bp.status IN ('active','waitlisted')
+                 ORDER BY CASE WHEN bp.status='active' THEN 0 ELSE 1 END,bp.id DESC
+                 LIMIT 1) AS batch_id,
+               (SELECT b.name
+                  FROM batch_players bp JOIN batches b ON b.id=bp.batch_id
+                 WHERE bp.player_id=e.player_id AND bp.status IN ('active','waitlisted')
+                 ORDER BY CASE WHEN bp.status='active' THEN 0 ELSE 1 END,bp.id DESC
+                 LIMIT 1) AS batch_name,
+               (SELECT bp.status
+                  FROM batch_players bp
+                 WHERE bp.player_id=e.player_id AND bp.status IN ('active','waitlisted')
+                 ORDER BY CASE WHEN bp.status='active' THEN 0 ELSE 1 END,bp.id DESC
+                 LIMIT 1) AS batch_status,
+               (SELECT bp.joined_on
+                  FROM batch_players bp
+                 WHERE bp.player_id=e.player_id AND bp.status IN ('active','waitlisted')
+                 ORDER BY CASE WHEN bp.status='active' THEN 0 ELSE 1 END,bp.id DESC
+                 LIMIT 1) AS batch_joined_on
         FROM academy_enrollment_completions c
         JOIN academy_enrollment_invites e ON e.id=c.enrollment_id
         LEFT JOIN players p ON p.id=e.player_id
@@ -77,6 +102,11 @@ def _monthly_enrollments(profile: dict | None, today: date) -> dict:
                 "player_name": row.get("player_name") or f"Player {row['player_id']}",
                 "enrolled_at": completed_at.isoformat(),
                 "enrolled_date": local_completed.date().isoformat(),
+                "batch_membership_id": int(row["batch_membership_id"]) if row.get("batch_membership_id") else None,
+                "batch_id": int(row["batch_id"]) if row.get("batch_id") else None,
+                "batch_name": row.get("batch_name"),
+                "batch_status": row.get("batch_status"),
+                "batch_joined_on": row.get("batch_joined_on"),
             }
         )
 
