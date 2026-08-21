@@ -158,7 +158,7 @@ def test_dashboard_is_canonical_academy_overview_without_legacy_flash():
 
                 # Players -> Dashboard must return directly to the prototype.
                 players = _watch_transition(page, "academy?tab=players")
-                expect(page.get_by_role("heading", name="Academy Players")).to_be_visible(timeout=15000)
+                expect(page.get_by_role("heading", name="Players", exact=True)).to_be_visible(timeout=15000)
                 _assert_clean(players)
 
                 back = _watch_transition(page, "dashboard")
