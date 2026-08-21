@@ -12,9 +12,16 @@
 }
 
 #academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-hero p,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .panel-head p {
+#academyWorkspace .academy-content[data-dashboard-v2="1"] .panel-head p,
+#academyWorkspace .academy-content[data-dashboard-v2="1"] article.panel > p,
+#academyWorkspace .academy-content[data-dashboard-v2="1"] article.panel > div > p {
   font-size: 13px;
   line-height: 1.5;
+}
+
+#academyWorkspace .academy-content[data-dashboard-v2="1"] article.panel small {
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 #academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-stat span {
@@ -119,20 +126,6 @@
 #academyWorkspace .academy-content[data-dashboard-v2="1"] .cam-batch-assignment-error {
   font-size: 12.5px;
   line-height: 1.45;
-}
-
-/* Readable descriptions/status text in dashboard panels that are injected by
-   existing admin/finance/batch overlays and do not use the dashboard-v2 row classes. */
-#academyWorkspace .academy-content[data-dashboard-v2="1"] article.panel p,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] article.panel small {
-  min-font-size: 12px;
-}
-
-/* CSS has no min-font-size property. Explicitly cover common direct panel copy. */
-#academyWorkspace .academy-content[data-dashboard-v2="1"] article.panel > p,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] article.panel > div > p {
-  font-size: 13px;
-  line-height: 1.5;
 }
 
 @media (max-width: 900px) {
