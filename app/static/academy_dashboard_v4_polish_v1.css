@@ -1,0 +1,78 @@
+/* Approved C17 dashboard prototype polish */
+body.c17-academy-mode #academyWorkspace>.academy-primary-nav,
+body.c17-academy-mode #academyWorkspace>.academy-tabs{display:none!important}
+body.c17-academy-mode #academyWorkspace{padding-top:0!important}
+body.c17-academy-mode #academyWorkspace .academy-content{padding-top:8px!important}
+
+.c17-svg{display:block;width:1em;height:1em}
+.c17-nav-svg{width:18px;height:18px;stroke-width:2}
+.c17-title-svg{width:17px;height:17px;stroke-width:2}
+.c17-program-person{display:inline-block;width:14px;height:14px;margin-left:7px;vertical-align:-1px;stroke-width:2}
+
+body.c17-academy-mode .c17-nav-item{padding:12px 13px;gap:12px;border-radius:9px}
+body.c17-academy-mode .c17-nav-item i{width:22px;height:22px;font-size:0;color:#d9ebe1}
+body.c17-academy-mode .c17-nav-item b{font-size:14px;line-height:1.2;font-weight:800;letter-spacing:-.01em}
+body.c17-academy-mode .c17-sidebar-nav{gap:5px}
+
+.c17-dashboard{gap:10px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#143b28}
+.c17-card,.c17-hero{border-radius:12px;border-color:#d9e6de;box-shadow:0 5px 18px rgba(22,66,45,.055)}
+.c17-card{padding:14px 16px}
+.c17-hero{padding:12px 16px;gap:18px}
+.c17-welcome h1{font-size:25px;letter-spacing:-.025em}
+.c17-welcome p{font-size:13.5px;line-height:1.4}
+
+.c17-card-title{gap:9px;margin-bottom:10px}
+.c17-card-title h2{font-size:15.5px;line-height:1.28;font-weight:850;letter-spacing:-.012em}
+.c17-icon{width:25px;height:25px;border-radius:7px;font-size:0;background:#e9f6ed;color:#137346}
+
+.c17-weather-now strong{font-size:26px}
+.c17-weather-now span{font-size:13.5px}
+.c17-weather-now small{font-size:11.5px;line-height:1.45}
+.c17-forecast-day b{font-size:10px}
+.c17-forecast-day small{font-size:10px}
+.c17-forecast-day strong{font-size:14px}
+.c17-forecast-day em{font-size:12px}
+
+.c17-program,.c17-total{padding:11px 10px;border-radius:10px}
+.c17-program span,.c17-total span{font-size:11.5px}
+.c17-program strong{display:flex;align-items:center;margin-top:8px;font-size:23px;line-height:1;color:#155336}
+.c17-total strong{font-size:29px}
+.c17-total small{font-size:10.5px;line-height:1.35}
+
+.c17-table-wrap th{padding:8px 10px;font-size:11px;line-height:1.2}
+.c17-table-wrap td{padding:9px 10px;font-size:12.5px;line-height:1.35}
+.c17-table-wrap td strong{font-size:12.5px}
+.c17-table-wrap td small{font-size:10.5px;line-height:1.35}
+.c17-primary,.c17-secondary,.c17-table-action{font-size:12px}
+.c17-status,.c17-assigned{font-size:10.5px}
+.c17-link{font-size:11.5px}
+
+/* Enrollment tracker is now a single full-width operational table. */
+.c17-enrollment-grid.c17-tracker-full{display:block;grid-template-columns:none}
+.c17-enrollment-grid.c17-tracker-full .c17-links-card{display:none!important}
+.c17-enrollment-grid.c17-tracker-full .c17-tracker-card{width:100%;min-width:0}
+
+.c17-session-grid h3{font-size:12.5px;padding:9px 11px}
+.c17-event-head h3{font-size:12.5px}
+.c17-event-head button{font-size:10.5px}
+.c17-event-row strong{font-size:11.5px}
+.c17-event-row small{font-size:10.5px;line-height:1.4}
+.c17-empty{font-size:12px}
+.c17-attendance-pct span{font-size:10.5px}
+
+/* Receipts and payments share one balanced 50/50 row, matching the prototype. */
+.c17-finance-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:stretch}
+.c17-finance-row>.c17-card{height:100%;min-width:0}
+.c17-money{padding:12px 13px}
+.c17-money span{font-size:10.5px;line-height:1.35}
+.c17-money strong{font-size:24px}
+.c17-money small{font-size:10.5px}
+
+@media(max-width:1100px){
+  .c17-finance-row{grid-template-columns:1fr}
+}
+@media(max-width:780px){
+  body.c17-academy-mode .c17-nav-item b{font-size:13px}
+  .c17-card-title h2{font-size:15px}
+  .c17-table-wrap td{font-size:12px}
+}
