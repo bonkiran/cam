@@ -50,6 +50,14 @@
     holder.dataset.c17Signature = NAV_SIGNATURE;
   }
 
+  function setActiveTarget(holder, target) {
+    $$('[data-c17-target]', holder).forEach(button => {
+      const selected = button.dataset.c17Target === target;
+      button.classList.toggle('active', selected);
+      button.setAttribute('aria-current', selected ? 'page' : 'false');
+    });
+  }
+
   function updateActive(holder) {
     const r = route();
     ITEMS.forEach(item => {
@@ -69,6 +77,11 @@
       event.preventDefault();
       const target = button.dataset.c17Target;
       if (!target) return;
+
+      // Give the user immediate visual feedback before async route/data work starts.
+      // Hash-change reconciliation below remains the source of truth afterward.
+      setActiveTarget(holder, target);
+
       const next = `#${target}`;
       if (location.hash === next) {
         window.dispatchEvent(new HashChangeEvent('hashchange'));
