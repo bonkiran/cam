@@ -1,0 +1,162 @@
+/* Shared C17 typography scale for operational pages.
+   Dashboard remains the visual source of truth. */
+body.c17-academy-mode .cam-registration-page,
+body.c17-academy-mode .c17-players-page,
+body.c17-academy-mode .cam-registration-page button,
+body.c17-academy-mode .cam-registration-page input,
+body.c17-academy-mode .cam-registration-page select,
+body.c17-academy-mode .cam-registration-page textarea,
+body.c17-academy-mode .c17-players-page button,
+body.c17-academy-mode .c17-players-page input,
+body.c17-academy-mode .c17-players-page select,
+body.c17-academy-mode .c17-players-page textarea {
+  font-family: inherit;
+}
+
+/* Dashboard card-title scale: 15px / 900. */
+body.c17-academy-mode .cam-registration-compose h2,
+body.c17-academy-mode .cam-registration-tracker h2,
+body.c17-academy-mode .cam-registration-review h2,
+body.c17-academy-mode .c17-player-records-head h2,
+body.c17-academy-mode .c17-unassigned-head h2,
+body.c17-academy-mode .c17-players-page .academy-form-title h2,
+body.c17-academy-mode .c17-players-page .academy-form-section h2 {
+  margin-top: 0;
+  color: #123f2a;
+  font-size: 15px;
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+body.c17-academy-mode .cam-registration-compose h2,
+body.c17-academy-mode .cam-registration-tracker h2,
+body.c17-academy-mode .cam-registration-review h2 {
+  margin-bottom: 5px;
+}
+
+/* Dashboard supporting-copy scale. */
+body.c17-academy-mode .cam-registration-compose p,
+body.c17-academy-mode .cam-registration-tracker p,
+body.c17-academy-mode .cam-registration-review p,
+body.c17-academy-mode .c17-player-records-head p,
+body.c17-academy-mode .c17-unassigned-head p,
+body.c17-academy-mode .c17-players-page .academy-form-title p,
+body.c17-academy-mode .c17-players-page .academy-form-section p {
+  color: #61766a;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* Enrollment pipeline cards now use the same scale as Dashboard program cards. */
+body.c17-academy-mode .cam-registration-kpi span,
+body.c17-academy-mode .cam-registration-kpi small {
+  color: #355d47;
+  font-size: 11px;
+}
+body.c17-academy-mode .cam-registration-kpi span {
+  font-weight: 800;
+}
+body.c17-academy-mode .cam-registration-kpi strong {
+  margin-top: 7px;
+  color: #155336;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+/* Enrollment table follows Dashboard table typography. */
+body.c17-academy-mode .cam-tracker-row {
+  color: #294936;
+  font-size: 12px;
+}
+body.c17-academy-mode .cam-tracker-row.header {
+  color: #506b5a;
+  font-size: 10px;
+  font-weight: 900;
+}
+body.c17-academy-mode .cam-tracker-row strong {
+  color: #294936;
+  font-size: 12px;
+  font-weight: 800;
+}
+body.c17-academy-mode .cam-tracker-row small {
+  color: #839188;
+  font-size: 10px;
+}
+body.c17-academy-mode .cam-status {
+  font-size: 10px;
+  font-weight: 900;
+}
+
+/* Form labels and controls use the compact Dashboard editor scale. */
+body.c17-academy-mode .cam-registration-fields label,
+body.c17-academy-mode .cam-review-note label,
+body.c17-academy-mode .c17-players-page .academy-field > span,
+body.c17-academy-mode .c17-players-page .academy-form-grid label {
+  color: #355d47;
+  font-size: 10px;
+  font-weight: 800;
+}
+body.c17-academy-mode .cam-registration-fields input,
+body.c17-academy-mode .cam-registration-fields select,
+body.c17-academy-mode .cam-registration-review textarea,
+body.c17-academy-mode .c17-players-page input,
+body.c17-academy-mode .c17-players-page select,
+body.c17-academy-mode .c17-players-page textarea {
+  color: #294936;
+  font-size: 12px;
+}
+
+/* Player batch panels use Dashboard section/subsection scales. */
+body.c17-academy-mode .c17-player-batch-head h3 {
+  color: #244f37;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 900;
+}
+body.c17-academy-mode .c17-player-batch-head p {
+  color: #74877d;
+  font-size: 10px;
+}
+body.c17-academy-mode .c17-player-batch-count,
+body.c17-academy-mode .c17-unassigned-count {
+  font-size: 12px;
+  font-weight: 900;
+}
+body.c17-academy-mode .c17-player-batch-panel .academy-player-row strong,
+body.c17-academy-mode .c17-unassigned-list .academy-player-row strong {
+  color: #294936;
+  font-size: 12px;
+  font-weight: 800;
+}
+body.c17-academy-mode .c17-player-batch-panel .academy-player-row small,
+body.c17-academy-mode .c17-unassigned-list .academy-player-row small {
+  color: #839188;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+/* Dashboard button treatment across Enrollment and Players. */
+body.c17-academy-mode .cam-registration-page button,
+body.c17-academy-mode .c17-players-page button {
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+}
+body.c17-academy-mode .cam-registration-page button.primary,
+body.c17-academy-mode .cam-registration-page .cam-row-actions button.review,
+body.c17-academy-mode .c17-players-page button.primary {
+  border-color: #087b45;
+  background: #087b45;
+  color: #fff;
+  box-shadow: 0 5px 12px rgba(8,123,69,.17);
+}
+body.c17-academy-mode .cam-registration-page button:not(.primary):not(.review):not(.danger):not(.warn),
+body.c17-academy-mode .c17-players-page button.secondary,
+body.c17-academy-mode .c17-players-page .academy-row-actions button {
+  border: 1px solid #cfe0d5;
+  background: #fff;
+  color: #245d3d;
+}
+
+/* Keep the shared C17 header untouched: it already uses the exact Dashboard scale. */
