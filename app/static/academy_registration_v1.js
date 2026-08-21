@@ -33,6 +33,12 @@
     try{return await requestJson('/api/academy/registration/branding');}
     catch{return {academy_name:'Academy'};}
   }
+  async function enrollmentHero(){
+    if(window.C17AcademyHeader?.hero){
+      return window.C17AcademyHeader.hero({title:'Enrollment',subtitle:'C17 Academy Enrollment'});
+    }
+    return '<section class="c17-hero c17-page-hero"><div class="c17-welcome"><h1>Enrollment</h1><p>C17 Academy Enrollment</p></div></section>';
+  }
   function fmtDate(v){
     if(!v)return '—';const d=new Date(v);if(Number.isNaN(d.getTime()))return String(v);
     return new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}).format(d);
@@ -49,27 +55,37 @@
   }
   function shareMessage(item,url){
     const parent=[item.parent_first_name,item.parent_last_name].filter(Boolean).join(' ')||'Parent';
-    return `Hi ${parent}, please complete the ${academyLabel()} player registration form using this secure link: ${url}`;
+    return `Hi ${parent}, please complete the ${academyLabel()} player enrollment form using this secure link: ${url}`;
   }
   async function markSent(id,channel){
     try{await requestJson(`/api/academy/registration/invites/${id}/sent`,{method:'POST',body:JSON.stringify({channel})});}
-    catch(err){console.warn('Could not mark registration sent',err);}
+    catch(err){console.warn('Could not mark enrollment link sent',err);}
   }
   function showShare(item,url){
     const host=$('#registrationShareHost');if(!host)return;
     const message=shareMessage(item,url);const digits=phoneDigits(item.parent_phone);
     const whatsapp=`https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
     const sms=`sms:${digits}?body=${encodeURIComponent(message)}`;
-    const mailto=`mailto:${encodeURIComponent(item.parent_email||'')}?subject=${encodeURIComponent(`${academyLabel()} Player Registration`)}&body=${encodeURIComponent(message)}`;
-    host.innerHTML=`<div class="cam-share-box"><strong>Registration link ready for ${esc(item.parent_first_name)} ${esc(item.parent_last_name)}</strong><div class="cam-share-url">${esc(url)}</div><div class="cam-share-actions"><button data-share="sms">Text Message</button><button data-share="whatsapp">WhatsApp</button>${item.parent_email?'<button data-share="email">Email</button>':''}<button data-share="copy">Copy Link</button></div></div>`;
+    const mailto=`mailto:${encodeURIComponent(item.parent_email||'')}?subject=${encodeURIComponent(`${academyLabel()} Player Enrollment`)}&body=${encodeURIComponent(message)}`;
+    host.innerHTML=`<div class="cam-share-box"><strong>Enrollment link ready for ${esc(item.parent_first_name)} ${esc(item.parent_last_name)}</strong><div class="cam-share-url">${esc(url)}</div><div class="cam-share-actions"><button data-share="sms">Text Message</button><button data-share="whatsapp">WhatsApp</button>${item.parent_email?'<button data-share="email">Email</button>':''}<button data-share="copy">Copy Link</button></div></div>`;
     $('[data-share="sms"]',host)?.addEventListener('click',async()=>{await markSent(item.id,'sms');location.href=sms;});
     $('[data-share="whatsapp"]',host)?.addEventListener('click',async()=>{await markSent(item.id,'whatsapp');window.open(whatsapp,'_blank','noopener');});
     $('[data-share="email"]',host)?.addEventListener('click',async()=>{await markSent(item.id,'email');location.href=mailto;});
-    $('[data-share="copy"]',host)?.addEventListener('click',async()=>{await navigator.clipboard.writeText(url);await markSent(item.id,'copy');notify('Registration link copied.');await renderRegistration(true);});
+    $('[data-share="copy"]',host)?.addEventListener('click',async()=>{await navigator.clipboard.writeText(url);await markSent(item.id,'copy');notify('Enrollment link copied.');await renderRegistration(true);});
   }
-  function kpi(label,value,note){return `<article class="cam-registration-kpi"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(note)}</small></article>`;}
+  function kpi(label,value){return `<article class="cam-registration-kpi"><span>${esc(label)}</span><strong>${esc(value)}</strong></article>`;}
+  function pipelineCounts(invites){
+    const rows=Array.isArray(invites)?invites:[];
+    const sentStatuses=new Set(['sent','opened','in_progress','submitted','needs_information','approved','declined']);
+    return {
+      sent:rows.filter(item=>Boolean(item.sent_at)||sentStatuses.has(String(item.status||''))).length,
+      waitingOpen:rows.filter(item=>String(item.status||'')==='sent').length,
+      working:rows.filter(item=>['opened','in_progress','needs_information'].includes(String(item.status||''))).length,
+      waitingReview:rows.filter(item=>String(item.status||'')==='submitted').length
+    };
+  }
   function trackerRows(invites,role){
-    if(!invites.length)return '<div class="cam-registration-empty"><strong>No registration links yet.</strong><div>Create the first registration link from the form on the left.</div></div>';
+    if(!invites.length)return '<div class="cam-registration-empty"><strong>No enrollment links yet.</strong><div>Create the first enrollment link from the form on the left.</div></div>';
     return `<div class="cam-tracker-row header"><span>Parent</span><span>Sent By</span><span>Sent / Activity</span><span>Status</span><span>Player</span><span>Actions</span></div>`+invites.map(item=>{
       const canReview=(role==='owner'||role==='admin')&&item.application_id&&['submitted','needs_information','approved','declined'].includes(item.status);
       const canResend=['created','sent','opened','in_progress','needs_information','expired'].includes(item.status)&&!item.submitted_at;
@@ -78,12 +94,12 @@
       return `<div class="cam-tracker-row" data-invite-id="${item.id}"><div><strong>${esc(item.parent_first_name)} ${esc(item.parent_last_name)}</strong><small>${esc(item.parent_phone)}${item.parent_email?` · ${esc(item.parent_email)}`:''}</small></div><div><strong>${esc(item.sent_by_name||'Academy Staff')}</strong><small>${esc(item.sent_by_role||'')}</small></div><div><strong>${esc(fmtDate(item.sent_at||item.created_at))}</strong><small>Last: ${esc(fmtDate(item.last_activity_at||item.created_at))}</small></div><div><span class="cam-status ${esc(item.status)}">${esc(statusLabel(item.status))}</span></div><div><strong>${esc(player)}</strong><small>${item.application_id?`Application #${item.application_id}`:'Not submitted'}</small></div><div class="cam-row-actions">${canReview?`<button class="review" data-review-app="${item.application_id}">${item.status==='submitted'?'Review':'View'}</button>`:''}${canResend?`<button data-resend="${item.id}">Resend</button>`:''}${canCancel?`<button data-cancel="${item.id}">Cancel</button>`:''}</div></div>`;
     }).join('');
   }
-  function pageHtml(invites,summary,role){
-    const counts=summary?.counts||{};
-    return `<section class="cam-registration-page"><section class="cam-registration-head"><div><span class="academy-kicker">STUDENT ONBOARDING · PROCESS 1</span><h1>Registration</h1><p>Create secure parent registration links, track progress through submission, and review completed applications before creating an active player.</p></div></section>
-      <section class="cam-registration-kpis">${kpi('Submitted',summary?.submitted||0,'Needs Admin/Owner review')}${kpi('Waiting on Parent',summary?.waiting_on_parent||0,'Sent, opened, or in progress')}${kpi('In Progress',summary?.in_progress||0,'Parent started the form')}${kpi('Approved',summary?.approved||0,'Converted to player records')}</section>
-      <section class="cam-registration-grid"><article class="panel cam-registration-compose"><h2>Send Registration Link</h2><p>Enter the parent contact. The parent completes all player and registration details.</p><form id="registrationInviteForm"><div class="cam-registration-fields"><label><span>Parent First Name *</span><input name="parent_first_name" required maxlength="100"></label><label><span>Parent Last Name *</span><input name="parent_last_name" required maxlength="100"></label><label class="wide"><span>Mobile Number *</span><input name="parent_phone" type="tel" required maxlength="60" placeholder="404-555-1234"></label><label class="wide"><span>Email</span><input name="parent_email" type="email" maxlength="200" placeholder="Optional"></label></div><div class="cam-registration-actions"><button class="primary" type="submit">Create Registration Link</button></div></form><div id="registrationShareHost"></div></article>
-      <article class="panel cam-registration-tracker"><h2>Registration Tracking</h2><p>${invites.length} registration record${invites.length===1?'':'s'} visible to your role.</p><div class="cam-tracker-table">${trackerRows(invites,role)}</div></article></section><div id="registrationReviewHost"></div></section>`;
+  function pageHtml(invites,summary,role,heroMarkup){
+    const pipeline=pipelineCounts(invites);
+    return `<section class="cam-registration-page">${heroMarkup}
+      <section class="cam-registration-kpis">${kpi('Registration Link Sent',pipeline.sent)}${kpi('Waiting on Parent to Open Link',pipeline.waitingOpen)}${kpi('Parents Working on Enrollment Form',pipeline.working)}${kpi('Waiting on Admin Review / Approval',pipeline.waitingReview)}</section>
+      <section class="cam-registration-grid"><article class="panel cam-registration-compose"><h2>Send Enrollment Link</h2><p>Enter the parent contact. The parent completes all player and enrollment details.</p><form id="registrationInviteForm"><div class="cam-registration-fields"><label><span>Parent First Name *</span><input name="parent_first_name" required maxlength="100"></label><label><span>Parent Last Name *</span><input name="parent_last_name" required maxlength="100"></label><label class="wide"><span>Mobile Number *</span><input name="parent_phone" type="tel" required maxlength="60" placeholder="404-555-1234"></label><label class="wide"><span>Email</span><input name="parent_email" type="email" maxlength="200" placeholder="Optional"></label></div><div class="cam-registration-actions"><button class="primary" type="submit">Create Enrollment Link</button></div></form><div id="registrationShareHost"></div></article>
+      <article class="panel cam-registration-tracker"><h2>Enrollment Tracking</h2><p>${invites.length} enrollment record${invites.length===1?'':'s'} visible to your role.</p><div class="cam-tracker-table">${trackerRows(invites,role)}</div></article></section><div id="registrationReviewHost"></div></section>`;
   }
   function reviewField(label,value){return `<dt>${esc(label)}</dt><dd>${esc(value||'—')}</dd>`;}
   function contactText(contact){return contact?`${contact.first_name||''} ${contact.last_name||''} · ${contact.relationship||''} · ${contact.phone||''}`.replace(/\s+·\s*$/,''):'—';}
@@ -102,12 +118,12 @@
     if(!registrationActive()||rendering)return;
     const content=$('#academyWorkspace .academy-content');if(!content)return;
     if(!force&&content.dataset.registrationRendered==='1')return;
-    rendering=true;content.dataset.registrationRendered='loading';content.innerHTML='<div class="panel academy-loading">Loading registration pipeline…</div>';
+    rendering=true;content.dataset.registrationRendered='loading';content.innerHTML='<div class="panel academy-loading">Loading enrollment pipeline…</div>';
     try{
-      const [invites,summary,role,branding]=await Promise.all([requestJson('/api/academy/registration/invites'),requestJson('/api/academy/registration/summary'),currentRole(),registrationBranding()]);
+      const [invites,summary,role,branding,heroMarkup]=await Promise.all([requestJson('/api/academy/registration/invites'),requestJson('/api/academy/registration/summary'),currentRole(),registrationBranding(),enrollmentHero()]);
       academyNameCache=String(branding?.academy_name||'Academy').trim()||'Academy';
       if(!registrationActive())return;
-      content.innerHTML=pageHtml(Array.isArray(invites)?invites:[],summary||{},role);
+      content.innerHTML=pageHtml(Array.isArray(invites)?invites:[],summary||{},role,heroMarkup);
       content.dataset.registrationRendered='1';wirePage(Array.isArray(invites)?invites:[],role);
     }catch(err){content.innerHTML=`<div class="warning">${esc(err.message)}</div>`;content.dataset.registrationRendered='1';}
     finally{rendering=false;}
@@ -115,14 +131,14 @@
   function wirePage(invites,role){
     $('#registrationInviteForm')?.addEventListener('submit',async e=>{
       e.preventDefault();const form=e.currentTarget;const raw=formObject(form);const submit=$('button[type="submit"]',form);submit.disabled=true;submit.textContent='Creating…';
-      try{const item=await requestJson('/api/academy/registration/invites',{method:'POST',body:JSON.stringify(raw)});showShare(item,item.registration_url);notify('Registration link created.');form.reset();}
-      catch(err){notify(err.message);}finally{submit.disabled=false;submit.textContent='Create Registration Link';}
+      try{const item=await requestJson('/api/academy/registration/invites',{method:'POST',body:JSON.stringify(raw)});showShare(item,item.registration_url);notify('Enrollment link created.');form.reset();}
+      catch(err){notify(err.message);}finally{submit.disabled=false;submit.textContent='Create Enrollment Link';}
     });
     $$('[data-resend]').forEach(btn=>btn.onclick=async()=>{
-      btn.disabled=true;try{const item=await requestJson(`/api/academy/registration/invites/${btn.dataset.resend}/resend`,{method:'POST',body:'{}'});showShare(item,item.registration_url);notify('New registration link generated.');await renderRegistration(true);}catch(err){notify(err.message);}finally{btn.disabled=false;}
+      btn.disabled=true;try{const item=await requestJson(`/api/academy/registration/invites/${btn.dataset.resend}/resend`,{method:'POST',body:'{}'});showShare(item,item.registration_url);notify('New enrollment link generated.');await renderRegistration(true);}catch(err){notify(err.message);}finally{btn.disabled=false;}
     });
     $$('[data-cancel]').forEach(btn=>btn.onclick=async()=>{
-      if(!confirm('Cancel this registration link?'))return;btn.disabled=true;try{await requestJson(`/api/academy/registration/invites/${btn.dataset.cancel}/cancel`,{method:'POST',body:'{}'});notify('Registration link cancelled.');await renderRegistration(true);}catch(err){notify(err.message);}finally{btn.disabled=false;}
+      if(!confirm('Cancel this enrollment link?'))return;btn.disabled=true;try{await requestJson(`/api/academy/registration/invites/${btn.dataset.cancel}/cancel`,{method:'POST',body:'{}'});notify('Enrollment link cancelled.');await renderRegistration(true);}catch(err){notify(err.message);}finally{btn.disabled=false;}
     });
     if(role==='owner'||role==='admin')$$('[data-review-app]').forEach(btn=>btn.onclick=()=>openReview(Number(btn.dataset.reviewApp)));
   }
@@ -138,7 +154,7 @@
       const action=btn.dataset.reviewAction;const note=$('#registrationReviewNote',host)?.value.trim()||null;
       if(action==='approve'&&!confirm('Approve this application and create the active player/guardian records?'))return;
       btn.disabled=true;
-      try{const result=await requestJson(`/api/academy/registration/applications/${app.id}/review`,{method:'POST',body:JSON.stringify({action,note})});notify(action==='approve'?'Registration approved and player created.':action==='needs_information'?'Information request recorded.':'Registration declined.');await renderRegistration(true);if(result?.id){} }
+      try{const result=await requestJson(`/api/academy/registration/applications/${app.id}/review`,{method:'POST',body:JSON.stringify({action,note})});notify(action==='approve'?'Enrollment approved and player created.':action==='needs_information'?'Information request recorded.':'Enrollment declined.');await renderRegistration(true);if(result?.id){} }
       catch(err){notify(err.message);btn.disabled=false;}
     });
   }
@@ -148,9 +164,9 @@
     try{
       const summary=await requestJson('/api/academy/registration/summary');if(!dashboardActive()||!stats.isConnected)return;
       const card=document.createElement('article');card.className='academy-stat blue cam-registration-dashboard-card';card.tabIndex=0;card.setAttribute('role','button');
-      card.innerHTML=`<div class="academy-stat-icon">✎</div><div><span>Submitted Applications</span><strong>${Number(summary?.submitted||0)}</strong><small>${Number(summary?.waiting_on_parent||0)} waiting on parent · Open Registration</small></div>`;
+      card.innerHTML=`<div class="academy-stat-icon">✎</div><div><span>Submitted Enrollments</span><strong>${Number(summary?.submitted||0)}</strong><small>${Number(summary?.waiting_on_parent||0)} waiting on parent · Open Enrollment</small></div>`;
       card.onclick=goRegistration;card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();goRegistration();}};stats.appendChild(card);
-    }catch(err){console.warn('Registration dashboard summary unavailable',err);}
+    }catch(err){console.warn('Enrollment dashboard summary unavailable',err);}
   }
   function apply(){scheduled=false;if(registrationActive())renderRegistration();else if(dashboardActive())injectDashboardCard();}
   function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(apply);}
