@@ -52,3 +52,30 @@ def test_dashboard_v4_polish_has_idempotent_mutation_guards():
     assert "if (row) return" in js
     assert "if (scheduled) return" in js
     assert "requestAnimationFrame(apply)" in js
+
+
+def test_c17_left_navigation_is_stable_and_clickable():
+    shell = (REPO_ROOT / "app" / "static" / "academy_c17_shell_v1.js").read_text(encoding="utf-8")
+    html = (REPO_ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
+
+    # The shell must not replace all nav buttons on every MutationObserver pass.
+    # Rebuilding repeatedly conflicted with the prototype icon-polish observer and
+    # continuously destroyed/recreated the clickable elements.
+    assert "NAV_SIGNATURE" in shell
+    assert "holder.dataset.c17Signature !== NAV_SIGNATURE" in shell
+    assert "buildAcademyNav(holder)" in shell
+    assert shell.count("holder.innerHTML =") == 1
+
+    # Use one delegated click handler on the persistent holder so icon DOM changes
+    # cannot detach button navigation behavior.
+    assert "holder.addEventListener('click'" in shell
+    assert "event.target.closest('[data-c17-target]')" in shell
+    assert "holder.dataset.c17Wired === '1'" in shell
+    assert "location.hash = target" in shell
+
+    # Active state changes without rebuilding the navigation.
+    assert "button.classList.toggle('active', selected)" in shell
+    assert "aria-current" in shell
+
+    # Cache-bust the repaired navigation script in production.
+    assert '/static/academy_c17_shell_v1.js?v=2' in html
