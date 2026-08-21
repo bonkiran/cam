@@ -38,15 +38,18 @@ def test_c17_dashboard_v4_matches_approved_followup():
     assert markup.index("receiptsMarkup(data)") < markup.index("paymentsMarkup(data)")
     assert ".c17-money-grid" in css
 
-    # Left-side academy nav replaces the horizontal academy tabs.
+    # Left-side Academy navigation is the sole navigation, with Dashboard mapped to the C17 overview.
     assert "academy-tabs{display:none!important}" in shell_css
     assert "c17-sidebar-nav" in shell_js
-    assert "academy_c17_shell_v1.js?v=2" in html
+    assert "{label:'Dashboard', icon:'⌂', target:'academy'" in shell_js
+    assert "{label:'Academy'" not in shell_js
+    assert "academy_c17_shell_v1.js?v=3" in html
     assert "academy_dashboard_v4.js?v=1" in html
     assert "academy_dashboard_v3_refinement_v1.js" not in html
 
 
 def test_c17_shell_navigation_contains_all_approved_items():
     js = (REPO_ROOT / "app" / "static" / "academy_c17_shell_v1.js").read_text(encoding="utf-8")
-    for label in ["Dashboard", "Academy", "Registration", "Players", "Programs", "Coaches", "Finance", "Reports", "Settings", "Insights", "Help & Support"]:
+    for label in ["Dashboard", "Registration", "Players", "Programs", "Coaches", "Finance", "Reports", "Settings", "Insights", "Help & Support"]:
         assert label in js
+    assert "{label:'Academy'" not in js
