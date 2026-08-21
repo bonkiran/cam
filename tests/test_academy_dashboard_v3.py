@@ -43,61 +43,65 @@ def test_new_enrollment_uses_local_month_and_exposes_parent(monkeypatch):
         },
     ]
     monkeypatch.setattr(dashboard_v3, "fetch_all", lambda *args, **kwargs: rows)
-
-    result = dashboard_v3._new_enrollments(
-        {"id": 1, "timezone": "America/New_York"},
-        date(2026, 8, 20),
-    )
-
+    result = dashboard_v3._new_enrollments({"id": 1, "timezone": "America/New_York"}, date(2026, 8, 20))
     assert result["count"] == 1
     assert result["players"][0]["player_name"] == "Jr Sumo verma"
     assert result["players"][0]["parent_name"] == "sumo verma"
     assert result["players"][0]["enrolled_date"] == "2026-08-20"
 
 
-def test_dashboard_v3_matches_approved_layout_contract():
-    js = (REPO_ROOT / "app" / "static" / "academy_dashboard_v3.js").read_text(encoding="utf-8")
-    css = (REPO_ROOT / "app" / "static" / "academy_dashboard_v3.css").read_text(encoding="utf-8")
+def test_dashboard_v4_matches_approved_c17_prototype_contract():
+    js = (REPO_ROOT / "app" / "static" / "academy_dashboard_v4.js").read_text(encoding="utf-8")
+    css = (REPO_ROOT / "app" / "static" / "academy_dashboard_v4.css").read_text(encoding="utf-8")
+    shell_js = (REPO_ROOT / "app" / "static" / "academy_c17_shell_v1.js").read_text(encoding="utf-8")
+    shell_css = (REPO_ROOT / "app" / "static" / "academy_c17_shell_v1.css").read_text(encoding="utf-8")
     html = (REPO_ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
     run_py = (REPO_ROOT / "run.py").read_text(encoding="utf-8")
 
     assert "/api/academy/dashboard/v3" in js
+    assert "/api/academy/enrollments" in js
     assert "forecast_days:'7'" in js
     assert "Players in Programs" in js
-    assert "Beginners" in js and "U11" in js and "U13" in js and "U14" in js and "U15" in js
-    assert "New Enrollment :" in js
-    assert "parent_name" in js
-    assert ">Assign Batch</button>" in js
-    assert "Enrollment Links Sent" in js
-    assert "Enrollment Tracker" in js
+    assert all(group in js for group in ["Beginners", "U11", "U13", "U14", "U15"])
+    assert "New Enrollment :" in js and "Enrolled Date" in js and "Assign Batch" in js
+    assert "Enrollment Links Sent" in js and "Enrollment Tracker" in js
+    assert "View all enrollment links" in js
 
-    # Both session tables must show coach names, including private/1-on-1 sessions.
     assert "<th>Batch</th><th>Coach</th><th>Venue</th><th>Time</th>" in js
     assert "<th>Player</th><th>Coach</th><th>Venue</th><th>Time</th>" in js
     assert "row.coach_name" in js
 
-    assert "Academy Receipts" in js
-    assert "Group Session Fee Received" in js
-    assert "Group Session Fee Pending" in js
-    assert "Academy Payments" in js
-    assert "Coach Salary Payments" in js
-    assert "Facility Payments" in js
-    assert "Academy Expenses" in js
     assert "Upcoming Events" in js
     assert "Matches" in js and "Camps / Programs" in js and "Tournaments" in js
-
-    # Dashboard attendance is intentionally batch-based and has no Excused column.
-    assert "cam-v3-attendance-grid" in js
-    assert "Attended ${Number(row.attended || 0)} / ${Number(row.scheduled || 0)}" in js
+    assert "Session Attendance" in js
+    assert "<th>Scheduled</th><th>Present</th><th>Late</th><th>Absent</th><th>Not Recorded</th><th>Attendance %</th>" in js
     assert "Excused" not in js
 
-    # Search/Crick AI topbar is hidden only while Academy Dashboard v3 is active.
-    assert "body.cam-academy-dashboard-v3-mode .topbar{display:none!important}" in css
-    assert "cam-v3-legacy-sibling" in css
-    assert "academy_dashboard_v3.css?v=1" in html
-    assert "academy_dashboard_v3.js?v=1" in html
-    assert "academy_dashboard_v2.js" not in html
+    # Financial panels are intentionally at the bottom, after Events and Attendance.
+    markup = js[js.index("function dashboardMarkup"):]
+    assert markup.index("eventsMarkup(data)") < markup.index("attendanceMarkup(data)") < markup.index("receiptsMarkup(data)") < markup.index("paymentsMarkup(data)")
+    assert "Academy Receipts" in js and "Academy Payments" in js
+
+    # Cross-origin weather GET must stay a simple request (no forced JSON content-type).
+    assert "if (options.body && !headers['Content-Type'])" in js
+    assert "geocoding-api.open-meteo.com" in js and "api.open-meteo.com/v1/forecast" in js
+
+    # C17 academy shell removes the academy top tab bar and supplies the approved left nav.
+    assert "body.c17-academy-mode #academyWorkspace .academy-tabs{display:none!important}" in shell_css
+    for label in ["Dashboard", "Academy", "Registration", "Players", "Programs", "Coaches", "Finance", "Reports", "Settings", "Insights", "Help & Support"]:
+        assert label in shell_js
+    assert "C17" in shell_js and "CRICKET ACADEMY" in shell_js
+    assert "/static/c17_academy_logo.png" in shell_js
+
+    assert "academy_c17_shell_v1.css?v=1" in html
+    assert "academy_dashboard_v4.css?v=1" in html
+    assert "academy_c17_shell_v1.js?v=1" in html
+    assert "academy_dashboard_v4.js?v=1" in html
+    assert "academy_dashboard_v3.js" not in html
+    assert "academy_dashboard_v3_refinement_v1.js" not in html
+    assert "academy_dashboard_enrollments_v1.js" not in html
     assert "academy_dashboard_v3_router" in run_py
+    assert ".c17-enrollment-grid" in css
 
 
 def test_dashboard_v3_api_attendance_does_not_expose_excused_column():
@@ -137,7 +141,6 @@ def test_dashboard_v3_degrades_one_section_without_blank_page(monkeypatch):
     monkeypatch.setattr(dashboard_v3, "_attendance_by_batch", lambda today: {"date": None, "latest_time": None, "total_scheduled": 0, "batches": []})
 
     result = dashboard_v3.academy_dashboard_v3({"id": 1, "display_name": "Admin", "role": "admin", "academy_id": 1})
-
     assert result["new_enrollments"]["count"] == 1
     assert result["registration_tracker"]["links_sent_count"] == 2
     assert result["program_counts"]["total_players"] == 0
