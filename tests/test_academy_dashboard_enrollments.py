@@ -107,23 +107,22 @@ def test_dashboard_ui_uses_requested_header_and_inline_batch_assignment():
     assert "academy_dashboard_enrollments_v1.js?v=2" in html
 
 
-def test_dashboard_readability_and_enrollment_dedupe_assets_are_loaded():
+def test_dashboard_v3_supersedes_legacy_readability_and_dedupe_assets():
     readability = (REPO_ROOT / "app" / "static" / "academy_dashboard_readability_v1.css").read_text(encoding="utf-8")
     dedupe = (REPO_ROOT / "app" / "static" / "academy_dashboard_enrollment_dedupe_v1.js").read_text(encoding="utf-8")
+    v3_css = (REPO_ROOT / "app" / "static" / "academy_dashboard_v3.css").read_text(encoding="utf-8")
+    v3_js = (REPO_ROOT / "app" / "static" / "academy_dashboard_v3.js").read_text(encoding="utf-8")
     html = (REPO_ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
 
+    # Legacy files remain in the repository for historical compatibility, but
+    # Dashboard v3 now owns the active dashboard typography and dedupe behavior.
     assert 'data-dashboard-v2="1"' in readability
-    assert ".panel-head p" in readability
-    assert ".academy-stat small" in readability
-    assert ".cam-weather-primary small" in readability
-    assert "font-size: 13px" in readability
-    assert "font-size: 12px" in readability
-    assert "min-font-size" not in readability
-
     assert ".cam-new-player-enrollments" in dedupe
-    assert "enrollmentPanels.forEach" in dedupe
-    assert "panel.remove()" in dedupe
-    assert "legacy.remove()" in dedupe
 
-    assert "academy_dashboard_readability_v1.css?v=1" in html
-    assert "academy_dashboard_enrollment_dedupe_v1.js?v=1" in html
+    assert "cam-academy-dashboard-v3-mode" in v3_css
+    assert "cam-v3-legacy-sibling" in v3_css
+    assert "suppressLegacy" in v3_js
+    assert "academy_dashboard_v3.css?v=1" in html
+    assert "academy_dashboard_v3.js?v=1" in html
+    assert "academy_dashboard_readability_v1.css?v=1" not in html
+    assert "academy_dashboard_enrollment_dedupe_v1.js?v=1" not in html
