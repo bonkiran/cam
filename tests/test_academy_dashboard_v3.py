@@ -86,22 +86,41 @@ def test_dashboard_v4_matches_approved_c17_prototype_contract():
     assert "if (options.body && !headers['Content-Type'])" in js
     assert "geocoding-api.open-meteo.com" in js and "api.open-meteo.com/v1/forecast" in js
 
-    # C17 academy shell removes the academy top tab bar and supplies the approved left nav.
+    # C17 Academy overview is the one Dashboard; the separate Academy menu was removed.
     assert "body.c17-academy-mode #academyWorkspace .academy-tabs{display:none!important}" in shell_css
-    for label in ["Dashboard", "Academy", "Registration", "Players", "Programs", "Coaches", "Finance", "Reports", "Settings", "Insights", "Help & Support"]:
+    for label in ["Dashboard", "Registration", "Players", "Programs", "Coaches", "Finance", "Reports", "Settings", "Insights", "Help & Support"]:
         assert label in shell_js
+    assert "{label:'Academy'" not in shell_js
+    assert "{label:'Dashboard', icon:'⌂', target:'academy'" in shell_js
+    assert "setActiveTarget(holder, target)" in shell_js
     assert "C17" in shell_js and "CRICKET ACADEMY" in shell_js
     assert "/static/c17_academy_logo.png" in shell_js
 
     assert "academy_c17_shell_v1.css?v=1" in html
     assert "academy_dashboard_v4.css?v=1" in html
-    assert "academy_c17_shell_v1.js?v=2" in html
+    assert "academy_c17_shell_v1.js?v=4" in html
     assert "academy_dashboard_v4.js?v=1" in html
     assert "academy_dashboard_v3.js" not in html
     assert "academy_dashboard_v3_refinement_v1.js" not in html
     assert "academy_dashboard_enrollments_v1.js" not in html
     assert "academy_dashboard_v3_router" in run_py
     assert ".c17-enrollment-grid" in css
+
+
+def test_registration_tracker_orders_mixed_schema_timestamps_portably(monkeypatch):
+    captured = {}
+
+    def fake_fetch_all(sql, params=()):
+        captured["sql"] = sql
+        return []
+
+    monkeypatch.setattr(dashboard_v3, "fetch_all", fake_fetch_all)
+    result = dashboard_v3._registration_tracker({"id": 1, "timezone": "America/New_York"}, date(2026, 8, 21))
+    assert result == {"links_sent_count": 0, "tracker_count": 0, "rows": []}
+    sql = captured["sql"]
+    assert "CAST(i.last_activity_at AS TEXT)" in sql
+    assert "CAST(i.sent_at AS TEXT)" in sql
+    assert "CAST(i.created_at AS TEXT)" in sql
 
 
 def test_dashboard_v3_api_attendance_does_not_expose_excused_column():

@@ -158,7 +158,11 @@ def _registration_tracker(profile: dict | None, today: date) -> dict:
         FROM academy_registration_invites i
         LEFT JOIN academy_registration_applications a ON a.invite_id=i.id
         {clause}
-        ORDER BY COALESCE(i.last_activity_at,i.sent_at,i.created_at) DESC,i.id DESC
+        ORDER BY COALESCE(
+            CAST(i.last_activity_at AS TEXT),
+            CAST(i.sent_at AS TEXT),
+            CAST(i.created_at AS TEXT)
+        ) DESC,i.id DESC
         """,
         params,
     )
