@@ -19,7 +19,7 @@
   window.__academyNavigationPerformance = metrics;
 
   function routeInfo() {
-    const raw = location.hash.replace(/^#/, '') || 'dashboard';
+    const raw = location.hash.replace(/^#/, '') || 'academy';
     const [page, query = ''] = raw.split('?');
     const params = new URLSearchParams(query);
     return { page, tab: page === 'academy' ? (params.get('tab') || 'overview') : null };
@@ -107,6 +107,12 @@
   function tabForButton(button) {
     if (!button) return null;
     if (button.dataset?.academyTab) return button.dataset.academyTab;
+    if (button.dataset?.c17Target) {
+      const raw = String(button.dataset.c17Target || '');
+      const [page, query = ''] = raw.split('?');
+      if (page !== 'academy') return null;
+      return new URLSearchParams(query).get('tab') || 'overview';
+    }
     if (button.id === 'academyProgramsTab') return 'programs';
     const label = (button.textContent || '').trim();
     const map = {
@@ -115,12 +121,14 @@
       'Academy Setup': 'setup',
       'Players': 'players',
       'Programs & Enrollment': 'programs',
+      'Programs': 'programs',
       'Batches & Sessions': 'batches',
       'Coaches': 'coaches',
       'Attendance': 'attendance',
       'Teams & Matches': 'teams',
       'Tournaments': 'tournaments',
       'Fees & Payments': 'fees',
+      'Finance': 'fees',
     };
     return map[label] || null;
   }
@@ -190,7 +198,7 @@
     const content = document.querySelector('#academyWorkspace .academy-content');
     if (!content || content.querySelector('.academy-loading')) return false;
     switch (tab) {
-      case 'overview': return !!content.querySelector('.academy-hero');
+      case 'overview': return content.dataset.dashboardV4 === '1' || !!content.querySelector('.c17-dashboard');
       case 'setup': return !!content.querySelector('#academyProfileForm');
       case 'players': return !!content.querySelector('.academy-player-panel');
       case 'programs': return !!content.querySelector('#openProgramForm');
@@ -233,9 +241,6 @@
     if (current.page !== 'academy' || !target || current.tab === target) return;
 
     setActiveTab(target);
-    // Owner Console and legacy Academy click handlers can both update tab classes in the
-    // same click task. Re-assert the intended target in a microtask so the first rendered
-    // frame always reflects the tab the user actually selected.
     queueMicrotask(() => {
       if (transition?.target === target) setActiveTab(target);
     });
@@ -266,7 +271,7 @@
   document.head.appendChild(style);
 
   document.addEventListener('click', (event) => {
-    const button = event.target.closest('#academyWorkspace .academy-tabs button, [data-academy-tab]');
+    const button = event.target.closest('#academyWorkspace .academy-tabs button, [data-academy-tab], .c17-sidebar-nav [data-c17-target]');
     if (!button) return;
     const target = tabForButton(button);
     beginTransition(target);
