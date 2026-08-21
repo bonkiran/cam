@@ -35,6 +35,7 @@ from app.academy_enrollment_completion_api import router as academy_enrollment_c
 from app.academy_parent_billing_api import router as academy_parent_billing_router
 from app.academy_parent_payment_policy_api import router as academy_parent_payment_policy_router
 from app.academy_dashboard_api import router as academy_dashboard_router
+from app.academy_dashboard_enrollment_api import router as academy_dashboard_enrollment_router
 from app.academy_current_weather_api import router as academy_current_weather_router
 from app.academy_owner_console_api import router as academy_owner_console_router
 from app.academy_reviews_api import router as academy_reviews_router
@@ -150,6 +151,7 @@ app.include_router(academy_enrollment_payment_router)
 app.include_router(academy_parent_billing_router)
 app.include_router(academy_parent_payment_policy_router)
 app.include_router(academy_dashboard_router)
+app.include_router(academy_dashboard_enrollment_router)
 app.include_router(academy_current_weather_router)
 app.include_router(academy_owner_console_router)
 app.include_router(academy_reviews_router)
