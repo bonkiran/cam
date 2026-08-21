@@ -8,23 +8,19 @@ def test_dashboard_v4_polish_matches_approved_prototype_changes():
     css = (REPO_ROOT / "app" / "static" / "academy_dashboard_v4_polish_v1.css").read_text(encoding="utf-8")
     html = (REPO_ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
 
-    # Enrollment links card is removed and the tracker becomes a full-width month-labelled table.
     assert "$('.c17-links-card', grid)?.remove()" in js
     assert "${monthLabelFromDashboard(root)} - Enrollment Tracker : ${count}" in js
     assert "c17-tracker-full" in js
     assert ".c17-enrollment-grid.c17-tracker-full" in css
 
-    # Receipts and Payments are recomposed into one balanced 50/50 row.
     assert "c17-finance-row" in js
     assert "row.append(receipts, payments)" in js
     assert ".c17-finance-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)" in css
 
-    # Academy top navigation is hidden; left navigation is the only Academy navigation surface.
     assert "#academyWorkspace>.academy-primary-nav" in css
     assert "#academyWorkspace>.academy-tabs" in css
     assert "display:none!important" in css
 
-    # Prototype-style SVG icon system covers the sidebar and dashboard sections.
     assert "userPlus" in js
     assert "Players in Programs" in js
     assert "New Enrollment" in js
@@ -37,7 +33,6 @@ def test_dashboard_v4_polish_matches_approved_prototype_changes():
     assert "c17-nav-svg" in css
     assert "c17-title-svg" in css
 
-    # Readability polish is loaded after Dashboard v4 so it wins the cascade.
     v4_css = html.index('/static/academy_dashboard_v4.css?v=1')
     polish_css = html.index('/static/academy_dashboard_v4_polish_v1.css?v=1')
     v4_js = html.index('/static/academy_dashboard_v4.js?v=1')
@@ -58,24 +53,57 @@ def test_c17_left_navigation_is_stable_and_clickable():
     shell = (REPO_ROOT / "app" / "static" / "academy_c17_shell_v1.js").read_text(encoding="utf-8")
     html = (REPO_ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
 
-    # The shell must not replace all nav buttons on every MutationObserver pass.
-    # Rebuilding repeatedly conflicted with the prototype icon-polish observer and
-    # continuously destroyed/recreated the clickable elements.
     assert "NAV_SIGNATURE" in shell
     assert "holder.dataset.c17Signature !== NAV_SIGNATURE" in shell
     assert "buildAcademyNav(holder)" in shell
     assert shell.count("holder.innerHTML =") == 1
 
-    # Use one delegated click handler on the persistent holder so icon DOM changes
-    # cannot detach button navigation behavior.
     assert "holder.addEventListener('click'" in shell
     assert "event.target.closest('[data-c17-target]')" in shell
     assert "holder.dataset.c17Wired === '1'" in shell
     assert "location.hash = target" in shell
 
-    # Active state changes without rebuilding the navigation.
     assert "button.classList.toggle('active', selected)" in shell
     assert "aria-current" in shell
-
-    # Cache-bust the repaired navigation script in production.
     assert '/static/academy_c17_shell_v1.js?v=2' in html
+
+
+def test_c17_dashboard_first_paint_never_exposes_legacy_overview():
+    first_paint = (REPO_ROOT / "app" / "static" / "academy_dashboard_first_paint_v1.js").read_text(encoding="utf-8")
+    first_paint_css = (REPO_ROOT / "app" / "static" / "academy_dashboard_first_paint_v1.css").read_text(encoding="utf-8")
+    route_guard = (REPO_ROOT / "app" / "static" / "academy_route_guard.js").read_text(encoding="utf-8")
+    html = (REPO_ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
+
+    # The first visible overview is a prototype-shaped skeleton, not the legacy Academy overview.
+    assert "c17-overview-first-paint" in first_paint
+    assert "c17DashboardFirstPaint" in first_paint
+    assert "c17-fp-hero" in first_paint
+    assert "c17-fp-programs" in first_paint
+    assert "c17-fp-table" in first_paint
+    assert "c17-fp-money" in first_paint
+    assert "#academyWorkspace{display:none!important}" in first_paint_css
+
+    # The real workspace is revealed only after Dashboard v4 owns the content.
+    assert "content.dataset.dashboardV4 !== '1'" in first_paint
+    assert "content.querySelector('.c17-dashboard')" in first_paint
+    assert "document.getElementById(SHELL_ID)?.remove()" in first_paint
+
+    # Avoid replaying an old Academy transition snapshot over the C17 overview.
+    assert "academyTransitionSnapshot" in first_paint
+    assert "academy-tab-transitioning" in first_paint
+
+    # Prefetch the two slow same-origin dashboard requests so v4 can reuse in-flight/cache work.
+    assert "fetch('/api/academy/dashboard/v3'" in first_paint
+    assert "fetch('/api/academy/enrollments'" in first_paint
+
+    # The old generic Loading Academy card is not used for the C17 overview route.
+    assert "const VERSION = '4'" in route_guard
+    assert "isAcademyOverviewRoute()" in route_guard
+    assert "if (isAcademyOverviewRoute())" in route_guard
+
+    # First-paint assets must load before the legacy Academy renderer can paint.
+    assert '/static/academy_dashboard_first_paint_v1.css?v=1' in html
+    assert '/static/academy_route_guard.js?v=4' in html
+    fp_js = html.index('/static/academy_dashboard_first_paint_v1.js?v=1')
+    legacy_js = html.index('/static/academy_v3.js?v=3')
+    assert fp_js < legacy_js
