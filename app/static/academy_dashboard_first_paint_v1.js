@@ -52,10 +52,12 @@
     return shell;
   }
 
-  function finalDashboardReady() {
+  function dashboardV4OwnsWorkspace() {
     const content = document.querySelector('#academyWorkspace .academy-content');
-    if (!content || content.dataset.dashboardV4 !== '1') return false;
-    return Boolean(content.querySelector('.c17-dashboard'));
+    // Dashboard v4 sets this marker after either a successful prototype render or
+    // its own error state. Either way, the legacy Academy overview no longer owns
+    // the visible workspace and the first-paint shell can safely hand off.
+    return Boolean(content && content.dataset.dashboardV4 === '1');
   }
 
   function apply() {
@@ -69,7 +71,7 @@
 
     root.classList.add(ROUTE_CLASS);
 
-    if (finalDashboardReady()) {
+    if (dashboardV4OwnsWorkspace()) {
       root.classList.add(READY_CLASS);
       document.getElementById(SHELL_ID)?.remove();
       return;
