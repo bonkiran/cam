@@ -43,7 +43,8 @@ def test_c17_dashboard_v4_matches_approved_followup():
     assert "c17-sidebar-nav" in shell_js
     assert "{label:'Dashboard', icon:'⌂', target:'academy'" in shell_js
     assert "{label:'Academy'" not in shell_js
-    assert "academy_c17_shell_v1.js?v=3" in html
+    assert "setActiveTarget(holder, target)" in shell_js
+    assert "academy_c17_shell_v1.js?v=4" in html
     assert "academy_dashboard_v4.js?v=1" in html
     assert "academy_dashboard_v3_refinement_v1.js" not in html
 
