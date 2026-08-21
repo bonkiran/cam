@@ -82,15 +82,16 @@ def test_c17_dashboard_first_paint_never_exposes_legacy_overview():
     assert "c17-fp-money" in first_paint
     assert "#academyWorkspace{display:none!important}" in first_paint_css
 
-    assert "content.dataset.dashboardV4 !== '1'" in first_paint
-    assert "content.querySelector('.c17-dashboard')" in first_paint
+    # The legacy workspace remains hidden until Dashboard v4 has explicitly
+    # claimed it. The handoff works for both successful prototype rendering and
+    # a v4-owned error state; legacy content is never the user-visible fallback.
+    assert "dashboardV4OwnsWorkspace" in first_paint
+    assert "content.dataset.dashboardV4 === '1'" in first_paint
     assert "document.getElementById(SHELL_ID)?.remove()" in first_paint
 
     assert "academyTransitionSnapshot" in first_paint
     assert "academy-tab-transitioning" in first_paint
 
-    # The first-paint layer is visual-only. It must not start API work before the
-    # normal Academy/session renderers are ready, because that can race auth/data setup.
     assert "fetch('/api/academy/dashboard/v3'" not in first_paint
     assert "fetch('/api/academy/enrollments'" not in first_paint
 
