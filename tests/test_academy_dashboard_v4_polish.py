@@ -63,12 +63,13 @@ def test_c17_left_navigation_uses_academy_overview_as_dashboard():
     assert "location.hash = target" in shell
     assert "button.classList.toggle('active', selected)" in shell
     assert "aria-current" in shell
+    assert "setActiveTarget(holder, target)" in shell
 
     # There is one Dashboard concept: the approved C17 Academy overview.
     assert "{label:'Dashboard', icon:'⌂', target:'academy'" in shell
     assert "{label:'Academy'" not in shell
     assert "target:'dashboard'" not in shell
-    assert '/static/academy_c17_shell_v1.js?v=3' in html
+    assert '/static/academy_c17_shell_v1.js?v=4' in html
 
 
 def test_c17_dashboard_first_paint_never_exposes_legacy_overview():
