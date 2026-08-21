@@ -1,0 +1,114 @@
+.cam-new-enrollment-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto;
+  gap: 10px 16px;
+  align-items: center;
+}
+
+.cam-new-enrollment-player {
+  min-width: 0;
+}
+
+.cam-new-enrollment-player strong,
+.cam-new-enrollment-player small {
+  display: block;
+}
+
+.cam-new-enrollment-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cam-new-enrollment-actions > span:first-child {
+  white-space: nowrap;
+}
+
+.cam-assign-batch {
+  white-space: nowrap;
+}
+
+.cam-batch-assigned {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(44, 151, 95, 0.12);
+}
+
+.cam-batch-assigned.waitlisted {
+  background: rgba(202, 137, 33, 0.14);
+}
+
+.cam-batch-assignment-editor {
+  grid-column: 1 / -1;
+}
+
+.cam-batch-assignment-editor:empty {
+  display: none;
+}
+
+.cam-batch-assignment-form,
+.cam-batch-assignment-box {
+  margin-top: 4px;
+  padding: 14px;
+  border: 1px solid rgba(128, 128, 128, 0.22);
+  border-radius: 12px;
+  background: rgba(128, 128, 128, 0.05);
+}
+
+.cam-batch-assignment-heading strong,
+.cam-batch-assignment-heading span,
+.cam-batch-assignment-box strong,
+.cam-batch-assignment-box span {
+  display: block;
+}
+
+.cam-batch-assignment-heading span,
+.cam-batch-assignment-box span {
+  margin-top: 3px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.cam-batch-assignment-fields {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) minmax(150px, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.cam-batch-assignment-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.cam-batch-assignment-status {
+  margin-right: auto;
+  font-size: 12px;
+}
+
+.cam-batch-assignment-error {
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  .cam-new-enrollment-row,
+  .cam-batch-assignment-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .cam-new-enrollment-actions {
+    justify-content: flex-start;
+  }
+}
