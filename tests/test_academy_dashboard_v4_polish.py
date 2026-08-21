@@ -74,7 +74,6 @@ def test_c17_dashboard_first_paint_never_exposes_legacy_overview():
     route_guard = (REPO_ROOT / "app" / "static" / "academy_route_guard.js").read_text(encoding="utf-8")
     html = (REPO_ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
 
-    # The first visible overview is a prototype-shaped skeleton, not the legacy Academy overview.
     assert "c17-overview-first-paint" in first_paint
     assert "c17DashboardFirstPaint" in first_paint
     assert "c17-fp-hero" in first_paint
@@ -83,25 +82,22 @@ def test_c17_dashboard_first_paint_never_exposes_legacy_overview():
     assert "c17-fp-money" in first_paint
     assert "#academyWorkspace{display:none!important}" in first_paint_css
 
-    # The real workspace is revealed only after Dashboard v4 owns the content.
     assert "content.dataset.dashboardV4 !== '1'" in first_paint
     assert "content.querySelector('.c17-dashboard')" in first_paint
     assert "document.getElementById(SHELL_ID)?.remove()" in first_paint
 
-    # Avoid replaying an old Academy transition snapshot over the C17 overview.
     assert "academyTransitionSnapshot" in first_paint
     assert "academy-tab-transitioning" in first_paint
 
-    # Prefetch the two slow same-origin dashboard requests so v4 can reuse in-flight/cache work.
-    assert "fetch('/api/academy/dashboard/v3'" in first_paint
-    assert "fetch('/api/academy/enrollments'" in first_paint
+    # The first-paint layer is visual-only. It must not start API work before the
+    # normal Academy/session renderers are ready, because that can race auth/data setup.
+    assert "fetch('/api/academy/dashboard/v3'" not in first_paint
+    assert "fetch('/api/academy/enrollments'" not in first_paint
 
-    # The old generic Loading Academy card is not used for the C17 overview route.
     assert "const VERSION = '4'" in route_guard
     assert "isAcademyOverviewRoute()" in route_guard
     assert "if (isAcademyOverviewRoute())" in route_guard
 
-    # First-paint assets must load before the legacy Academy renderer can paint.
     assert '/static/academy_dashboard_first_paint_v1.css?v=1' in html
     assert '/static/academy_route_guard.js?v=4' in html
     fp_js = html.index('/static/academy_dashboard_first_paint_v1.js?v=1')
