@@ -45,6 +45,7 @@ def _observe_click(page, label: str, ready_selector: str) -> dict:
             frames: 0,
             firstFrameActive: false,
             blankFrames: 0,
+            firstPaintFrames: 0,
             legacyOverviewFrames: 0,
             loadingPanelExposedFrames: 0,
             maxVisibleMainChildren: 0,
@@ -64,7 +65,9 @@ def _observe_click(page, label: str, ready_selector: str) -> dict:
             const contentVisible = visible(content);
             const readyNode = document.querySelector(readySelector);
             const ready = !!readyNode && visible(readyNode) && !readyNode.querySelector?.('.academy-loading');
-            if (!contentVisible && !ready) result.blankFrames += 1;
+            const firstPaintVisible = visible(document.getElementById('c17DashboardFirstPaint'));
+            if (firstPaintVisible) result.firstPaintFrames += 1;
+            if (!contentVisible && !ready && !firstPaintVisible) result.blankFrames += 1;
 
             const exposedLoading = [...document.querySelectorAll('#academyWorkspace .academy-loading')].some(visible);
             if (exposedLoading) result.loadingPanelExposedFrames += 1;
@@ -139,6 +142,7 @@ def test_c17_left_navigation_clicks_are_immediate_and_visually_stable():
                 _assert_stable_transition(dashboard)
                 assert dashboard["finalHash"] == "#academy", dashboard
                 assert dashboard["legacyOverviewFrames"] == 0, dashboard
+                assert dashboard["firstPaintFrames"] > 0, dashboard
 
                 programs = _observe_click(page, "Programs", "#openProgramForm")
                 _assert_stable_transition(programs)
