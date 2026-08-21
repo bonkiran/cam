@@ -19,6 +19,8 @@ on:
       - 'app/static/academy_enrollment_complete_v1.css'
       - 'app/static/academy_dashboard_enrollments_v1.js'
       - 'app/static/academy_dashboard_enrollments_v1.css'
+      - 'app/static/academy_dashboard_enrollment_dedupe_v1.js'
+      - 'app/static/academy_dashboard_readability_v1.css'
       - 'app/static/index.html'
       - 'run.py'
       - 'tests/test_payment_provider_abstraction.py'
@@ -43,6 +45,8 @@ on:
       - 'app/static/academy_enrollment_complete_v1.css'
       - 'app/static/academy_dashboard_enrollments_v1.js'
       - 'app/static/academy_dashboard_enrollments_v1.css'
+      - 'app/static/academy_dashboard_enrollment_dedupe_v1.js'
+      - 'app/static/academy_dashboard_readability_v1.css'
       - 'app/static/index.html'
       - 'run.py'
       - 'tests/test_payment_provider_abstraction.py'
@@ -85,7 +89,8 @@ jobs:
         run: >-
           node --check app/static/academy_enrollment_public_v1.js &&
           node --check app/static/academy_enrollment_complete_v1.js &&
-          node --check app/static/academy_dashboard_enrollments_v1.js
+          node --check app/static/academy_dashboard_enrollments_v1.js &&
+          node --check app/static/academy_dashboard_enrollment_dedupe_v1.js
       - name: Run Stripe Square contract Slice 2C-2D and dashboard enrollment tests
         run: >-
           pytest -q
