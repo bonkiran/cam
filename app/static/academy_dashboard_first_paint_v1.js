@@ -3,7 +3,6 @@
   const READY_CLASS = 'c17-overview-ready';
   const SHELL_ID = 'c17DashboardFirstPaint';
   let scheduled = false;
-  let prefetched = false;
 
   function route() {
     const raw = location.hash.replace(/^#/, '');
@@ -38,15 +37,6 @@
     delete document.documentElement.dataset.academyTransitionTarget;
   }
 
-  function prefetchDashboard() {
-    if (prefetched || !active()) return;
-    prefetched = true;
-    // These requests are picked up by academy_navigation_performance_v1.js,
-    // so the real Dashboard v4 renderer can reuse the same in-flight/cached GETs.
-    fetch('/api/academy/dashboard/v3', {cache:'no-store'}).catch(() => {});
-    fetch('/api/academy/enrollments', {cache:'no-store'}).catch(() => {});
-  }
-
   function ensureShell() {
     const main = document.querySelector('#app .main');
     if (!main) return null;
@@ -74,12 +64,10 @@
     if (!active()) {
       root.classList.remove(ROUTE_CLASS, READY_CLASS);
       document.getElementById(SHELL_ID)?.remove();
-      prefetched = false;
       return;
     }
 
     root.classList.add(ROUTE_CLASS);
-    prefetchDashboard();
 
     if (finalDashboardReady()) {
       root.classList.add(READY_CLASS);
