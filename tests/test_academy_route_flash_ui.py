@@ -33,6 +33,8 @@ def _watch_transition(page, target_hash: str) -> dict:
           const result = {
             badPlaceholderFrames: 0,
             badInterimVisibleFrames: 0,
+            legacyOverviewFrames: 0,
+            prototypeFirstPaintFrames: 0,
             workspaceMissingFrames: 0,
             frames: 0,
             sawLoadingState: false,
@@ -46,9 +48,12 @@ def _watch_transition(page, target_hash: str) -> dict:
             const rect = el.getBoundingClientRect();
             return style.visibility !== 'hidden' && style.display !== 'none' && style.opacity !== '0' && rect.width > 0 && rect.height > 0;
           };
+          const targetRaw = targetHash.replace(/^#/, '');
+          const [targetPage, targetQuery = ''] = targetRaw.split('?');
+          const targetTab = targetPage === 'academy' ? (new URLSearchParams(targetQuery).get('tab') || 'overview') : null;
           const frame = () => new Promise(resolve => requestAnimationFrame(resolve));
           location.hash = targetHash;
-          for (let i = 0; i < 180; i++) {
+          for (let i = 0; i < 1200; i++) {
             await frame();
             result.frames += 1;
             result.guardVersion = document.documentElement.dataset.academyRouteGuard || null;
@@ -68,18 +73,32 @@ def _watch_transition(page, target_hash: str) -> dict:
             });
             if (genericTextNodes.some(isVisible)) result.badPlaceholderFrames += 1;
 
+            const legacy = [
+              ...document.querySelectorAll('#academyWorkspace .academy-hero, #academyWorkspace .academy-stats, #academyWorkspace .academy-dashboard-grid')
+            ];
+            if (legacy.some(isVisible)) result.legacyOverviewFrames += 1;
+
+            const firstPaint = document.querySelector('#c17DashboardFirstPaint');
+            if (isVisible(firstPaint)) result.prototypeFirstPaintFrames += 1;
+
             if (pending) {
               const main = document.querySelector('#app .main');
               if (main) {
                 const visibleInterim = [...main.children]
                   .filter(el => !el.classList.contains('topbar'))
+                  .filter(el => el.id !== 'c17DashboardFirstPaint')
                   .some(isVisible);
                 if (visibleInterim) result.badInterimVisibleFrames += 1;
               }
             }
 
             const workspace = document.querySelector('#academyWorkspace .academy-content');
-            if (workspace && !pending) break;
+            if (targetTab === 'overview') {
+              const finalDashboard = workspace?.querySelector('.c17-dashboard');
+              if (isVisible(finalDashboard)) break;
+            } else if (workspace && !pending && isVisible(workspace)) {
+              break;
+            }
           }
           return result;
         }
@@ -89,10 +108,11 @@ def _watch_transition(page, target_hash: str) -> dict:
 
 
 def _assert_clean(result: dict) -> None:
-    assert result["guardVersion"] == "3", result
+    assert result["guardVersion"] == "4", result
     assert result["adapterVersion"] == "1", result
     assert result["badPlaceholderFrames"] == 0, result
     assert result["badInterimVisibleFrames"] == 0, result
+    assert result["legacyOverviewFrames"] == 0, result
     assert result["workspaceMissingFrames"] == 0, result
 
 
@@ -117,25 +137,31 @@ def test_academy_routes_never_paint_generic_placeholder_or_reload_between_tabs()
             browser = playwright.chromium.launch(headless=True)
             page = browser.new_page(viewport={"width": 1778, "height": 832})
             try:
-                # Analysis is intentionally parked during Academy pilot work, so
-                # Academy is now the stable initial workspace for this regression.
-                # The separate paused-Analysis regression verifies stale Analysis
-                # URLs redirect here before any video API request can leave the page.
                 page.goto(f"{BASE_URL}/#academy", wait_until="domcontentloaded")
-                expect(page.locator("#academyWorkspace")).to_be_visible(timeout=15000)
-                expect(page.locator("#academyWorkspace .academy-content")).to_be_visible(timeout=15000)
-                assert page.evaluate("document.documentElement.dataset.academyRouteGuard") == "3"
-                assert page.evaluate("document.documentElement.dataset.academyRouterAdapter") == "1"
 
-                # Academy -> Academy navigation must preserve the mounted workspace
-                # and must never re-enable the full-page Loading Academy overlay.
+                # The approved C17 prototype owns the first visible Academy overview paint.
+                # The legacy Academy overview may still render internally while old modules
+                # are being retired, but it must never be visible to the user.
+                expect(page.locator("#c17DashboardFirstPaint")).to_be_visible(timeout=5000)
+                assert page.evaluate("document.documentElement.dataset.academyRouteGuard") == "4"
+                assert page.evaluate("document.documentElement.dataset.academyRouterAdapter") == "1"
+                assert page.evaluate("document.documentElement.classList.contains('academy-route-pending')") is False
+                expect(page.locator("#academyWorkspace .academy-hero")).to_be_hidden(timeout=5000)
+                expect(page.locator("#academyWorkspace .academy-stats")).to_be_hidden(timeout=5000)
+
+                # Once v4 data is ready, swap the prototype skeleton for the real prototype
+                # in one ownership handoff; the old dashboard must never be the visible interim UI.
+                expect(page.locator("#academyWorkspace .c17-dashboard")).to_be_visible(timeout=30000)
+                expect(page.locator("#c17DashboardFirstPaint")).to_be_hidden(timeout=5000)
+
+                # Academy -> Academy navigation keeps the mounted workspace stable.
                 players = _watch_transition(page, "academy?tab=players")
                 expect(page.get_by_role("heading", name="Academy Players")).to_be_visible(timeout=15000)
                 _assert_clean(players)
                 assert players["sawLoadingState"] is False, players
 
                 back_overview = _watch_transition(page, "academy")
-                expect(page.locator("#academyWorkspace")).to_be_visible(timeout=15000)
+                expect(page.locator("#academyWorkspace .c17-dashboard")).to_be_visible(timeout=30000)
                 _assert_clean(back_overview)
                 assert back_overview["sawLoadingState"] is False, back_overview
             finally:
