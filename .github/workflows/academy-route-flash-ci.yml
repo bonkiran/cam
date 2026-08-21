@@ -12,6 +12,8 @@ on:
     paths:
       - 'app/static/academy_route_guard.js'
       - 'app/static/academy_navigation_performance_v1.js'
+      - 'app/static/academy_dashboard_first_paint_v1.js'
+      - 'app/static/academy_dashboard_first_paint_v1.css'
       - 'app/static/academy_reports_tab_v1.js'
       - 'app/static/analysis_pause_v1.js'
       - 'app/static/analysis_workspace_tabs_v1.js'
@@ -26,6 +28,8 @@ on:
     paths:
       - 'app/static/academy_route_guard.js'
       - 'app/static/academy_navigation_performance_v1.js'
+      - 'app/static/academy_dashboard_first_paint_v1.js'
+      - 'app/static/academy_dashboard_first_paint_v1.css'
       - 'app/static/academy_reports_tab_v1.js'
       - 'app/static/analysis_pause_v1.js'
       - 'app/static/analysis_workspace_tabs_v1.js'
@@ -56,6 +60,7 @@ jobs:
         run: |
           node --check app/static/academy_route_guard.js
           node --check app/static/academy_navigation_performance_v1.js
+          node --check app/static/academy_dashboard_first_paint_v1.js
           node --check app/static/academy_reports_tab_v1.js
           node --check app/static/analysis_pause_v1.js
           node --check app/static/analysis_workspace_tabs_v1.js
