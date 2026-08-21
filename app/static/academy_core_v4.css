@@ -1,0 +1,45 @@
+/* C17 academy core: one opaque workspace and one active content surface. */
+body.c17-academy-mode .main {
+  background: #eef4f1 !important;
+  overflow-x: hidden;
+}
+
+body.c17-academy-mode #academyWorkspace {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  background: #eef4f1;
+  overflow: hidden;
+}
+
+body.c17-academy-mode #academyWorkspace > .academy-content {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: #eef4f1;
+}
+
+body.c17-academy-mode #academyWorkspace > .academy-content > * {
+  position: relative;
+  z-index: 1;
+}
+
+.c17-route-loading {
+  min-height: calc(100vh - 20px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  padding: 24px;
+  background: #eef4f1;
+  color: #567268;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* The C17 sidebar is the only navigation surface while academy routes are active. */
+body.c17-academy-mode #academyWorkspace > .academy-tabs,
+body.c17-academy-mode #academyWorkspace > .academy-primary-nav {
+  display: none !important;
+}
