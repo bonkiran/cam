@@ -6,7 +6,7 @@
 
   const ITEMS = [
     {label:'Dashboard', icon:'⌂', target:'academy', active:r => r.page==='academy' && r.tab==='overview'},
-    {label:'Registration', icon:'✎', target:'academy?tab=registration', active:r => r.page==='academy' && r.tab==='registration'},
+    {label:'Enrollment', icon:'✎', target:'academy?tab=registration', active:r => r.page==='academy' && r.tab==='registration'},
     {label:'Players', icon:'♙', target:'academy?tab=players', active:r => r.page==='academy' && r.tab==='players'},
     {label:'Programs', icon:'▤', target:'academy?tab=programs', active:r => r.page==='academy' && r.tab==='programs'},
     {label:'Coaches', icon:'♟', target:'academy?tab=coaches', active:r => r.page==='academy' && r.tab==='coaches'},
