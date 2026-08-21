@@ -68,7 +68,8 @@ def _observe_click(page, label: str, ready_selector: str) -> dict:
 
             const content = document.querySelector('#academyWorkspace .academy-content');
             const contentVisible = visible(content);
-            const ready = !!document.querySelector(readySelector) && !document.querySelector(`${readySelector} .academy-loading`);
+            const readyNode = document.querySelector(readySelector);
+            const ready = !!readyNode && !readyNode.querySelector('.academy-loading');
             if (!snapshotVisible && !contentVisible && !ready) result.blankFrames += 1;
 
             const exposedLoading = [...document.querySelectorAll('#academyWorkspace .academy-loading')].some(visible);
@@ -131,12 +132,16 @@ def test_academy_tab_clicks_are_immediate_and_visually_stable():
             try:
                 page.goto(f"{BASE_URL}/#academy", wait_until="domcontentloaded")
                 expect(page.locator("#academyWorkspace")).to_be_visible(timeout=20000)
-                expect(page.locator(".academy-hero")).to_be_visible(timeout=20000)
+                # The old .academy-hero overview is intentionally no longer exposed. During
+                # Dashboard v4 loading, the transition guard owns the surface; in auth-less CI
+                # Dashboard v4 may settle to its warning state instead of live production data.
+                expect(page.locator(".c17-dashboard, .warning").first).to_be_visible(timeout=20000)
+                expect(page.locator(".academy-hero")).to_have_count(0)
 
                 players = _observe_click(page, "Players", ".academy-player-panel")
                 _assert_stable_transition(players, require_snapshot=True)
 
-                dashboard = _observe_click(page, "Dashboard", ".academy-hero")
+                dashboard = _observe_click(page, "Dashboard", ".c17-dashboard, .warning")
                 _assert_stable_transition(dashboard)
 
                 programs = _observe_click(page, "Programs & Enrollment", "#openProgramForm")
