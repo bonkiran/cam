@@ -26,7 +26,14 @@ on:
       - 'app/static/academy_dashboard_v3.css'
       - 'app/static/academy_dashboard_v3_refinement_v1.js'
       - 'app/static/academy_dashboard_v3_refinement_v1.css'
+      - 'app/static/academy_dashboard_v4.js'
+      - 'app/static/academy_dashboard_v4.css'
+      - 'app/static/academy_dashboard_v4_polish_v1.js'
+      - 'app/static/academy_dashboard_v4_polish_v1.css'
+      - 'app/static/academy_c17_shell_v1.js'
+      - 'app/static/academy_c17_shell_v1.css'
       - 'app/static/c17_cricket_academy_logo.png'
+      - 'app/static/c17_academy_logo.png'
       - 'app/static/index.html'
       - 'run.py'
       - 'tests/test_payment_provider_abstraction.py'
@@ -36,6 +43,7 @@ on:
       - 'tests/test_academy_dashboard_enrollments.py'
       - 'tests/test_academy_dashboard_v3.py'
       - 'tests/test_academy_dashboard_v3_refinement.py'
+      - 'tests/test_academy_dashboard_v4_polish.py'
       - '.github/workflows/academy-payment-provider-ci.yml'
   pull_request:
     paths:
@@ -60,7 +68,14 @@ on:
       - 'app/static/academy_dashboard_v3.css'
       - 'app/static/academy_dashboard_v3_refinement_v1.js'
       - 'app/static/academy_dashboard_v3_refinement_v1.css'
+      - 'app/static/academy_dashboard_v4.js'
+      - 'app/static/academy_dashboard_v4.css'
+      - 'app/static/academy_dashboard_v4_polish_v1.js'
+      - 'app/static/academy_dashboard_v4_polish_v1.css'
+      - 'app/static/academy_c17_shell_v1.js'
+      - 'app/static/academy_c17_shell_v1.css'
       - 'app/static/c17_cricket_academy_logo.png'
+      - 'app/static/c17_academy_logo.png'
       - 'app/static/index.html'
       - 'run.py'
       - 'tests/test_payment_provider_abstraction.py'
@@ -70,6 +85,7 @@ on:
       - 'tests/test_academy_dashboard_enrollments.py'
       - 'tests/test_academy_dashboard_v3.py'
       - 'tests/test_academy_dashboard_v3_refinement.py'
+      - 'tests/test_academy_dashboard_v4_polish.py'
       - '.github/workflows/academy-payment-provider-ci.yml'
 
 permissions:
@@ -103,6 +119,7 @@ jobs:
           tests/test_academy_dashboard_enrollments.py
           tests/test_academy_dashboard_v3.py
           tests/test_academy_dashboard_v3_refinement.py
+          tests/test_academy_dashboard_v4_polish.py
           run.py
       - name: JavaScript syntax check
         run: >-
@@ -111,7 +128,10 @@ jobs:
           node --check app/static/academy_dashboard_enrollments_v1.js &&
           node --check app/static/academy_dashboard_enrollment_dedupe_v1.js &&
           node --check app/static/academy_dashboard_v3.js &&
-          node --check app/static/academy_dashboard_v3_refinement_v1.js
+          node --check app/static/academy_dashboard_v3_refinement_v1.js &&
+          node --check app/static/academy_dashboard_v4.js &&
+          node --check app/static/academy_dashboard_v4_polish_v1.js &&
+          node --check app/static/academy_c17_shell_v1.js
       - name: Run Stripe Square contract Slice 2C-2D and dashboard tests
         run: >-
           pytest -q
@@ -122,3 +142,4 @@ jobs:
           tests/test_academy_dashboard_enrollments.py
           tests/test_academy_dashboard_v3.py
           tests/test_academy_dashboard_v3_refinement.py
+          tests/test_academy_dashboard_v4_polish.py
