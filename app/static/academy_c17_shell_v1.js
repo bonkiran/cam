@@ -17,6 +17,7 @@
     {label:'Insights', icon:'⌁', target:'insights', active:r => r.page==='insights'},
     {label:'Help & Support', icon:'?', target:'help', active:r => r.page==='help'}
   ];
+  const NAV_SIGNATURE = ITEMS.map(item => `${item.label}:${item.target}`).join('|');
 
   function route() {
     const raw = location.hash.replace(/^#/, '');
@@ -45,6 +46,40 @@
     }
   }
 
+  function buildAcademyNav(holder) {
+    holder.innerHTML = ITEMS.map(item => `<button type="button" class="c17-nav-item" data-c17-target="${item.target}"><i>${item.icon}</i><b>${item.label}</b></button>`).join('');
+    holder.dataset.c17Signature = NAV_SIGNATURE;
+  }
+
+  function updateActive(holder) {
+    const r = route();
+    ITEMS.forEach(item => {
+      const button = $(`[data-c17-target="${item.target}"]`, holder);
+      if (!button) return;
+      const selected = Boolean(item.active(r));
+      button.classList.toggle('active', selected);
+      button.setAttribute('aria-current', selected ? 'page' : 'false');
+    });
+  }
+
+  function wireAcademyNav(holder) {
+    if (holder.dataset.c17Wired === '1') return;
+    holder.addEventListener('click', event => {
+      const button = event.target.closest('[data-c17-target]');
+      if (!button || !holder.contains(button)) return;
+      event.preventDefault();
+      const target = button.dataset.c17Target;
+      if (!target) return;
+      const next = `#${target}`;
+      if (location.hash === next) {
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
+      } else {
+        location.hash = target;
+      }
+    });
+    holder.dataset.c17Wired = '1';
+  }
+
   function ensureAcademyNav() {
     const nav = $('.sidebar .nav');
     if (!nav || !academyMode()) return;
@@ -54,9 +89,16 @@
       holder.className = 'c17-sidebar-nav';
       nav.appendChild(holder);
     }
-    const r = route();
-    holder.innerHTML = ITEMS.map(item => `<button type="button" class="c17-nav-item ${item.active(r)?'active':''}" data-c17-target="${item.target}"><i>${item.icon}</i><b>${item.label}</b></button>`).join('');
-    $$('[data-c17-target]', holder).forEach(button => button.onclick = () => { location.hash = button.dataset.c17Target; });
+
+    // Important: do not rebuild the nav on every DOM mutation. The dashboard
+    // prototype-polish layer replaces icon markup in-place; repeatedly replacing
+    // holder.innerHTML created a MutationObserver feedback loop that continuously
+    // destroyed/recreated the buttons and made clicks unreliable.
+    if (holder.dataset.c17Signature !== NAV_SIGNATURE || holder.querySelectorAll('[data-c17-target]').length !== ITEMS.length) {
+      buildAcademyNav(holder);
+    }
+    wireAcademyNav(holder);
+    updateActive(holder);
   }
 
   function apply() {
