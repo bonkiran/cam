@@ -36,9 +36,9 @@ def _observe_click(page, label: str, ready_selector: str) -> dict:
             const rect = el.getBoundingClientRect();
             return !el.hidden && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0' && rect.width > 0 && rect.height > 0;
           };
-          const buttons = [...document.querySelectorAll('#academyWorkspace .academy-tabs button')];
+          const buttons = [...document.querySelectorAll('.c17-sidebar-nav button')];
           const button = buttons.find(el => (el.textContent || '').trim() === label && visible(el));
-          if (!button) throw new Error(`Visible tab not found: ${label}`);
+          if (!button) throw new Error(`Visible C17 navigation item not found: ${label}`);
 
           const frame = () => new Promise(resolve => requestAnimationFrame(resolve));
           const result = {
@@ -55,7 +55,7 @@ def _observe_click(page, label: str, ready_selector: str) -> dict:
           for (let i = 0; i < 300; i++) {
             await frame();
             result.frames += 1;
-            const currentButtons = [...document.querySelectorAll('#academyWorkspace .academy-tabs button')];
+            const currentButtons = [...document.querySelectorAll('.c17-sidebar-nav button')];
             const currentButton = currentButtons.find(el => (el.textContent || '').trim() === label && visible(el));
             if (i === 0) result.firstFrameActive = !!currentButton?.classList.contains('active');
 
@@ -137,6 +137,7 @@ def test_academy_tab_clicks_are_immediate_and_visually_stable():
                 # Dashboard v4 may settle to its warning state instead of live production data.
                 expect(page.locator(".c17-dashboard, .warning").first).to_be_visible(timeout=20000)
                 expect(page.locator(".academy-hero")).to_have_count(0)
+                expect(page.locator(".c17-sidebar-nav")).to_be_visible(timeout=20000)
 
                 players = _observe_click(page, "Players", ".academy-player-panel")
                 _assert_stable_transition(players, require_snapshot=True)
@@ -144,7 +145,7 @@ def test_academy_tab_clicks_are_immediate_and_visually_stable():
                 dashboard = _observe_click(page, "Dashboard", ".c17-dashboard, .warning")
                 _assert_stable_transition(dashboard)
 
-                programs = _observe_click(page, "Programs & Enrollment", "#openProgramForm")
+                programs = _observe_click(page, "Programs", "#openProgramForm")
                 _assert_stable_transition(programs, require_snapshot=True)
 
                 coaches = _observe_click(page, "Coaches", "#openCoachForm")
