@@ -8,8 +8,8 @@ from fastapi.responses import JSONResponse
 from .cam_auth_api import current_access_user
 from .database import fetch_one
 
-# These Academy endpoints already enforce their own role/identity rules and
-# therefore must not be reduced to Owner/Admin-only by the legacy-management gate.
+# These CAM endpoints already enforce their own role/identity rules and therefore
+# must not be reduced to Owner/Admin-only by the generic management gate.
 SELF_AUTHORIZED_PREFIXES = (
     "/api/cam/access",
     "/api/cam/parent",
@@ -25,6 +25,8 @@ def _temporary_admin_mode() -> bool:
 
 
 def _access_is_bootstrapped() -> bool:
+    # Persisted schema naming is intentionally unchanged in CAM-15. Database
+    # table/column migration is a separate controlled task.
     row = fetch_one("SELECT COUNT(*) AS count FROM academy_users") or {"count": 0}
     return int(row.get("count") or 0) > 0
 
@@ -33,26 +35,26 @@ def _error_response(exc: HTTPException) -> JSONResponse:
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 
-def install_academy_management_rbac(app) -> None:
-    """Protect legacy Academy management APIs after the first access user exists.
+def install_cam_management_rbac(app) -> None:
+    """Protect CAM management APIs after the first access user exists.
 
     Migration behavior is deliberate:
-    - Before access bootstrap: existing Academy setup APIs remain usable so an
-      academy can create its initial profile/reference records and bootstrap the
-      first owner without being locked out.
-    - After bootstrap: generic Academy management APIs are Owner/Admin-only.
+    - Before access bootstrap: CAM setup APIs remain usable so an organization
+      can create its initial profile/reference records and bootstrap the first
+      owner without being locked out.
+    - After bootstrap: generic CAM management APIs are Owner/Admin-only.
     - Parent, Access/Roles, Registration and Player Reviews endpoints retain their
       dedicated fine-grained authorization logic.
-    - During the temporary controlled-pilot Admin mode, generic Academy APIs are
-      intentionally left open so the current single-Admin web console can be
-      manually validated without a browser session. Track B.0 will remove this.
+    - During temporary controlled-pilot Admin mode, generic CAM APIs are left
+      open so the current single-Admin web console can be manually validated
+      without a browser session. Track B.0 will remove this bypass.
 
     Role-specific Coach/Parent/Player operational APIs should be added as
     dedicated endpoints rather than reopening the generic management surface.
     """
 
     @app.middleware("http")
-    async def academy_management_rbac(request: Request, call_next):
+    async def cam_management_rbac(request: Request, call_next):
         path = request.url.path
         if request.method == "OPTIONS" or not path.startswith("/api/cam/"):
             return await call_next(request)
@@ -74,6 +76,6 @@ def install_academy_management_rbac(app) -> None:
         if str(user.get("role")) not in {"owner", "admin"}:
             return JSONResponse(
                 status_code=status.HTTP_403_FORBIDDEN,
-                content={"detail": "Owner or admin access is required for Academy management"},
+                content={"detail": "Owner or admin access is required for CAM management"},
             )
         return await call_next(request)
