@@ -12,6 +12,8 @@ on:
 jobs:
   cam-regression:
     runs-on: ubuntu-latest
+    env:
+      CAM_TEMP_ADMIN_MODE: "1"
     services:
       postgres:
         image: postgres:16
@@ -79,7 +81,8 @@ jobs:
             tests/test_cam_players_ui.py \
             tests/test_cam_programs_ui.py \
             tests/test_cam_attendance_ui.py \
-            tests/test_cam14_player_development_ui.py
+            tests/test_cam14_player_development_ui.py \
+            tests/test_cam16_dashboard_attendance_entry.py
       - name: Upload browser failure screenshots
         if: failure()
         uses: actions/upload-artifact@v4
