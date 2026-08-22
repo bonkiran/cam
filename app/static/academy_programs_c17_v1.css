@@ -1,6 +1,7 @@
 /* C17 Programs page: Dashboard-style header and a single operations toolbar. */
 body.c17-academy-mode .academy-tabs,
-body.c17-academy-mode .academy-primary-nav {
+body.c17-academy-mode .academy-primary-nav,
+body.c17-academy-mode .academy-owner-context-nav {
   display:none !important;
 }
 
