@@ -1,0 +1,85 @@
+name: CAM-16 Manual Test Readiness
+
+on:
+  push:
+    branches:
+      - bongonfun/cam-15-cam-naming-cleanup
+    paths:
+      - 'app/cam_attendance_api.py'
+      - 'app/cam_player_development_api.py'
+      - 'app/static/cam_dashboard_v4.js'
+      - 'app/static/cam_attendance_v1.js'
+      - 'app/static/cam_player_development_v1.js'
+      - 'tests/test_cam_attendance_api.py'
+      - 'tests/test_cam_attendance_ui.py'
+      - 'tests/test_cam14_player_development_api.py'
+      - 'tests/test_cam14_player_development_ui.py'
+      - 'tests/test_cam15_naming_guard.py'
+      - 'tests/test_cam16_dashboard_attendance_entry.py'
+      - '.github/workflows/cam16-validation-marker.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: crickanalysis_cam16_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d crickanalysis_cam16_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: bongonfun/cam-15-cam-naming-cleanup
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest httpx playwright
+          python -m playwright install chromium
+      - name: Compile and JS syntax
+        run: |
+          python -m compileall -q app run.py tests
+          node --check app/static/cam_dashboard_v4.js
+          node --check app/static/cam_attendance_v1.js
+          node --check app/static/cam_player_development_v1.js
+      - name: Naming and Dashboard entry guards
+        run: pytest -q tests/test_cam15_naming_guard.py tests/test_cam16_dashboard_attendance_entry.py
+      - name: Attendance and MOAT API on SQLite
+        run: pytest -q tests/test_cam_attendance_api.py tests/test_cam14_player_development_api.py
+      - name: Attendance and MOAT API on PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_cam16_test
+        run: pytest -q tests/test_cam_attendance_api.py tests/test_cam14_player_development_api.py
+      - name: Attendance and MOAT browser acceptance
+        run: pytest -q tests/test_cam_attendance_ui.py tests/test_cam14_player_development_ui.py tests/test_cam16_dashboard_attendance_entry.py
+      - name: Record successful readiness
+        run: |
+          mkdir -p validation
+          cat > validation/CAM16_MANUAL_TEST_READY.txt <<'EOF'
+          PASS
+          Dashboard -> Take Attendance -> exact session -> Today's Development Focus validated.
+          Player and coach attendance statuses are Present, Late, Absent only.
+          SQLite API, PostgreSQL API, Chromium attendance, MOAT-01 and Dashboard entry tests passed.
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add validation/CAM16_MANUAL_TEST_READY.txt
+          if ! git diff --cached --quiet; then
+            git commit -m "CAM-16 mark manual test readiness green"
+            git push origin HEAD:bongonfun/cam-15-cam-naming-cleanup
+          fi
