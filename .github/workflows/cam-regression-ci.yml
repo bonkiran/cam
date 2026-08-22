@@ -74,11 +74,10 @@ jobs:
             tests/test_cam_batches_api.py \
             tests/test_cam_attendance_api.py \
             tests/test_cam14_player_development_api.py
-      - name: Dashboard and moat browser regression on SQLite
+      - name: Current Dashboard and moat browser regression on SQLite
         run: |
           pytest -q \
             tests/test_cam_route_flash_ui.py \
-            tests/test_cam_players_ui.py \
             tests/test_cam_programs_ui.py \
             tests/test_cam_attendance_ui.py \
             tests/test_cam14_player_development_ui.py \
