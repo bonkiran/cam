@@ -11,14 +11,13 @@ from .database import connection, fetch_all, fetch_one
 
 router = APIRouter(prefix="/api/cam", tags=["cam-attendance"])
 
-AttendanceStatus = Literal["present", "absent", "late", "excused"]
+AttendanceStatus = Literal["present", "late", "absent"]
 
 
 class AttendancePolicyPayload(BaseModel):
     repeated_absence_threshold: int = Field(default=3, ge=1, le=20)
     absence_lookback_days: int = Field(default=30, ge=1, le=365)
     default_makeup_for_absent: bool = True
-    default_makeup_for_excused: bool = True
 
 
 class PlayerAttendanceEntry(BaseModel):
@@ -128,6 +127,9 @@ def _ensure_tables() -> None:
     """
     with connection() as conn:
         conn.executescript(schema)
+        # Normalize historical four-state attendance into the current three-state model.
+        conn.execute("UPDATE player_attendance SET status='absent' WHERE status='excused'")
+        conn.execute("UPDATE coach_attendance SET status='absent' WHERE status='excused'")
 
 
 def _academy(conn):
@@ -147,7 +149,6 @@ def _policy(conn) -> dict:
             "repeated_absence_threshold": 3,
             "absence_lookback_days": 30,
             "default_makeup_for_absent": True,
-            "default_makeup_for_excused": True,
         }
     row = conn.execute("SELECT * FROM attendance_policies WHERE academy_id=?", (academy_id,)).fetchone()
     if not row:
@@ -162,7 +163,7 @@ def _policy(conn) -> dict:
         row = conn.execute("SELECT * FROM attendance_policies WHERE id=?", (int(created["id"]),)).fetchone()
     out = dict(row)
     out["default_makeup_for_absent"] = bool(out.get("default_makeup_for_absent"))
-    out["default_makeup_for_excused"] = bool(out.get("default_makeup_for_excused"))
+    out.pop("default_makeup_for_excused", None)
     return out
 
 
@@ -219,8 +220,6 @@ def _history(conn, *, entity_type: str, attendance_id: int, session_id: int, sub
 def _default_makeup(status: str, policy: dict) -> bool:
     if status == "absent":
         return bool(policy["default_makeup_for_absent"])
-    if status == "excused":
-        return bool(policy["default_makeup_for_excused"])
     return False
 
 
@@ -286,14 +285,13 @@ def update_attendance_policy(payload: AttendancePolicyPayload):
         conn.execute(
             """
             UPDATE attendance_policies SET repeated_absence_threshold=?,absence_lookback_days=?,
-                   default_makeup_for_absent=?,default_makeup_for_excused=?,updated_at=CURRENT_TIMESTAMP
+                   default_makeup_for_absent=?,default_makeup_for_excused=0,updated_at=CURRENT_TIMESTAMP
             WHERE academy_id=?
             """,
             (
                 payload.repeated_absence_threshold,
                 payload.absence_lookback_days,
                 1 if payload.default_makeup_for_absent else 0,
-                1 if payload.default_makeup_for_excused else 0,
                 academy_id,
             ),
         )
@@ -351,7 +349,7 @@ def save_session_attendance(session_id: int, payload: SessionAttendancePayload):
             ).fetchone()
             before = _attendance_state(existing_row)
             makeup = _default_makeup(entry.status, policy) if entry.make_up_eligible is None else bool(entry.make_up_eligible)
-            reason = _clean(entry.absence_reason) if entry.status in {"absent", "excused"} else None
+            reason = _clean(entry.absence_reason) if entry.status == "absent" else None
             notes = _clean(entry.notes)
             if existing_row:
                 attendance_id = int(existing_row["id"])
@@ -436,7 +434,7 @@ def player_attendance_summary(player_id: int):
         """,
         (player_id,),
     )
-    counts = {status: 0 for status in ("present", "absent", "late", "excused")}
+    counts = {status: 0 for status in ("present", "late", "absent")}
     makeup_count = 0
     for row in rows:
         status = str(row["status"])
@@ -455,7 +453,7 @@ def player_attendance_summary(player_id: int):
         "attendance_denominator": denominator,
         "attendance_percentage": percentage,
         "make_up_eligible_count": makeup_count,
-        "calculation_rule": "present + late count as attended; absent counts against percentage; excused is excluded from the denominator",
+        "calculation_rule": "present + late count as attended; absent counts against percentage",
     }
 
 

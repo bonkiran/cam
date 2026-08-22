@@ -112,14 +112,13 @@ def test_cam14_passive_practice_evidence_tracks_focus_and_attendance_without_cla
     assert absent_history.status_code == 200
     assert absent_history.json()["evidence"] == []
 
-    # Attendance correction removes passive evidence immediately. Excused is not
-    # treated as development exposure because the player did not attend.
+    # Attendance correction removes passive evidence immediately when a player is changed to Absent.
     corrected = _put(
         f"/api/cam/sessions/{session_id}/attendance",
         {
             "players": [
                 {"player_id": p1["id"], "status": "present"},
-                {"player_id": p2["id"], "status": "excused", "absence_reason": "Family commitment"},
+                {"player_id": p2["id"], "status": "absent", "absence_reason": "Family commitment"},
                 {"player_id": p3["id"], "status": "absent", "absence_reason": "School"},
             ],
             "coach_status": "present",
@@ -155,7 +154,7 @@ def test_cam14_passive_practice_evidence_tracks_focus_and_attendance_without_cla
         {
             "players": [
                 {"player_id": p1["id"], "status": "present"},
-                {"player_id": p2["id"], "status": "excused", "absence_reason": "Family commitment"},
+                {"player_id": p2["id"], "status": "absent", "absence_reason": "Family commitment"},
                 {"player_id": p3["id"], "status": "absent", "absence_reason": "School"},
             ],
             "coach_status": "present",
@@ -166,6 +165,22 @@ def test_cam14_passive_practice_evidence_tracks_focus_and_attendance_without_cla
     cleared = _put(f"/api/cam/sessions/{session_id}/development-focus", {"skill_keys": []})
     assert cleared["generated_evidence_count"] == 0
     assert client.get(f"/api/cam/players/{p1['id']}/development-history").json()["evidence"] == []
+
+
+def test_cam14_rejects_retired_excused_attendance_status():
+    session_id, players = _setup_session("ThreeState")
+    response = client.put(
+        f"/api/cam/sessions/{session_id}/attendance",
+        json={
+            "players": [
+                {"player_id": players[0]["id"], "status": "present"},
+                {"player_id": players[1]["id"], "status": "excused"},
+                {"player_id": players[2]["id"], "status": "absent", "absence_reason": "School"},
+            ],
+            "coach_status": "present",
+        },
+    )
+    assert response.status_code == 422
 
 
 def test_cam14_rejects_unknown_development_skill():

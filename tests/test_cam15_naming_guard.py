@@ -32,6 +32,8 @@ def test_active_cam_namespace_has_no_legacy_academy_technical_references():
             if p.is_file() and p.suffix in {".py", ".js", ".css", ".html"}
         ]
         for file in paths:
+            if file.resolve() == Path(__file__).resolve():
+                continue
             text = file.read_text(encoding="utf-8", errors="ignore")
             for pattern in forbidden_patterns:
                 if pattern in text:

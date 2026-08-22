@@ -153,7 +153,7 @@ def _source_for_session(session) -> str:
 def _sync_session_practice_evidence(conn, session_id: int) -> int:
     """Make Practiced evidence exactly match focus x attended players for a session.
 
-    Present and late count as attended. Absent and excused never receive passive
+    Present and late count as attended. Absent never receives passive
     development evidence. This function is intentionally idempotent so attendance
     corrections and focus edits can safely be saved more than once.
     """

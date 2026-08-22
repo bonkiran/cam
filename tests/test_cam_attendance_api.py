@@ -105,7 +105,7 @@ def test_attendance_statuses_corrections_metrics_makeup_coach_and_alerts():
     assert history.json()[0]["before"]["status"] == "present"
     assert history.json()[0]["after"]["status"] == "late"
 
-    # Sessions 2-4 exercise all four player statuses and repeated absence alerting.
+    # Sessions 2-4 exercise the three supported player statuses and repeated absence alerting.
     _put(
         f"/api/cam/sessions/{session_ids[1]}/attendance",
         {
@@ -153,7 +153,7 @@ def test_attendance_statuses_corrections_metrics_makeup_coach_and_alerts():
         f"/api/cam/sessions/{session_ids[3]}/attendance",
         {
             "players": [
-                {"player_id": player1["id"], "status": "excused", "absence_reason": "Family commitment"},
+                {"player_id": player1["id"], "status": "absent", "absence_reason": "Family commitment"},
                 {"player_id": player2["id"], "status": "present"},
             ],
             "coach_status": "present",
@@ -166,12 +166,12 @@ def test_attendance_statuses_corrections_metrics_makeup_coach_and_alerts():
     assert summary_data["recorded_sessions"] == 4
     assert summary_data["present"] == 1
     assert summary_data["late"] == 1
-    assert summary_data["absent"] == 1
-    assert summary_data["excused"] == 1
-    assert summary_data["attendance_denominator"] == 3
-    assert summary_data["attendance_percentage"] == 66.7
+    assert summary_data["absent"] == 2
+    assert "excused" not in summary_data
+    assert summary_data["attendance_denominator"] == 4
+    assert summary_data["attendance_percentage"] == 50.0
     assert summary_data["make_up_eligible_count"] == 2
-    assert "excused is excluded" in summary_data["calculation_rule"]
+    assert summary_data["calculation_rule"] == "present + late count as attended; absent counts against percentage"
 
     # Correcting Player 2's third absence below the threshold automatically resolves the alert.
     _put(

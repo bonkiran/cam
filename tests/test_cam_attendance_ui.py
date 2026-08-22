@@ -113,6 +113,8 @@ def test_attendance_ui_end_to_end():
 
                 # Session 1: batch attendance, make-up default, and coach attendance.
                 _select_session(page, session_ids[0])
+                values = _player_row(page, p1["name"]).locator('[name="attendance_status"] option').evaluate_all("els => els.map(e => e.value)")
+                assert values == ["present", "late", "absent"]
                 page.get_by_role("button", name="Mark All Present").click()
                 row2 = _player_row(page, p2["name"])
                 row2.locator('[name="attendance_status"]').select_option("absent")
@@ -161,16 +163,16 @@ def test_attendance_ui_end_to_end():
                 _save(page)
                 expect(page.locator(".cam-attendance-alert", has_text=p2["name"])).to_have_count(1, timeout=10000)
 
-                # Session 4: excused defaults to make-up eligible and is outside percentage denominator.
+                # Session 4: Absent remains make-up eligible and counts against attendance percentage.
                 _select_session(page, session_ids[3])
                 page.get_by_role("button", name="Mark All Present").click()
                 row1 = _player_row(page, p1["name"])
-                row1.locator('[name="attendance_status"]').select_option("excused")
+                row1.locator('[name="attendance_status"]').select_option("absent")
                 row1.locator('[name="absence_reason"]').fill("Family commitment")
                 expect(row1.locator('[name="make_up_eligible"]')).to_be_checked()
                 _save(page)
                 row1 = _player_row(page, p1["name"])
-                expect(row1).to_contain_text("66.7% attendance", timeout=10000)
+                expect(row1).to_contain_text("50% attendance", timeout=10000)
                 expect(row1).to_contain_text("2 make-up eligible")
 
                 # Correct the third Player 2 absence; the open alert resolves automatically.

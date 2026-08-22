@@ -74,7 +74,7 @@
   }
 
   function go(tab) {
-    location.hash = tab === 'overview' ? 'cam' : `academy?tab=${encodeURIComponent(tab)}`;
+    location.hash = tab === 'overview' ? 'cam' : `cam?tab=${encodeURIComponent(tab)}`;
   }
 
   function notify(message) {
@@ -265,12 +265,12 @@
   }
 
   function sessionRows(rows = [], privateSession = false) {
-    return rows.map(row => `<tr><td>${esc(privateSession ? (row.player_name || 'Player') : (row.batch_name || 'Group Session'))}</td><td>${esc(row.coach_name || 'Coach not assigned')}</td><td>${esc(row.location || 'Location not set')}</td><td>${esc(sessionTime(row.start_time, row.duration_minutes))}</td></tr>`).join('');
+    return rows.map(row => `<tr><td>${esc(privateSession ? (row.player_name || 'Player') : (row.batch_name || 'Group Session'))}</td><td>${esc(row.coach_name || 'Coach not assigned')}</td><td>${esc(row.location || 'Location not set')}</td><td>${esc(sessionTime(row.start_time, row.duration_minutes))}</td><td><button type="button" class="c17-table-action c17-take-attendance" data-session-id="${Number(row.id)}">Take Attendance</button></td></tr>`).join('');
   }
 
   function sessionsMarkup(data) {
     const sessions = data.sessions || {group:[], private:[], count:0};
-    return `<article class="c17-card">${cardTitle('▣',esc(fmtDayDate(data.as_of))+' Sessions : '+Number(sessions.count || 0))}<div class="c17-session-grid"><section><h3>Group Sessions - ${sessions.group?.length || 0}</h3><div class="c17-table-wrap"><table><thead><tr><th>Batch</th><th>Coach</th><th>Venue</th><th>Time</th></tr></thead><tbody>${sessionRows(sessions.group) || '<tr><td colspan="4">No group sessions scheduled today.</td></tr>'}</tbody></table></div></section><section><h3>1 on 1 Sessions - ${sessions.private?.length || 0}</h3><div class="c17-table-wrap"><table><thead><tr><th>Player</th><th>Coach</th><th>Venue</th><th>Time</th></tr></thead><tbody>${sessionRows(sessions.private, true) || '<tr><td colspan="4">No 1 on 1 sessions scheduled today.</td></tr>'}</tbody></table></div></section></div></article>`;
+    return `<article class="c17-card">${cardTitle('▣',esc(fmtDayDate(data.as_of))+' Sessions : '+Number(sessions.count || 0))}<div class="c17-session-grid"><section><h3>Group Sessions - ${sessions.group?.length || 0}</h3><div class="c17-table-wrap"><table><thead><tr><th>Batch</th><th>Coach</th><th>Venue</th><th>Time</th><th>Action</th></tr></thead><tbody>${sessionRows(sessions.group) || '<tr><td colspan="5">No group sessions scheduled today.</td></tr>'}</tbody></table></div></section><section><h3>1 on 1 Sessions - ${sessions.private?.length || 0}</h3><div class="c17-table-wrap"><table><thead><tr><th>Player</th><th>Coach</th><th>Venue</th><th>Time</th><th>Action</th></tr></thead><tbody>${sessionRows(sessions.private, true) || '<tr><td colspan="5">No 1 on 1 sessions scheduled today.</td></tr>'}</tbody></table></div></section></div></article>`;
   }
 
   function eventDateRange(start, end) {
@@ -360,6 +360,7 @@
     $$('.c17-assign-batch', root).forEach(button => button.onclick = () => openBatchEditor(button));
     $$('[data-open-registration]', root).forEach(button => button.onclick = () => { location.hash='cam?tab=registration'; });
     $$('[data-dashboard-tab]', root).forEach(button => button.onclick = () => go(button.dataset.dashboardTab));
+    $$('.c17-take-attendance', root).forEach(button => button.onclick = () => { const sessionId = Number(button.dataset.sessionId || 0); if (sessionId) location.hash = `cam?tab=attendance&session_id=${encodeURIComponent(sessionId)}`; });
   }
 
   async function render(force = false) {
