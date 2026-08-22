@@ -7,7 +7,7 @@
     const raw = location.hash.replace(/^#/, '');
     const [page, query = ''] = raw.split('?');
     const tab = new URLSearchParams(query).get('tab') || 'overview';
-    return (page || 'dashboard') === 'academy' && tab === 'overview';
+    return (page || 'dashboard') === 'cam' && tab === 'overview';
   }
 
   function legacyRegistrationPanel(content) {
@@ -22,13 +22,13 @@
   function dedupe() {
     scheduled = false;
     if (!dashboardActive()) return;
-    const content = $('#academyWorkspace .academy-content');
+    const content = $('#camWorkspace .cam-content');
     if (!content) return;
 
     const enrollmentPanels = $$('.cam-new-player-enrollments', content);
     if (!enrollmentPanels.length) return;
 
-    const keep = enrollmentPanels.find(panel => panel.closest('.academy-dashboard-v2-grid')) || enrollmentPanels[0];
+    const keep = enrollmentPanels.find(panel => panel.closest('.cam-dashboard-v2-grid')) || enrollmentPanels[0];
     enrollmentPanels.forEach(panel => {
       if (panel !== keep) panel.remove();
     });

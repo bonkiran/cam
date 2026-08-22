@@ -12,7 +12,7 @@
 
   function active() {
     const r = route();
-    return r.page === 'academy' && r.tab === 'players';
+    return r.page === 'cam' && r.tab === 'players';
   }
 
   function esc(value = '') {
@@ -51,14 +51,14 @@
   async function rosterData() {
     const groups = Object.fromEntries(GROUPS.map(name => [name, new Set()]));
     const assigned = new Set();
-    const batches = await requestJson('/api/academy/batches');
+    const batches = await requestJson('/api/cam/batches');
     const relevant = (Array.isArray(batches) ? batches : [])
       .map(batch => ({batch, group: groupForBatch(batch)}))
       .filter(item => item.group);
 
     const rosters = await Promise.all(relevant.map(async item => {
       try {
-        const rows = await requestJson(`/api/academy/batches/${Number(item.batch.id)}/players`);
+        const rows = await requestJson(`/api/cam/batches/${Number(item.batch.id)}/players`);
         return {group:item.group, rows:Array.isArray(rows) ? rows : []};
       } catch (error) {
         console.warn(`Could not load ${item.group} roster`, error);
@@ -97,7 +97,7 @@
   }
 
   function assignmentForm(page, data, selectedPlayerId = null) {
-    const rows = $$('.c17-unassigned-list .academy-player-row[data-player-id]', page)
+    const rows = $$('.c17-unassigned-list .cam-player-row[data-player-id]', page)
       .sort((a, b) => playerName(a).localeCompare(playerName(b)));
     const playerOptions = rows.map(row => {
       const id = Number(row.dataset.playerId || 0);
@@ -110,13 +110,13 @@
       return `<option value="${Number(batch.id)}">${esc(label)}</option>`;
     }).join('');
 
-    return `<form id="c17AssignPlayerForm" class="panel academy-form-card c17-player-assign-form">
-      <div class="academy-form-title"><div><span class="academy-kicker">PLAYER ASSIGNMENT</span><h2>Assign Player to Batch</h2><p>Select an unassigned player and the active batch they should join.</p></div><button type="button" class="secondary" data-close-player-assignment>Cancel</button></div>
-      <div class="academy-form-grid two">
-        <label class="academy-field"><span>Player *</span><select name="player_id" required>${playerOptions}</select></label>
-        <label class="academy-field"><span>Batch *</span><select name="batch_id" required>${batchOptions}</select></label>
+    return `<form id="c17AssignPlayerForm" class="panel cam-form-card c17-player-assign-form">
+      <div class="cam-form-title"><div><span class="cam-kicker">PLAYER ASSIGNMENT</span><h2>Assign Player to Batch</h2><p>Select an unassigned player and the active batch they should join.</p></div><button type="button" class="secondary" data-close-player-assignment>Cancel</button></div>
+      <div class="cam-form-grid two">
+        <label class="cam-field"><span>Player *</span><select name="player_id" required>${playerOptions}</select></label>
+        <label class="cam-field"><span>Batch *</span><select name="batch_id" required>${batchOptions}</select></label>
       </div>
-      <div class="academy-form-actions"><span id="c17PlayerAssignStatus"></span><button type="submit" class="primary">Assign Player</button></div>
+      <div class="cam-form-actions"><span id="c17PlayerAssignStatus"></span><button type="submit" class="primary">Assign Player</button></div>
     </form>`;
   }
 
@@ -125,7 +125,7 @@
     GROUPS.forEach(name => {
       const panel = $(`.c17-player-batch-panel[data-player-batch="${name}"]`, page);
       if (!panel) return;
-      const count = $$('.academy-player-row[data-player-id]', panel).length;
+      const count = $$('.cam-player-row[data-player-id]', panel).length;
       assignedTotal += count;
       const badge = $('.c17-player-batch-count', panel);
       if (badge) badge.textContent = String(count);
@@ -136,7 +136,7 @@
     });
 
     const unassignedList = $('.c17-unassigned-list', page);
-    const unassignedCount = unassignedList ? $$('.academy-player-row[data-player-id]', unassignedList).length : 0;
+    const unassignedCount = unassignedList ? $$('.cam-player-row[data-player-id]', unassignedList).length : 0;
     const unassignedBadge = $('.c17-unassigned-count', page);
     if (unassignedBadge) unassignedBadge.textContent = String(unassignedCount);
     if (unassignedList) {
@@ -153,7 +153,7 @@
   }
 
   function moveAssignedPlayer(page, data, playerId, batchId) {
-    const row = $(`.c17-unassigned-list .academy-player-row[data-player-id="${Number(playerId)}"]`, page);
+    const row = $(`.c17-unassigned-list .cam-player-row[data-player-id="${Number(playerId)}"]`, page);
     const batch = data.assignableBatches.find(item => Number(item.id) === Number(batchId));
     if (!row || !batch) return;
 
@@ -170,7 +170,7 @@
   function openAssignmentEditor(page, data, selectedPlayerId = null) {
     const editor = $('#playerEditor', page);
     if (!editor) return;
-    const rows = $$('.c17-unassigned-list .academy-player-row[data-player-id]', page);
+    const rows = $$('.c17-unassigned-list .cam-player-row[data-player-id]', page);
     if (!rows.length) {
       notify('All active players are already assigned to a batch.');
       return;
@@ -197,7 +197,7 @@
       if (submit) submit.disabled = true;
       if (status) status.textContent = 'Assigning…';
       try {
-        await requestJson(`/api/academy/batches/${batchId}/players`, {
+        await requestJson(`/api/cam/batches/${batchId}/players`, {
           method:'POST',
           body:JSON.stringify({player_id:playerId, waitlist_if_full:false, joined_on:new Date().toISOString().slice(0,10)})
         });
@@ -215,13 +215,13 @@
   async function decorate(content) {
     if (!active() || !content?.isConnected) return;
     if ($('.c17-players-page', content)) return;
-    const legacyPanel = $('.academy-player-panel', content);
+    const legacyPanel = $('.cam-player-panel', content);
     if (!legacyPanel || content.dataset.c17PlayersDecorating === '1') return;
 
     content.dataset.c17PlayersDecorating = '1';
     content.style.visibility = 'hidden';
 
-    const legacyRows = $$('.academy-player-row[data-player-id]', legacyPanel);
+    const legacyRows = $$('.cam-player-row[data-player-id]', legacyPanel);
     const addButton = $('#addAcademyPlayer', content);
     const editor = $('#playerEditor', content);
 
@@ -273,8 +273,8 @@
         .sort((a, b) => playerName(a).localeCompare(playerName(b)));
       unassignedRows.forEach(row => {
         row.classList.add('c17-unassigned-player-row');
-        const actions = $('.academy-row-actions', row) || row.appendChild(document.createElement('div'));
-        actions.classList.add('academy-row-actions');
+        const actions = $('.cam-row-actions', row) || row.appendChild(document.createElement('div'));
+        actions.classList.add('cam-row-actions');
         const assign = document.createElement('button');
         assign.type = 'button';
         assign.className = 'secondary c17-assign-row-button';
@@ -305,10 +305,10 @@
   function apply() {
     scheduled = false;
     if (!active()) return;
-    const content = $('#academyWorkspace .academy-content');
+    const content = $('#camWorkspace .cam-content');
     if (!content) return;
     if ($('.c17-players-page', content)) return;
-    if ($('.academy-player-panel', content)) decorate(content);
+    if ($('.cam-player-panel', content)) decorate(content);
   }
 
   function schedule() {
@@ -321,8 +321,8 @@
   document.addEventListener('DOMContentLoaded', schedule);
   new MutationObserver(() => {
     if (!active()) return;
-    const content = $('#academyWorkspace .academy-content');
-    if (content && !$('.c17-players-page', content) && $('.academy-player-panel', content)) decorate(content);
+    const content = $('#camWorkspace .cam-content');
+    if (content && !$('.c17-players-page', content) && $('.cam-player-panel', content)) decorate(content);
   }).observe(document.documentElement, {childList:true, subtree:true});
   schedule();
 })();

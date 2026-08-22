@@ -9,10 +9,10 @@
     return {page: page || 'dashboard', tab: new URLSearchParams(query).get('tab') || 'overview'};
   }
 
-  const academyMode = () => route().page === 'academy';
+  const camMode = () => route().page === 'cam';
   const dashboardActive = () => {
     const r = route();
-    return r.page === 'academy' && r.tab === 'overview';
+    return r.page === 'cam' && r.tab === 'overview';
   };
 
   const ICONS = {
@@ -41,12 +41,12 @@
   }
 
   const sidebarIcons = {
-    Dashboard:'home', Academy:'academy', Registration:'edit', Players:'user', Programs:'clipboard',
+    Dashboard:'home', Academy:'cam', Registration:'edit', Players:'user', Programs:'clipboard',
     Coaches:'coaches', Finance:'dollar', Reports:'chart', Settings:'settings', Insights:'activity', 'Help & Support':'help'
   };
 
   function polishSidebar() {
-    if (!academyMode()) return;
+    if (!camMode()) return;
     $$('.c17-nav-item').forEach(button => {
       const label = $('b', button)?.textContent.trim() || '';
       const holder = $('i', button);
@@ -121,8 +121,8 @@
   }
 
   function hideTopAcademyNav() {
-    if (!academyMode()) return;
-    $$('#academyWorkspace > .academy-primary-nav, #academyWorkspace > .academy-tabs').forEach(nav => {
+    if (!camMode()) return;
+    $$('#camWorkspace > .cam-primary-nav, #camWorkspace > .cam-tabs').forEach(nav => {
       nav.setAttribute('aria-hidden', 'true');
       nav.style.display = 'none';
     });
@@ -130,7 +130,7 @@
 
   function apply() {
     scheduled = false;
-    if (!academyMode()) return;
+    if (!camMode()) return;
     hideTopAcademyNav();
     polishSidebar();
     if (!dashboardActive()) return;
@@ -150,6 +150,6 @@
 
   window.addEventListener('hashchange', schedule);
   document.addEventListener('DOMContentLoaded', schedule);
-  new MutationObserver(() => { if (academyMode()) schedule(); }).observe(document.documentElement, {childList:true, subtree:true});
+  new MutationObserver(() => { if (camMode()) schedule(); }).observe(document.documentElement, {childList:true, subtree:true});
   schedule();
 })();

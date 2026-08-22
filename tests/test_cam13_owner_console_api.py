@@ -38,7 +38,7 @@ def _auth(token: str) -> dict[str, str]:
 
 def test_owner_console_directory_player360_and_notification_event():
     profile = client.put(
-        "/api/academy/profile",
+        "/api/cam/profile",
         json={"name": "CAM-13 Academy", "timezone": "America/New_York"},
     )
     assert profile.status_code == 200, profile.text
@@ -57,7 +57,7 @@ def test_owner_console_directory_player360_and_notification_event():
     headers = _auth(token)
 
     player = client.post(
-        "/api/academy/players",
+        "/api/cam/players",
         headers=headers,
         json={
             "name": "Aarav CAM13",
@@ -83,7 +83,7 @@ def test_owner_console_directory_player360_and_notification_event():
     player_id = player.json()["id"]
 
     coach = client.post(
-        "/api/academy/coaches",
+        "/api/cam/coaches",
         headers=headers,
         json={
             "first_name": "Ravi",
@@ -97,14 +97,14 @@ def test_owner_console_directory_player360_and_notification_event():
     coach_id = coach.json()["id"]
 
     program = client.post(
-        "/api/academy/programs",
+        "/api/cam/programs",
         headers=headers,
         json={"name": "CAM13 U15", "program_type": "group", "status": "active"},
     )
     assert program.status_code == 201, program.text
 
     batch = client.post(
-        "/api/academy/batches",
+        "/api/cam/batches",
         headers=headers,
         json={
             "name": "CAM13 U15 Batch A",
@@ -117,14 +117,14 @@ def test_owner_console_directory_player360_and_notification_event():
     batch_id = batch.json()["id"]
 
     membership = client.post(
-        f"/api/academy/batches/{batch_id}/players",
+        f"/api/cam/batches/{batch_id}/players",
         headers=headers,
         json={"player_id": player_id, "waitlist_if_full": False, "joined_on": date.today().isoformat()},
     )
     assert membership.status_code == 201, membership.text
 
     assignment = client.post(
-        f"/api/academy/coach-player-assignments",
+        f"/api/cam/coach-player-assignments",
         headers=headers,
         json={
             "coach_id": coach_id,
@@ -136,7 +136,7 @@ def test_owner_console_directory_player360_and_notification_event():
     assert assignment.status_code == 201, assignment.text
 
     private_session = client.post(
-        "/api/academy/sessions/private",
+        "/api/cam/sessions/private",
         headers=headers,
         json={
             "player_id": player_id,
@@ -150,14 +150,14 @@ def test_owner_console_directory_player360_and_notification_event():
     assert private_session.status_code == 201, private_session.text
     session_id = private_session.json()["id"]
 
-    directory = client.get("/api/academy/owner-console/players", headers=headers)
+    directory = client.get("/api/cam/owner-console/players", headers=headers)
     assert directory.status_code == 200, directory.text
     row = next(item for item in directory.json() if item["id"] == player_id)
     assert row["batches"][0]["name"] == "CAM13 U15 Batch A"
     assert row["guardians"][0]["name"] == "Priya Patel"
     assert row["cricclubs"]["status"] == "not_connected"
 
-    summary = client.get(f"/api/academy/owner-console/players/{player_id}/summary", headers=headers)
+    summary = client.get(f"/api/cam/owner-console/players/{player_id}/summary", headers=headers)
     assert summary.status_code == 200, summary.text
     payload = summary.json()
     assert payload["player"]["name"] == "Aarav CAM13"
@@ -166,7 +166,7 @@ def test_owner_console_directory_player360_and_notification_event():
     assert payload["guardians"][0]["email"] == "priya.cam13@example.test"
 
     event = client.post(
-        "/api/academy/owner-console/notification-events",
+        "/api/cam/owner-console/notification-events",
         headers=headers,
         json={
             "event_type": "session_rescheduled",
@@ -185,7 +185,7 @@ def test_owner_console_directory_player360_and_notification_event():
     assert set(event_payload["channels"]) == {"push", "whatsapp"}
     assert event_payload["recipient_count"] == 2
 
-    events = client.get("/api/academy/owner-console/notification-events", headers=headers)
+    events = client.get("/api/cam/owner-console/notification-events", headers=headers)
     assert events.status_code == 200, events.text
     assert events.json()[0]["id"] == event_payload["id"]
 
@@ -199,12 +199,12 @@ def test_owner_console_is_owner_admin_only():
     assert login.status_code == 200, login.text
     owner_headers = _auth(login.json()["token"])
 
-    users = client.get("/api/academy/access/reference", headers=owner_headers)
+    users = client.get("/api/cam/access/reference", headers=owner_headers)
     assert users.status_code == 200, users.text
     guardian_id = users.json()["guardians"][0]["id"]
 
     parent = client.post(
-        "/api/academy/access/users",
+        "/api/cam/access/users",
         headers=owner_headers,
         json={
             "display_name": "CAM13 Parent",
@@ -224,5 +224,5 @@ def test_owner_console_is_owner_admin_only():
     assert parent_login.status_code == 200, parent_login.text
     parent_headers = _auth(parent_login.json()["token"])
 
-    forbidden = client.get("/api/academy/owner-console/players", headers=parent_headers)
+    forbidden = client.get("/api/cam/owner-console/players", headers=parent_headers)
     assert forbidden.status_code == 403, forbidden.text

@@ -118,7 +118,7 @@
         button.textContent = 'Testing…';
         setResult(host, provider, 'Connecting securely to the provider sandbox…');
         try {
-          const data = await providerApi(`/api/academy/payment-providers/${provider}/test-connection`, {method: 'POST', body: '{}'});
+          const data = await providerApi(`/api/cam/payment-providers/${provider}/test-connection`, {method: 'POST', body: '{}'});
           setResult(host, provider, `${data.provider === 'stripe' ? 'Stripe' : 'Square'} sandbox connection successful.`, 'success');
           await loadProviders(host);
         } catch (error) {
@@ -135,7 +135,7 @@
         button.disabled = true;
         button.textContent = 'Selecting…';
         try {
-          await providerApi('/api/academy/payment-providers/select', {
+          await providerApi('/api/cam/payment-providers/select', {
             method: 'POST',
             body: JSON.stringify({provider}),
           });
@@ -155,7 +155,7 @@
     const note = host.querySelector('#camProviderArchitectureNote');
     if (!grid) return;
     try {
-      const data = await providerApi('/api/academy/payment-providers');
+      const data = await providerApi('/api/cam/payment-providers');
       if (!host.isConnected || activeRoute() !== ROUTE) return;
       const providers = Array.isArray(data?.providers) ? data.providers : [];
       grid.innerHTML = providers.map(providerCard).join('') || '<div class="warning">No payment providers are available.</div>';

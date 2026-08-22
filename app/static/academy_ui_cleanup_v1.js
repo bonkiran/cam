@@ -8,7 +8,7 @@
     return {page:page||'dashboard', tab:new URLSearchParams(query).get('tab')||'overview'};
   }
 
-  function academyActive(){ return route().page === 'academy'; }
+  function camActive(){ return route().page === 'cam'; }
 
   const TITLE_MAP = new Map([
     ['Academy Players','Players'],
@@ -20,8 +20,8 @@
   ]);
 
   function normalizePageTitles(){
-    if(!academyActive()) return;
-    $$('#academyWorkspace .academy-content h1').forEach(h1 => {
+    if(!camActive()) return;
+    $$('#camWorkspace .cam-content h1').forEach(h1 => {
       const replacement=TITLE_MAP.get((h1.textContent||'').trim());
       if(replacement && h1.textContent!==replacement) h1.textContent=replacement;
     });
@@ -30,7 +30,7 @@
   function normalizeSearch(){
     const input=$('#globalSearch');
     if(!input) return;
-    const wanted=academyActive() ? 'Search players, coaches, programs...' : 'Search analyses, players...';
+    const wanted=camActive() ? 'Search players, coaches, programs...' : 'Search analyses, players...';
     if(input.placeholder!==wanted) input.placeholder=wanted;
   }
 
@@ -41,9 +41,9 @@
   }
 
   function polishDashboard(){
-    const content=$('#academyWorkspace .academy-content');
+    const content=$('#camWorkspace .cam-content');
     if(!content) return;
-    const dashboard=academyActive() && route().tab==='overview';
+    const dashboard=camActive() && route().tab==='overview';
     content.classList.toggle('cam-owner-dashboard-polished',dashboard);
     if(!dashboard) return;
 
@@ -60,13 +60,13 @@
   }
 
   function enrichLoadingState(){
-    if(!academyActive()) return;
-    const content=$('#academyWorkspace .academy-content');
+    if(!camActive()) return;
+    const content=$('#camWorkspace .cam-content');
     if(!content) return;
     const text=(content.textContent||'').trim();
     const loading=/^Loading\b/i.test(text) || /Loading (fees|billing|players|programs|coaches|reports|settings)/i.test(text);
-    if(!loading){ content.classList.remove('cam-academy-loading'); return; }
-    content.classList.add('cam-academy-loading');
+    if(!loading){ content.classList.remove('cam-cam-loading'); return; }
+    content.classList.add('cam-cam-loading');
     if($('.cam-ui-loading-skeleton',content)) return;
     const skeleton=document.createElement('div');
     skeleton.className='cam-ui-loading-skeleton';
@@ -76,7 +76,7 @@
   }
 
   function markAcademyShell(){
-    document.body.classList.toggle('cam-academy-context',academyActive());
+    document.body.classList.toggle('cam-cam-context',camActive());
   }
 
   let scheduled=false;

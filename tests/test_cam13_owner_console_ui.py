@@ -14,7 +14,7 @@ from playwright.sync_api import expect, sync_playwright
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BASE_URL = "http://127.0.0.1:8793"
-SESSION_KEY = "cam-academy-session-v1"
+SESSION_KEY = "cam-cam-session-v1"
 
 
 def _wait_for_server(url: str, timeout: float = 30.0) -> None:
@@ -79,7 +79,7 @@ def test_owner_admin_console_has_clean_navigation_and_contextual_workflows():
 
     try:
         _wait_for_server(f"{BASE_URL}/api/health")
-        _json_request("PUT", "/api/academy/profile", {"name": "Owner Console Academy", "timezone": "America/New_York"})
+        _json_request("PUT", "/api/cam/profile", {"name": "Owner Console Academy", "timezone": "America/New_York"})
         bootstrap = _json_request(
             "POST",
             "/api/auth/bootstrap",
@@ -95,7 +95,7 @@ def test_owner_admin_console_has_clean_navigation_and_contextual_workflows():
 
         player = _json_request(
             "POST",
-            "/api/academy/players",
+            "/api/cam/players",
             {
                 "name": "Aarav Owner Console",
                 "first_name": "Aarav",
@@ -119,13 +119,13 @@ def test_owner_admin_console_has_clean_navigation_and_contextual_workflows():
         )
         coach = _json_request(
             "POST",
-            "/api/academy/coaches",
+            "/api/cam/coaches",
             {"first_name": "Ravi", "last_name": "Coach", "status": "active"},
             headers,
         )
         _json_request(
             "POST",
-            "/api/academy/sessions/private",
+            "/api/cam/sessions/private",
             {
                 "player_id": player["id"],
                 "coach_id": coach["id"],
@@ -143,9 +143,9 @@ def test_owner_admin_console_has_clean_navigation_and_contextual_workflows():
             try:
                 page.goto(BASE_URL, wait_until="domcontentloaded")
                 page.evaluate("([key,value]) => sessionStorage.setItem(key,value)", [SESSION_KEY, token])
-                page.goto(f"{BASE_URL}/#academy", wait_until="domcontentloaded")
+                page.goto(f"{BASE_URL}/#cam", wait_until="domcontentloaded")
 
-                owner_tabs = page.locator("#academyWorkspace .academy-tabs [data-owner-console-tab]:visible")
+                owner_tabs = page.locator("#camWorkspace .cam-tabs [data-owner-console-tab]:visible")
                 expect(owner_tabs).to_have_count(7, timeout=20000)
                 assert owner_tabs.all_text_contents() == [
                     "Dashboard",
@@ -159,7 +159,7 @@ def test_owner_admin_console_has_clean_navigation_and_contextual_workflows():
 
                 page.get_by_role("button", name="Programs", exact=True).click()
                 expect(page.get_by_role("heading", name="Programs & Enrollment")).to_be_visible(timeout=15000)
-                context = page.locator(".academy-owner-context-nav")
+                context = page.locator(".cam-owner-context-nav")
                 expect(context).to_be_visible(timeout=10000)
                 assert context.locator("button").all_text_contents() == [
                     "Programs & Enrollment",
@@ -170,7 +170,7 @@ def test_owner_admin_console_has_clean_navigation_and_contextual_workflows():
 
                 page.get_by_role("button", name="Settings", exact=True).click()
                 expect(page.get_by_role("heading", name="Settings", exact=True)).to_be_visible(timeout=10000)
-                settings_shell = page.locator(".academy-owner-settings-shell")
+                settings_shell = page.locator(".cam-owner-settings-shell")
                 expect(settings_shell.get_by_role("button", name="Academy Profile")).to_be_visible()
                 expect(settings_shell.get_by_role("button", name="Access & Roles")).to_be_visible()
                 expect(settings_shell.get_by_role("button", name="Fee Setup")).to_be_visible()
@@ -180,13 +180,13 @@ def test_owner_admin_console_has_clean_navigation_and_contextual_workflows():
                 expect(page.get_by_role("heading", name="Academy Players")).to_be_visible(timeout=15000)
                 expect(page.get_by_role("button", name="Player 360", exact=True)).to_be_visible(timeout=10000)
                 page.get_by_role("button", name="Player 360", exact=True).click()
-                expect(page.locator(".academy-owner-player360")).to_be_visible(timeout=15000)
+                expect(page.locator(".cam-owner-player360")).to_be_visible(timeout=15000)
                 expect(page.get_by_role("heading", name="Aarav Owner Console", exact=True)).to_be_visible()
                 expect(page.get_by_role("heading", name="Parents & Guardians", exact=True)).to_be_visible()
                 expect(page.get_by_role("heading", name="CricClubs Profile", exact=True)).to_be_visible()
 
                 page.get_by_role("button", name="Dashboard", exact=True).click()
-                expect(page.locator("#academyOwnerSnapshot")).to_be_visible(timeout=15000)
+                expect(page.locator("#camOwnerSnapshot")).to_be_visible(timeout=15000)
                 expect(page.get_by_role("heading", name="Batch Breakdown", exact=True)).to_be_visible()
                 expect(page.get_by_role("heading", name="New Player Registrations", exact=True)).to_be_visible()
                 expect(page.get_by_role("heading", name="Current Month Academy Outgoings", exact=True)).to_be_visible()

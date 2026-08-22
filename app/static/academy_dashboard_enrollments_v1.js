@@ -16,7 +16,7 @@
 
   function active() {
     const current = route();
-    return current.page === 'academy' && current.tab === 'overview';
+    return current.page === 'cam' && current.tab === 'overview';
   }
 
   function esc(value = '') {
@@ -50,7 +50,7 @@
   async function loadEnrollments() {
     const now = Date.now();
     if (enrollmentCache && now - enrollmentCachedAt < 15000) return enrollmentCache;
-    enrollmentCache = await requestJson('/api/academy/dashboard/new-player-enrollments');
+    enrollmentCache = await requestJson('/api/cam/dashboard/new-player-enrollments');
     enrollmentCachedAt = now;
     return enrollmentCache || {count:0, players:[]};
   }
@@ -58,7 +58,7 @@
   async function loadBatches() {
     const now = Date.now();
     if (batchCache && now - batchCachedAt < 15000) return batchCache;
-    const rows = await requestJson('/api/academy/batches');
+    const rows = await requestJson('/api/cam/batches');
     batchCache = Array.isArray(rows) ? rows : [];
     batchCachedAt = now;
     return batchCache;
@@ -83,10 +83,10 @@
 
   function rowsMarkup(players = []) {
     if (!players.length) {
-      return '<div class="academy-dash-empty">No players have completed enrollment this month.</div>';
+      return '<div class="cam-dash-empty">No players have completed enrollment this month.</div>';
     }
     return players.map(player => `
-      <div class="academy-dash-session cam-new-enrollment-row" data-enrollment-id="${esc(player.enrollment_id)}" data-player-id="${esc(player.player_id)}">
+      <div class="cam-dash-session cam-new-enrollment-row" data-enrollment-id="${esc(player.enrollment_id)}" data-player-id="${esc(player.player_id)}">
         <div class="cam-new-enrollment-player">
           <strong>${esc(player.player_name || 'Player')}</strong>
           <small>Enrollment complete</small>
@@ -118,8 +118,8 @@
     return `<form class="cam-batch-assignment-form" data-player-id="${esc(player.player_id)}">
       <div class="cam-batch-assignment-heading"><div><strong>Assign ${esc(player.player_name || 'player')} to a batch</strong><span>This creates the roster membership directly from the Dashboard.</span></div></div>
       <div class="cam-batch-assignment-fields">
-        <label class="academy-field"><span>Batch *</span><select name="batch_id" required ${hasOpenBatch ? '' : 'disabled'}><option value="">Select batch</option>${options}</select></label>
-        <label class="academy-field"><span>Start date *</span><input type="date" name="joined_on" value="${esc(player.enrolled_date || new Date().toISOString().slice(0, 10))}" required></label>
+        <label class="cam-field"><span>Batch *</span><select name="batch_id" required ${hasOpenBatch ? '' : 'disabled'}><option value="">Select batch</option>${options}</select></label>
+        <label class="cam-field"><span>Start date *</span><input type="date" name="joined_on" value="${esc(player.enrolled_date || new Date().toISOString().slice(0, 10))}" required></label>
       </div>
       ${hasOpenBatch ? '' : '<p class="cam-batch-assignment-error">All active batches are currently full.</p>'}
       <div class="cam-batch-assignment-buttons">
@@ -161,7 +161,7 @@
           if (submit) submit.disabled = true;
           if (status) status.textContent = 'Assigning…';
           try {
-            const membership = await requestJson(`/api/academy/batches/${batchId}/players`, {
+            const membership = await requestJson(`/api/cam/batches/${batchId}/players`, {
               method:'POST',
               body:JSON.stringify({player_id:playerId, waitlist_if_full:false, joined_on:joinedOn}),
             });
@@ -192,15 +192,15 @@
 
   function render(data) {
     if (!active()) return;
-    const content = $('#academyWorkspace .academy-content');
+    const content = $('#camWorkspace .cam-content');
     if (!content) return;
 
     let panel = existingRegistrationPanel(content) || $('.cam-new-player-enrollments', content);
     if (!panel) {
-      const grid = $('.academy-dashboard-v2-grid', content) || $('.academy-dashboard-grid', content);
+      const grid = $('.cam-dashboard-v2-grid', content) || $('.cam-dashboard-grid', content);
       if (!grid) return;
       panel = document.createElement('article');
-      panel.className = 'panel academy-dash-panel cam-new-player-enrollments';
+      panel.className = 'panel cam-dash-panel cam-new-player-enrollments';
       grid.prepend(panel);
     } else {
       panel.classList.add('cam-new-player-enrollments');
@@ -247,7 +247,7 @@
     enrollmentCachedAt = 0;
     schedule();
   });
-  window.addEventListener('academy-enrollment-completed', () => {
+  window.addEventListener('cam-enrollment-completed', () => {
     enrollmentCache = null;
     enrollmentCachedAt = 0;
     schedule();

@@ -14,7 +14,7 @@
 
   function isProgramsPage() {
     const r = route();
-    return r.page === 'academy' && r.tab === 'programs';
+    return r.page === 'cam' && r.tab === 'programs';
   }
 
   function esc(value = '') {
@@ -37,7 +37,7 @@
   }
 
   function hideLegacyProgramTabs() {
-    document.querySelectorAll('.academy-tabs, .academy-primary-nav').forEach(node => {
+    document.querySelectorAll('.cam-tabs, .cam-primary-nav').forEach(node => {
       node.style.display = 'none';
       node.setAttribute('aria-hidden', 'true');
     });
@@ -64,32 +64,32 @@
   function scheduleForm(batches) {
     const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const options = batches.map(batch => `<option value="${Number(batch.id)}">${esc(batch.name || `Batch ${batch.id}`)}</option>`).join('');
-    return `<form id="c17ProgramScheduleForm" class="panel academy-form-card">
-      <div class="academy-form-title">
-        <div><span class="academy-kicker">RECURRING SCHEDULE</span><h2>Generate Batch Sessions</h2><p>Dates/times are stored in the Academy timezone. Existing identical occurrences are not duplicated.</p></div>
+    return `<form id="c17ProgramScheduleForm" class="panel cam-form-card">
+      <div class="cam-form-title">
+        <div><span class="cam-kicker">RECURRING SCHEDULE</span><h2>Generate Batch Sessions</h2><p>Dates/times are stored in the Academy timezone. Existing identical occurrences are not duplicated.</p></div>
         <button type="button" class="secondary" data-close-program-schedule>Cancel</button>
       </div>
-      <div class="academy-form-grid three">
-        <label class="academy-field"><span>Batch *</span><select name="batch_id" required><option value="">Select</option>${options}</select></label>
-        <label class="academy-field"><span>Start Date *</span><input type="date" name="start_date" required></label>
-        <label class="academy-field"><span>End Date *</span><input type="date" name="end_date" required></label>
-        <label class="academy-field"><span>Start Time *</span><input type="time" name="start_time" value="19:00" required></label>
-        <label class="academy-field"><span>Duration (minutes) *</span><input type="number" name="duration_minutes" value="60" required></label>
+      <div class="cam-form-grid three">
+        <label class="cam-field"><span>Batch *</span><select name="batch_id" required><option value="">Select</option>${options}</select></label>
+        <label class="cam-field"><span>Start Date *</span><input type="date" name="start_date" required></label>
+        <label class="cam-field"><span>End Date *</span><input type="date" name="end_date" required></label>
+        <label class="cam-field"><span>Start Time *</span><input type="time" name="start_time" value="19:00" required></label>
+        <label class="cam-field"><span>Duration (minutes) *</span><input type="number" name="duration_minutes" value="60" required></label>
       </div>
-      <div class="academy-weekdays"><span>Training days *</span>${days.map((day, index) => `<label><input type="checkbox" name="weekday" value="${index}"> ${day}</label>`).join('')}</div>
-      <div class="academy-form-actions"><span id="c17ProgramScheduleStatus"></span><button type="submit" class="primary">Generate Sessions</button></div>
+      <div class="cam-weekdays"><span>Training days *</span>${days.map((day, index) => `<label><input type="checkbox" name="weekday" value="${index}"> ${day}</label>`).join('')}</div>
+      <div class="cam-form-actions"><span id="c17ProgramScheduleStatus"></span><button type="submit" class="primary">Generate Sessions</button></div>
     </form>`;
   }
 
   async function openInlineSessions() {
     if (!isProgramsPage()) return;
-    const content = $('#academyWorkspace .academy-content');
+    const content = $('#camWorkspace .cam-content');
     const host = $('#c17ProgramInlineAction', content || document);
     if (!content || !host) return;
 
-    host.innerHTML = '<div class="panel academy-loading">Loading active batches…</div>';
+    host.innerHTML = '<div class="panel cam-loading">Loading active batches…</div>';
     try {
-      const batches = await requestJson('/api/academy/batches');
+      const batches = await requestJson('/api/cam/batches');
       if (!isProgramsPage() || !host.isConnected) return;
       const activeBatches = (Array.isArray(batches) ? batches : []).filter(batch => String(batch.status || 'active').toLowerCase() === 'active');
       if (!activeBatches.length) {
@@ -117,7 +117,7 @@
           if (status) status.textContent = 'Generating…';
           try {
             const batchId = Number(data.get('batch_id'));
-            const result = await requestJson(`/api/academy/batches/${batchId}/generate-sessions`, {
+            const result = await requestJson(`/api/cam/batches/${batchId}/generate-sessions`, {
               method:'POST',
               body:JSON.stringify({
                 start_date:data.get('start_date'),
@@ -145,9 +145,9 @@
 
   async function enhanceProgramsPage() {
     if (enhancing || !isProgramsPage()) return;
-    const content = $('#academyWorkspace .academy-content');
+    const content = $('#camWorkspace .cam-content');
     if (!content || content.dataset.c17ProgramsHub === '1') return;
-    const legacyHeader = $('.academy-section-head', content);
+    const legacyHeader = $('.cam-section-head', content);
     if (!legacyHeader) return;
 
     enhancing = true;
@@ -178,18 +178,18 @@
         createProgramButton.classList.add('primary');
         actions.appendChild(createProgramButton);
       }
-      actions.appendChild(buildButton('Create Batches', 'create-batch', 'academy?tab=batches'));
-      actions.appendChild(buildButton('Create Sessions', 'create-sessions', 'academy?tab=batches'));
-      actions.appendChild(buildButton('Create Matches', 'create-match', 'academy?tab=teams'));
-      actions.appendChild(buildButton('Create Tournaments', 'create-tournament', 'academy?tab=tournaments'));
+      actions.appendChild(buildButton('Create Batches', 'create-batch', 'cam?tab=batches'));
+      actions.appendChild(buildButton('Create Sessions', 'create-sessions', 'cam?tab=batches'));
+      actions.appendChild(buildButton('Create Matches', 'create-match', 'cam?tab=teams'));
+      actions.appendChild(buildButton('Create Tournaments', 'create-tournament', 'cam?tab=tournaments'));
 
       hero.insertAdjacentElement('afterend', toolbar);
 
-      const stats = $('.academy-stats', content);
+      const stats = $('.cam-stats', content);
       if (stats && !$('#c17ProgramInlineAction', content)) {
         const inlineHost = document.createElement('div');
         inlineHost.id = 'c17ProgramInlineAction';
-        inlineHost.className = 'academy-program-editor c17-program-inline-action';
+        inlineHost.className = 'cam-program-editor c17-program-inline-action';
         stats.insertAdjacentElement('afterend', inlineHost);
       }
 
@@ -213,9 +213,9 @@
       'create-tournament': {tab:'tournaments', selector:'#openTournamentForm'}
     };
     const target = map[action];
-    if (!target || r.page !== 'academy' || r.tab !== target.tab) return;
+    if (!target || r.page !== 'cam' || r.tab !== target.tab) return;
 
-    const button = $(target.selector, $('#academyWorkspace .academy-content') || document);
+    const button = $(target.selector, $('#camWorkspace .cam-content') || document);
     if (!button) return;
     try { sessionStorage.removeItem(ACTION_KEY); } catch {}
     button.click();

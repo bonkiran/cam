@@ -49,10 +49,10 @@ def main():
         raise RuntimeError(f"Baseline file not found: {BASELINE_PATH}")
     baseline = json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
 
-    dashboard = get("/api/academy/dashboard/operations")
+    dashboard = get("/api/cam/dashboard/operations")
     month = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m")
-    finance = get(f"/api/academy/finance/operations-summary?month={month}")
-    players = get("/api/academy/players")
+    finance = get(f"/api/cam/finance/operations-summary?month={month}")
+    players = get("/api/cam/players")
 
     if str(baseline.get("month")) != month:
         raise RuntimeError(f"Baseline month mismatch: expected {month}, got {baseline.get('month')}")

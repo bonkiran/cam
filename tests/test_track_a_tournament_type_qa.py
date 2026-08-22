@@ -48,7 +48,7 @@ def _reset_shared_postgres_state() -> None:
 
 
 def _create(payload: dict):
-    response = client.post("/api/academy/tournaments", json=payload)
+    response = client.post("/api/cam/tournaments", json=payload)
     assert response.status_code == 201, response.text
     return response.json()
 
@@ -56,7 +56,7 @@ def _create(payload: dict):
 def test_internal_and_external_tournament_classification_is_persisted():
     _reset_shared_postgres_state()
 
-    profile = client.put("/api/academy/profile", json={"name": "Track A Competition Academy"})
+    profile = client.put("/api/cam/profile", json={"name": "Track A Competition Academy"})
     assert profile.status_code == 200, profile.text
 
     internal = _create(
@@ -98,7 +98,7 @@ def test_internal_and_external_tournament_classification_is_persisted():
     assert legacy["tournament_type"] == "external"
 
     invalid = client.post(
-        "/api/academy/tournaments",
+        "/api/cam/tournaments",
         json={
             "name": "Invalid Tournament Type",
             "tournament_type": "partner",
@@ -108,7 +108,7 @@ def test_internal_and_external_tournament_classification_is_persisted():
     )
     assert invalid.status_code == 422, invalid.text
 
-    rows = client.get("/api/academy/tournaments")
+    rows = client.get("/api/cam/tournaments")
     assert rows.status_code == 200, rows.text
     by_name = {row["name"]: row for row in rows.json()}
     assert by_name["Track A Internal Academy Cup"]["tournament_type"] == "internal"
@@ -116,7 +116,7 @@ def test_internal_and_external_tournament_classification_is_persisted():
 
     # Classification remains editable while retaining the same tournament row.
     changed = client.put(
-        f"/api/academy/tournaments/{internal['id']}",
+        f"/api/cam/tournaments/{internal['id']}",
         json={
             "name": internal["name"],
             "tournament_type": "external",

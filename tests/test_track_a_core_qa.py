@@ -88,7 +88,7 @@ def _bootstrap_owner() -> str:
 
 def _create_access_user(owner_token: str, **payload):
     response = client.post(
-        "/api/academy/access/users",
+        "/api/cam/access/users",
         json=payload,
         headers=_auth(owner_token),
     )
@@ -115,7 +115,7 @@ def test_track_a_setup_players_guardians_programs_and_rbac_permutations():
 
     # QA-001 / Setup: create the first valid Academy profile.
     profile = client.put(
-        "/api/academy/profile",
+        "/api/cam/profile",
         json={
             "name": "Track A Cricket Academy",
             "email": "office.tracka@example.test",
@@ -131,9 +131,9 @@ def test_track_a_setup_players_guardians_programs_and_rbac_permutations():
 
     # Validation: Academy name shorter than the model minimum is rejected and
     # the existing profile remains unchanged.
-    invalid_profile = client.put("/api/academy/profile", json={"name": "A"})
+    invalid_profile = client.put("/api/cam/profile", json={"name": "A"})
     assert invalid_profile.status_code == 422, invalid_profile.text
-    assert client.get("/api/academy/profile").json()["profile"]["name"] == "Track A Cricket Academy"
+    assert client.get("/api/cam/profile").json()["profile"]["name"] == "Track A Cricket Academy"
 
     # QA-003 / QA-007 / QA-008: create a complete player with two guardians and
     # distinct primary/billing/pickup flags.
@@ -169,7 +169,7 @@ def test_track_a_setup_players_guardians_programs_and_rbac_permutations():
             },
         ],
     }
-    player_response = client.post("/api/academy/players", json=player_payload)
+    player_response = client.post("/api/cam/players", json=player_payload)
     assert player_response.status_code == 201, player_response.text
     player = player_response.json()
     player_id = int(player["id"])
@@ -186,28 +186,28 @@ def test_track_a_setup_players_guardians_programs_and_rbac_permutations():
 
     # QA-004: missing required player display name is rejected without creating
     # a partial player row.
-    before_invalid = client.get("/api/academy/players").json()
+    before_invalid = client.get("/api/cam/players").json()
     invalid_player = client.post(
-        "/api/academy/players",
+        "/api/cam/players",
         json={"first_name": "No", "last_name": "Display Name", "status": "active"},
     )
     assert invalid_player.status_code == 422, invalid_player.text
-    after_invalid = client.get("/api/academy/players").json()
+    after_invalid = client.get("/api/cam/players").json()
     assert len(after_invalid) == len(before_invalid)
 
     # Duplicate names are case-insensitive and must not create a second master
     # player identity.
     duplicate_player = client.post(
-        "/api/academy/players",
+        "/api/cam/players",
         json={"name": "track a aarav patel", "status": "active"},
     )
     assert duplicate_player.status_code == 409, duplicate_player.text
-    assert len(client.get("/api/academy/players").json()) == len(before_invalid)
+    assert len(client.get("/api/cam/players").json()) == len(before_invalid)
 
     # QA-005: Active -> inactive -> active lifecycle changes preserve the same
     # player ID and the existing guardian relationships.
     inactive = client.put(
-        f"/api/academy/players/{player_id}",
+        f"/api/cam/players/{player_id}",
         json={"name": player_payload["name"], "status": "inactive"},
     )
     assert inactive.status_code == 200, inactive.text
@@ -215,7 +215,7 @@ def test_track_a_setup_players_guardians_programs_and_rbac_permutations():
     assert len(inactive.json()["guardians"]) == 2
 
     reactivated = client.put(
-        f"/api/academy/players/{player_id}",
+        f"/api/cam/players/{player_id}",
         json={"name": player_payload["name"], "status": "active"},
     )
     assert reactivated.status_code == 200, reactivated.text
@@ -230,17 +230,17 @@ def test_track_a_setup_players_guardians_programs_and_rbac_permutations():
     # QA-002: anonymous profile mutation after bootstrap is rejected and does
     # not change the Academy profile.
     anonymous_profile_update = client.put(
-        "/api/academy/profile",
+        "/api/cam/profile",
         json={"name": "Unauthorized Academy Rename"},
     )
     assert anonymous_profile_update.status_code == 401, anonymous_profile_update.text
-    current_profile = client.get("/api/academy/profile", headers=_auth(owner_token))
+    current_profile = client.get("/api/cam/profile", headers=_auth(owner_token))
     assert current_profile.status_code == 200, current_profile.text
     assert current_profile.json()["profile"]["name"] == "Track A Cricket Academy"
 
     # Owner can update the same protected management record.
     owner_profile_update = client.put(
-        "/api/academy/profile",
+        "/api/cam/profile",
         json={"name": "Track A Cricket Academy Updated"},
         headers=_auth(owner_token),
     )
@@ -279,14 +279,14 @@ def test_track_a_setup_players_guardians_programs_and_rbac_permutations():
     player_token = _login("player.tracka@example.test", "TrackAPlayer!123")
 
     # Admin has generic management access; Parent and Player do not.
-    assert client.get("/api/academy/players", headers=_auth(admin_token)).status_code == 200
-    assert client.get("/api/academy/players", headers=_auth(parent_token)).status_code == 403
-    assert client.get("/api/academy/players", headers=_auth(player_token)).status_code == 403
-    assert client.get("/api/academy/players").status_code == 401
+    assert client.get("/api/cam/players", headers=_auth(admin_token)).status_code == 200
+    assert client.get("/api/cam/players", headers=_auth(parent_token)).status_code == 403
+    assert client.get("/api/cam/players", headers=_auth(player_token)).status_code == 403
+    assert client.get("/api/cam/players").status_code == 401
 
     # Parent cannot mutate Academy setup either.
     parent_profile_update = client.put(
-        "/api/academy/profile",
+        "/api/cam/profile",
         json={"name": "Parent Unauthorized Rename"},
         headers=_auth(parent_token),
     )
@@ -301,16 +301,16 @@ def test_track_a_setup_players_guardians_programs_and_rbac_permutations():
     ]
     created_program_ids = []
     for payload in program_payloads:
-        response = client.post("/api/academy/programs", json=payload, headers=_auth(owner_token))
+        response = client.post("/api/cam/programs", json=payload, headers=_auth(owner_token))
         assert response.status_code == 201, response.text
         created_program_ids.append(int(response.json()["id"]))
 
-    programs = client.get("/api/academy/programs", headers=_auth(owner_token))
+    programs = client.get("/api/cam/programs", headers=_auth(owner_token))
     assert programs.status_code == 200, programs.text
     assert set(created_program_ids).issubset({int(row["id"]) for row in programs.json()})
 
     duplicate_program = client.post(
-        "/api/academy/programs",
+        "/api/cam/programs",
         json={"name": "track a u13 development", "program_type": "group", "status": "active"},
         headers=_auth(owner_token),
     )
@@ -318,6 +318,6 @@ def test_track_a_setup_players_guardians_programs_and_rbac_permutations():
 
     # Parent dedicated billing surface remains reachable while generic
     # management stays closed; the linked player must be in family scope.
-    parent_billing = client.get("/api/academy/parent/billing", headers=_auth(parent_token))
+    parent_billing = client.get("/api/cam/parent/billing", headers=_auth(parent_token))
     assert parent_billing.status_code == 200, parent_billing.text
     assert player_id in {int(row["id"]) for row in parent_billing.json()["players"]}

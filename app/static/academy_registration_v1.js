@@ -4,7 +4,7 @@
   let rendering=false;
   let scheduled=false;
   let roleCache=null;
-  let academyNameCache='Academy';
+  let camNameCache='Academy';
 
   function esc(v=''){
     return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -13,9 +13,9 @@
     const raw=location.hash.replace(/^#/,'');const [page,query='']=raw.split('?');
     return {page:page||'dashboard',tab:new URLSearchParams(query).get('tab')||'overview'};
   }
-  function registrationActive(){const r=route();return r.page==='academy'&&r.tab==='registration';}
-  function dashboardActive(){const r=route();return r.page==='academy'&&r.tab==='overview';}
-  function goRegistration(){location.hash='academy?tab=registration';}
+  function registrationActive(){const r=route();return r.page==='cam'&&r.tab==='registration';}
+  function dashboardActive(){const r=route();return r.page==='cam'&&r.tab==='overview';}
+  function goRegistration(){location.hash='cam?tab=registration';}
   function notify(message){if(typeof window.toast==='function')window.toast(message);else console.log(message);}
   async function requestJson(url,options={}){
     const res=await fetch(url,{cache:'no-store',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});
@@ -30,7 +30,7 @@
     return roleCache;
   }
   async function registrationBranding(){
-    try{return await requestJson('/api/academy/registration/branding');}
+    try{return await requestJson('/api/cam/registration/branding');}
     catch{return {academy_name:'Academy'};}
   }
   async function enrollmentHero(){
@@ -49,16 +49,16 @@
     return map[v]||v;
   }
   function formObject(form){const out={};new FormData(form).forEach((v,k)=>out[k]=typeof v==='string'?v.trim():v);return out;}
-  function academyLabel(){
-    const name=String(academyNameCache||'Academy').trim()||'Academy';
+  function camLabel(){
+    const name=String(camNameCache||'Academy').trim()||'Academy';
     return /academy$/i.test(name)?name:`${name} Academy`;
   }
   function shareMessage(item,url){
     const parent=[item.parent_first_name,item.parent_last_name].filter(Boolean).join(' ')||'Parent';
-    return `Hi ${parent}, please complete the ${academyLabel()} player enrollment form using this secure link: ${url}`;
+    return `Hi ${parent}, please complete the ${camLabel()} player enrollment form using this secure link: ${url}`;
   }
   async function markSent(id,channel){
-    try{await requestJson(`/api/academy/registration/invites/${id}/sent`,{method:'POST',body:JSON.stringify({channel})});}
+    try{await requestJson(`/api/cam/registration/invites/${id}/sent`,{method:'POST',body:JSON.stringify({channel})});}
     catch(err){console.warn('Could not mark enrollment link sent',err);}
   }
   function showShare(item,url){
@@ -66,7 +66,7 @@
     const message=shareMessage(item,url);const digits=phoneDigits(item.parent_phone);
     const whatsapp=`https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
     const sms=`sms:${digits}?body=${encodeURIComponent(message)}`;
-    const mailto=`mailto:${encodeURIComponent(item.parent_email||'')}?subject=${encodeURIComponent(`${academyLabel()} Player Enrollment`)}&body=${encodeURIComponent(message)}`;
+    const mailto=`mailto:${encodeURIComponent(item.parent_email||'')}?subject=${encodeURIComponent(`${camLabel()} Player Enrollment`)}&body=${encodeURIComponent(message)}`;
     host.innerHTML=`<div class="cam-share-box"><strong>Enrollment link ready for ${esc(item.parent_first_name)} ${esc(item.parent_last_name)}</strong><div class="cam-share-url">${esc(url)}</div><div class="cam-share-actions"><button data-share="sms">Text Message</button><button data-share="whatsapp">WhatsApp</button>${item.parent_email?'<button data-share="email">Email</button>':''}<button data-share="copy">Copy Link</button></div></div>`;
     $('[data-share="sms"]',host)?.addEventListener('click',async()=>{await markSent(item.id,'sms');location.href=sms;});
     $('[data-share="whatsapp"]',host)?.addEventListener('click',async()=>{await markSent(item.id,'whatsapp');window.open(whatsapp,'_blank','noopener');});
@@ -105,7 +105,7 @@
   function contactText(contact){return contact?`${contact.first_name||''} ${contact.last_name||''} · ${contact.relationship||''} · ${contact.phone||''}`.replace(/\s+·\s*$/,''):'—';}
   function reviewHtml(app){
     const emergency=app.emergency_contacts||[];
-    return `<article class="panel cam-registration-review"><div class="cam-registration-head"><div><span class="academy-kicker">APPLICATION #${app.id}</span><h2>${esc(app.player_first_name)} ${esc(app.player_last_name)}</h2><p>Submitted ${esc(fmtDate(app.submitted_at))} · Status: ${esc(statusLabel(app.status))}</p></div><button type="button" class="secondary" id="closeRegistrationReview">Close</button></div>
+    return `<article class="panel cam-registration-review"><div class="cam-registration-head"><div><span class="cam-kicker">APPLICATION #${app.id}</span><h2>${esc(app.player_first_name)} ${esc(app.player_last_name)}</h2><p>Submitted ${esc(fmtDate(app.submitted_at))} · Status: ${esc(statusLabel(app.status))}</p></div><button type="button" class="secondary" id="closeRegistrationReview">Close</button></div>
       <section class="cam-review-summary"><div><span>Cricket Role</span><strong>${esc(app.cricket_role||'—')}</strong></div><div><span>Batting / Bowling</span><strong>${esc(app.batting_order||'—')} · ${esc(app.bowling_type||'—')}</strong></div><div><span>Wicketkeeping</span><strong>${app.wicketkeeping===true?'Yes':app.wicketkeeping===false?'No':'—'}</strong></div></section>
       <section class="cam-review-sections"><article class="cam-review-section"><h3>Player</h3><dl>${reviewField('Name',`${app.player_first_name||''} ${app.player_last_name||''}`)}${reviewField('Date of Birth',app.player_date_of_birth)}${reviewField('Gender',app.player_gender)}${reviewField('Role',app.cricket_role)}${reviewField('Batting Order',app.batting_order)}${reviewField('Bowling Type',app.bowling_type)}</dl></article>
       <article class="cam-review-section"><h3>Parent</h3><dl>${reviewField('Name',`${app.parent_first_name||''} ${app.parent_last_name||''}`)}${reviewField('Relationship',app.parent_relationship)}${reviewField('Email',app.parent_email)}${reviewField('Phone',app.parent_phone)}${reviewField('Address',[app.parent_address_line1,app.parent_city,app.parent_state,app.parent_postal_code,app.parent_country].filter(Boolean).join(', '))}</dl></article>
@@ -116,12 +116,12 @@
   }
   async function renderRegistration(force=false){
     if(!registrationActive()||rendering)return;
-    const content=$('#academyWorkspace .academy-content');if(!content)return;
+    const content=$('#camWorkspace .cam-content');if(!content)return;
     if(!force&&content.dataset.registrationRendered==='1')return;
-    rendering=true;content.dataset.registrationRendered='loading';content.innerHTML='<div class="panel academy-loading">Loading enrollment pipeline…</div>';
+    rendering=true;content.dataset.registrationRendered='loading';content.innerHTML='<div class="panel cam-loading">Loading enrollment pipeline…</div>';
     try{
-      const [invites,summary,role,branding,heroMarkup]=await Promise.all([requestJson('/api/academy/registration/invites'),requestJson('/api/academy/registration/summary'),currentRole(),registrationBranding(),enrollmentHero()]);
-      academyNameCache=String(branding?.academy_name||'Academy').trim()||'Academy';
+      const [invites,summary,role,branding,heroMarkup]=await Promise.all([requestJson('/api/cam/registration/invites'),requestJson('/api/cam/registration/summary'),currentRole(),registrationBranding(),enrollmentHero()]);
+      camNameCache=String(branding?.academy_name||'Academy').trim()||'Academy';
       if(!registrationActive())return;
       content.innerHTML=pageHtml(Array.isArray(invites)?invites:[],summary||{},role,heroMarkup);
       content.dataset.registrationRendered='1';wirePage(Array.isArray(invites)?invites:[],role);
@@ -131,40 +131,40 @@
   function wirePage(invites,role){
     $('#registrationInviteForm')?.addEventListener('submit',async e=>{
       e.preventDefault();const form=e.currentTarget;const raw=formObject(form);const submit=$('button[type="submit"]',form);submit.disabled=true;submit.textContent='Creating…';
-      try{const item=await requestJson('/api/academy/registration/invites',{method:'POST',body:JSON.stringify(raw)});showShare(item,item.registration_url);notify('Enrollment link created.');form.reset();}
+      try{const item=await requestJson('/api/cam/registration/invites',{method:'POST',body:JSON.stringify(raw)});showShare(item,item.registration_url);notify('Enrollment link created.');form.reset();}
       catch(err){notify(err.message);}finally{submit.disabled=false;submit.textContent='Create Enrollment Link';}
     });
     $$('[data-resend]').forEach(btn=>btn.onclick=async()=>{
-      btn.disabled=true;try{const item=await requestJson(`/api/academy/registration/invites/${btn.dataset.resend}/resend`,{method:'POST',body:'{}'});showShare(item,item.registration_url);notify('New enrollment link generated.');await renderRegistration(true);}catch(err){notify(err.message);}finally{btn.disabled=false;}
+      btn.disabled=true;try{const item=await requestJson(`/api/cam/registration/invites/${btn.dataset.resend}/resend`,{method:'POST',body:'{}'});showShare(item,item.registration_url);notify('New enrollment link generated.');await renderRegistration(true);}catch(err){notify(err.message);}finally{btn.disabled=false;}
     });
     $$('[data-cancel]').forEach(btn=>btn.onclick=async()=>{
-      if(!confirm('Cancel this enrollment link?'))return;btn.disabled=true;try{await requestJson(`/api/academy/registration/invites/${btn.dataset.cancel}/cancel`,{method:'POST',body:'{}'});notify('Enrollment link cancelled.');await renderRegistration(true);}catch(err){notify(err.message);}finally{btn.disabled=false;}
+      if(!confirm('Cancel this enrollment link?'))return;btn.disabled=true;try{await requestJson(`/api/cam/registration/invites/${btn.dataset.cancel}/cancel`,{method:'POST',body:'{}'});notify('Enrollment link cancelled.');await renderRegistration(true);}catch(err){notify(err.message);}finally{btn.disabled=false;}
     });
     if(role==='owner'||role==='admin')$$('[data-review-app]').forEach(btn=>btn.onclick=()=>openReview(Number(btn.dataset.reviewApp)));
   }
   async function openReview(applicationId){
     const host=$('#registrationReviewHost');if(!host)return;host.innerHTML='<article class="panel cam-registration-review">Loading application…</article>';host.scrollIntoView({behavior:'smooth',block:'start'});
-    try{const app=await requestJson(`/api/academy/registration/applications/${applicationId}`);host.innerHTML=reviewHtml(app);wireReview(host,app);}
+    try{const app=await requestJson(`/api/cam/registration/applications/${applicationId}`);host.innerHTML=reviewHtml(app);wireReview(host,app);}
     catch(err){host.innerHTML=`<div class="warning">${esc(err.message)}</div>`;}
   }
   function wireReview(host,app){
     $('#closeRegistrationReview',host)?.addEventListener('click',()=>host.innerHTML='');
-    $('#openApprovedPlayer',host)?.addEventListener('click',()=>{location.hash='academy?tab=players';});
+    $('#openApprovedPlayer',host)?.addEventListener('click',()=>{location.hash='cam?tab=players';});
     $$('[data-review-action]',host).forEach(btn=>btn.onclick=async()=>{
       const action=btn.dataset.reviewAction;const note=$('#registrationReviewNote',host)?.value.trim()||null;
       if(action==='approve'&&!confirm('Approve this application and create the active player/guardian records?'))return;
       btn.disabled=true;
-      try{const result=await requestJson(`/api/academy/registration/applications/${app.id}/review`,{method:'POST',body:JSON.stringify({action,note})});notify(action==='approve'?'Enrollment approved and player created.':action==='needs_information'?'Information request recorded.':'Enrollment declined.');await renderRegistration(true);if(result?.id){} }
+      try{const result=await requestJson(`/api/cam/registration/applications/${app.id}/review`,{method:'POST',body:JSON.stringify({action,note})});notify(action==='approve'?'Enrollment approved and player created.':action==='needs_information'?'Information request recorded.':'Enrollment declined.');await renderRegistration(true);if(result?.id){} }
       catch(err){notify(err.message);btn.disabled=false;}
     });
   }
   async function injectDashboardCard(){
     if(!dashboardActive())return;
-    const stats=$('#academyWorkspace .academy-stats');if(!stats||$('.cam-registration-dashboard-card',stats))return;
+    const stats=$('#camWorkspace .cam-stats');if(!stats||$('.cam-registration-dashboard-card',stats))return;
     try{
-      const summary=await requestJson('/api/academy/registration/summary');if(!dashboardActive()||!stats.isConnected)return;
-      const card=document.createElement('article');card.className='academy-stat blue cam-registration-dashboard-card';card.tabIndex=0;card.setAttribute('role','button');
-      card.innerHTML=`<div class="academy-stat-icon">✎</div><div><span>Submitted Enrollments</span><strong>${Number(summary?.submitted||0)}</strong><small>${Number(summary?.waiting_on_parent||0)} waiting on parent · Open Enrollment</small></div>`;
+      const summary=await requestJson('/api/cam/registration/summary');if(!dashboardActive()||!stats.isConnected)return;
+      const card=document.createElement('article');card.className='cam-stat blue cam-registration-dashboard-card';card.tabIndex=0;card.setAttribute('role','button');
+      card.innerHTML=`<div class="cam-stat-icon">✎</div><div><span>Submitted Enrollments</span><strong>${Number(summary?.submitted||0)}</strong><small>${Number(summary?.waiting_on_parent||0)} waiting on parent · Open Enrollment</small></div>`;
       card.onclick=goRegistration;card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();goRegistration();}};stats.appendChild(card);
     }catch(err){console.warn('Enrollment dashboard summary unavailable',err);}
   }

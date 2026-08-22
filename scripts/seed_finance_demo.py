@@ -80,7 +80,7 @@ def require_named(items, key, value, label):
 
 
 def current_enrollment(player_id: int, program_id: int):
-    rows = get(f"/api/academy/enrollments?player_id={player_id}&program_id={program_id}")
+    rows = get(f"/api/cam/enrollments?player_id={player_id}&program_id={program_id}")
     for row in rows:
         if str(row.get("status") or "") in {"active", "frozen"}:
             return row
@@ -91,13 +91,13 @@ def current_enrollment(player_id: int, program_id: int):
 
 
 def ensure_fee_plan(name: str, amount_cents: int, program_id: int):
-    rows = get("/api/academy/fee-plans")
+    rows = get("/api/cam/fee-plans")
     found = find_by(rows, "name", name)
     if found:
         print("reuse fee plan", found["name"], found["id"])
         return found
     created = post(
-        "/api/academy/fee-plans",
+        "/api/cam/fee-plans",
         {
             "name": name,
             "amount_cents": amount_cents,
@@ -114,7 +114,7 @@ def ensure_fee_plan(name: str, amount_cents: int, program_id: int):
 
 
 def ensure_billing_account(name: str, player_ids: list[int]):
-    rows = get("/api/academy/billing-accounts")
+    rows = get("/api/cam/billing-accounts")
     found = find_by(rows, "account_name", name)
     if found:
         existing_ids = {int(row["player_id"]) for row in found.get("players", [])}
@@ -126,7 +126,7 @@ def ensure_billing_account(name: str, player_ids: list[int]):
         print("reuse billing account", found["account_name"], found["id"])
         return found
     created = post(
-        "/api/academy/billing-accounts",
+        "/api/cam/billing-accounts",
         {
             "account_name": name,
             "player_ids": player_ids,
@@ -141,7 +141,7 @@ def ensure_billing_account(name: str, player_ids: list[int]):
 
 def configure_billing(enrollment_id: int, fee_plan_id: int):
     configured = put(
-        f"/api/academy/enrollments/{enrollment_id}/billing",
+        f"/api/cam/enrollments/{enrollment_id}/billing",
         {
             "fee_plan_id": fee_plan_id,
             "discount_type": "none",
@@ -154,7 +154,7 @@ def configure_billing(enrollment_id: int, fee_plan_id: int):
 
 
 def ensure_invoice(account_id: int, enrollment_id: int, issue_date: str, due_date: str, description: str):
-    rows = get(f"/api/academy/invoices?account_id={account_id}")
+    rows = get(f"/api/cam/invoices?account_id={account_id}")
     for row in rows:
         if (
             str(row.get("source_type") or "") == "enrollment"
@@ -164,7 +164,7 @@ def ensure_invoice(account_id: int, enrollment_id: int, issue_date: str, due_dat
             print("reuse invoice", row.get("invoice_number"), row.get("id"), description)
             return row
     created = post(
-        "/api/academy/invoices/from-enrollment",
+        "/api/cam/invoices/from-enrollment",
         {
             "account_id": account_id,
             "enrollment_id": enrollment_id,
@@ -179,7 +179,7 @@ def ensure_invoice(account_id: int, enrollment_id: int, issue_date: str, due_dat
 
 def ensure_payment(account_id: int, invoice: dict, amount_cents: int, method: str, received_on: str, key: str, notes: str):
     payment = post(
-        "/api/academy/payments",
+        "/api/cam/payments",
         {
             "account_id": account_id,
             "amount_cents": amount_cents,
@@ -196,7 +196,7 @@ def ensure_payment(account_id: int, invoice: dict, amount_cents: int, method: st
 
 def roll_forward_old_demo_balances(account_id: int, demo_enrollment_ids: set[int], month_start: date):
     previous_period_date = month_start - timedelta(days=1)
-    rows = get(f"/api/academy/invoices?account_id={account_id}")
+    rows = get(f"/api/cam/invoices?account_id={account_id}")
     settled = []
     for invoice in rows:
         if str(invoice.get("source_type") or "") != "enrollment":
@@ -243,8 +243,8 @@ def main():
         late_issue = today - timedelta(days=20)
         late_due = today - timedelta(days=5)
 
-    players = get("/api/academy/players")
-    programs = get("/api/academy/programs")
+    players = get("/api/cam/players")
+    programs = get("/api/cam/programs")
 
     aarav = require_named(players, "name", "DEMO Aarav Patel", "player")
     maya = require_named(players, "name", "DEMO Maya Rao", "player")
@@ -325,7 +325,7 @@ def main():
         "DEMO DATA — partial payment leaves $120 outstanding.",
     )
 
-    final_invoices = get(f"/api/academy/invoices?account_id={account_id}")
+    final_invoices = get(f"/api/cam/invoices?account_id={account_id}")
     by_id = {int(row["id"]): row for row in final_invoices}
     scenario_rows = [
         ("paid_in_full", by_id[int(paid_invoice["id"])]),

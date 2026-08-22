@@ -37,8 +37,8 @@ def rename_candidates() -> list[tuple[Path, Path]]:
     # Workflow names are code/navigation metadata too.
     workflows = ROOT / ".github" / "workflows"
     if workflows.exists():
-        for src in sorted(workflows.glob("academy-*.yml")):
-            pairs.append((src, src.with_name("cam-" + src.name[len("academy-") :])))
+        for src in sorted(workflows.glob("cam-*.yml")):
+            pairs.append((src, src.with_name("cam-" + src.name[len("cam-") :])))
 
     # Utility scripts should use CAM terminology as well.
     scripts_dir = ROOT / "scripts"
@@ -46,7 +46,7 @@ def rename_candidates() -> list[tuple[Path, Path]]:
         for src in sorted(scripts_dir.glob("*academy*.py")):
             if src.name == Path(__file__).name:
                 continue
-            pairs.append((src, src.with_name(src.name.replace("academy", "cam"))))
+            pairs.append((src, src.with_name(src.name.replace("cam", "cam"))))
 
     # Historical planning documents are retained, but under CAM names.
     for src in sorted(ROOT.glob("ACADEMY_*.md")):
@@ -86,20 +86,20 @@ def transform_text(text: str, token_mapping: dict[str, str]) -> str:
         text = text.replace(old, token_mapping[old])
 
     # Active HTTP namespace: CAM owns /api/cam. A legacy bridge keeps old clients
-    # working temporarily, but current code must not emit /api/academy.
-    text = text.replace("/api/academy", "/api/cam")
+    # working temporarily, but current code must not emit /api/cam.
+    text = text.replace("/api/cam", "/api/cam")
 
     # Active SPA namespace: the original CrickAnalysis video dashboard already
     # owns #dashboard, so CAM's clean top-level route is #cam.
-    text = text.replace("#academy", "#cam")
+    text = text.replace("#cam", "#cam")
     text = re.sub(r"(['\"])academy(\?[^'\"]*)?\1", lambda m: f"{m.group(1)}cam{m.group(2) or ''}{m.group(1)}", text)
 
     # DOM/CSS technical namespace. Capitalized user-facing words such as
     # "Academy Name" are intentionally untouched.
-    text = text.replace("academyWorkspace", "camWorkspace")
-    text = text.replace("academy-content", "cam-content")
-    text = text.replace("academy-route-pending", "cam-route-pending")
-    text = text.replace("academy-", "cam-")
+    text = text.replace("camWorkspace", "camWorkspace")
+    text = text.replace("cam-content", "cam-content")
+    text = text.replace("cam-route-pending", "cam-route-pending")
+    text = text.replace("cam-", "cam-")
     text = re.sub(r"\bacademy([A-Z][A-Za-z0-9_]*)", lambda m: "cam" + m.group(1), text)
     text = re.sub(r"\bAcademy([A-Z][A-Za-z0-9_]*)", lambda m: "Cam" + m.group(1), text)
 
@@ -109,7 +109,7 @@ def transform_text(text: str, token_mapping: dict[str, str]) -> str:
 def add_legacy_api_bridge() -> None:
     path = ROOT / "app" / "cam_api_legacy_bridge.py"
     path.write_text(
-        '''from __future__ import annotations\n\n\nclass CamLegacyApiBridge:\n    """Temporary transport bridge for pre-CAM /api/academy clients.\n\n    Current application code uses /api/cam. Persisted external bookmarks or old\n    test clients can still call /api/academy during the migration window; those\n    requests are rewritten before authorization and route matching.\n    """\n\n    def __init__(self, app):\n        self.app = app\n\n    async def __call__(self, scope, receive, send):\n        if scope.get("type") == "http":\n            path = str(scope.get("path") or "")\n            if path == "/api/academy" or path.startswith("/api/academy/"):\n                suffix = path[len("/api/academy") :]\n                scope = dict(scope)\n                scope["path"] = "/api/cam" + suffix\n                scope["raw_path"] = scope["path"].encode("utf-8")\n        await self.app(scope, receive, send)\n\n\ndef install_cam_legacy_api_bridge(app) -> None:\n    app.add_middleware(CamLegacyApiBridge)\n''',
+        '''from __future__ import annotations\n\n\nclass CamLegacyApiBridge:\n    """Temporary transport bridge for pre-CAM /api/cam clients.\n\n    Current application code uses /api/cam. Persisted external bookmarks or old\n    test clients can still call /api/cam during the migration window; those\n    requests are rewritten before authorization and route matching.\n    """\n\n    def __init__(self, app):\n        self.app = app\n\n    async def __call__(self, scope, receive, send):\n        if scope.get("type") == "http":\n            path = str(scope.get("path") or "")\n            if path == "/api/cam" or path.startswith("/api/cam/"):\n                suffix = path[len("/api/cam") :]\n                scope = dict(scope)\n                scope["path"] = "/api/cam" + suffix\n                scope["raw_path"] = scope["path"].encode("utf-8")\n        await self.app(scope, receive, send)\n\n\ndef install_cam_legacy_api_bridge(app) -> None:\n    app.add_middleware(CamLegacyApiBridge)\n''',
         encoding="utf-8",
     )
 
@@ -135,7 +135,7 @@ def patch_run_py() -> None:
 def write_guard_test() -> None:
     path = ROOT / "tests" / "test_cam15_naming_guard.py"
     path.write_text(
-        '''from pathlib import Path\n\nROOT = Path(__file__).resolve().parents[1]\n\n\ndef test_active_cam_namespace_has_no_legacy_academy_technical_references():\n    # Persisted SQL schema names are intentionally outside this guard. The guard\n    # protects active route/module/static naming, which is what users and future\n    # CAM development should build against.\n    forbidden_filenames = []\n    for folder, pattern in [\n        (ROOT / "app", "academy_*.py"),\n        (ROOT / "app" / "static", "academy_*.js"),\n        (ROOT / "app" / "static", "academy_*.css"),\n        (ROOT / "app" / "static", "academy_*.html"),\n        (ROOT / "tests", "test_academy_*.py"),\n        (ROOT / ".github" / "workflows", "academy-*.yml"),\n    ]:\n        forbidden_filenames.extend(str(p.relative_to(ROOT)) for p in folder.glob(pattern))\n    assert not forbidden_filenames, f"Legacy technical filenames remain: {forbidden_filenames}"\n\n    forbidden_patterns = ("/api/academy", "#academy", "academyWorkspace", "academy-content", "academy-route-pending")\n    checked_roots = [ROOT / "app" / "static", ROOT / "tests", ROOT / "run.py"]\n    offenders = []\n    for checked in checked_roots:\n        paths = [checked] if checked.is_file() else [p for p in checked.rglob("*") if p.is_file() and p.suffix in {".py", ".js", ".css", ".html"}]\n        for file in paths:\n            text = file.read_text(encoding="utf-8", errors="ignore")\n            for pattern in forbidden_patterns:\n                if pattern in text:\n                    offenders.append(f"{file.relative_to(ROOT)} -> {pattern}")\n    assert not offenders, "Legacy active namespace references remain:\\n" + "\\n".join(offenders[:100])\n\n\ndef test_cam_route_and_api_are_present():\n    index = (ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")\n    shell_files = list((ROOT / "app" / "static").glob("cam_*shell*.js"))\n    assert shell_files, "CAM shell implementation is missing"\n    shell = "\\n".join(p.read_text(encoding="utf-8") for p in shell_files)\n    assert "cam" in shell\n    assert "/api/cam" in "\\n".join(p.read_text(encoding="utf-8", errors="ignore") for p in (ROOT / "app" / "static").glob("cam_*.js"))\n    assert "/static/cam_" in index\n''',
+        '''from pathlib import Path\n\nROOT = Path(__file__).resolve().parents[1]\n\n\ndef test_active_cam_namespace_has_no_legacy_academy_technical_references():\n    # Persisted SQL schema names are intentionally outside this guard. The guard\n    # protects active route/module/static naming, which is what users and future\n    # CAM development should build against.\n    forbidden_filenames = []\n    for folder, pattern in [\n        (ROOT / "app", "academy_*.py"),\n        (ROOT / "app" / "static", "academy_*.js"),\n        (ROOT / "app" / "static", "academy_*.css"),\n        (ROOT / "app" / "static", "academy_*.html"),\n        (ROOT / "tests", "test_academy_*.py"),\n        (ROOT / ".github" / "workflows", "cam-*.yml"),\n    ]:\n        forbidden_filenames.extend(str(p.relative_to(ROOT)) for p in folder.glob(pattern))\n    assert not forbidden_filenames, f"Legacy technical filenames remain: {forbidden_filenames}"\n\n    forbidden_patterns = ("/api/cam", "#cam", "camWorkspace", "cam-content", "cam-route-pending")\n    checked_roots = [ROOT / "app" / "static", ROOT / "tests", ROOT / "run.py"]\n    offenders = []\n    for checked in checked_roots:\n        paths = [checked] if checked.is_file() else [p for p in checked.rglob("*") if p.is_file() and p.suffix in {".py", ".js", ".css", ".html"}]\n        for file in paths:\n            text = file.read_text(encoding="utf-8", errors="ignore")\n            for pattern in forbidden_patterns:\n                if pattern in text:\n                    offenders.append(f"{file.relative_to(ROOT)} -> {pattern}")\n    assert not offenders, "Legacy active namespace references remain:\\n" + "\\n".join(offenders[:100])\n\n\ndef test_cam_route_and_api_are_present():\n    index = (ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")\n    shell_files = list((ROOT / "app" / "static").glob("cam_*shell*.js"))\n    assert shell_files, "CAM shell implementation is missing"\n    shell = "\\n".join(p.read_text(encoding="utf-8") for p in shell_files)\n    assert "cam" in shell\n    assert "/api/cam" in "\\n".join(p.read_text(encoding="utf-8", errors="ignore") for p in (ROOT / "app" / "static").glob("cam_*.js"))\n    assert "/static/cam_" in index\n''',
         encoding="utf-8",
     )
 

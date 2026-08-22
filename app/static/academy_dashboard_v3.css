@@ -1,9 +1,9 @@
 /* Academy Dashboard v3 — production implementation of the approved Image 2 prototype. */
-body.cam-academy-dashboard-v3-mode .topbar{display:none!important}
-body.cam-academy-dashboard-v3-mode .main{padding-top:0!important}
-body.cam-academy-dashboard-v3-mode #academyWorkspace .academy-tabs{top:0!important;margin-top:0}
-body.cam-academy-dashboard-v3-mode #academyWorkspace .academy-content{padding-top:10px}
-#academyWorkspace .academy-content[data-dashboard-v3="1"]>.cam-v3-legacy-sibling{display:none!important}
+body.cam-cam-dashboard-v3-mode .topbar{display:none!important}
+body.cam-cam-dashboard-v3-mode .main{padding-top:0!important}
+body.cam-cam-dashboard-v3-mode #camWorkspace .cam-tabs{top:0!important;margin-top:0}
+body.cam-cam-dashboard-v3-mode #camWorkspace .cam-content{padding-top:10px}
+#camWorkspace .cam-content[data-dashboard-v3="1"]>.cam-v3-legacy-sibling{display:none!important}
 
 .cam-dashboard-v3{display:flex;flex-direction:column;gap:14px;padding-bottom:24px;color:#173d2a}
 .cam-v3-card,.cam-v3-hero{border:1px solid #dce8e0;background:#fff;border-radius:15px;box-shadow:0 8px 24px rgba(22,66,45,.065);min-width:0}
@@ -46,4 +46,4 @@ body.cam-academy-dashboard-v3-mode #academyWorkspace .academy-content{padding-to
 
 @media(max-width:1320px){.cam-v3-hero{grid-template-columns:minmax(210px,.58fr) minmax(0,1.7fr)}.cam-v3-forecast-day{padding-left:3px;padding-right:3px}.cam-v3-program-grid{grid-template-columns:repeat(3,1fr)}.cam-v3-total-players{grid-column:span 1}.cam-v3-attendance-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:1080px){.cam-v3-hero,.cam-v3-two-col,.cam-v3-finance-grid,.cam-v3-session-grid{grid-template-columns:1fr}.cam-v3-weather{grid-template-columns:1fr}.cam-v3-weather-current{border-right:0;border-bottom:1px solid #dbe8df}.cam-v3-events-grid{grid-template-columns:1fr}.cam-v3-program-grid{grid-template-columns:repeat(3,1fr)}.cam-v3-attendance-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:760px){body.cam-academy-dashboard-v3-mode .main{padding-left:12px;padding-right:12px}.cam-v3-hero{padding:14px}.cam-v3-card{padding:13px}.cam-v3-forecast{grid-template-columns:repeat(4,1fr)}.cam-v3-program-grid{grid-template-columns:repeat(2,1fr)}.cam-v3-enrollment-row{grid-template-columns:1fr}.cam-v3-editor-box{grid-template-columns:1fr}.cam-v3-money-grid.two,.cam-v3-money-grid.three{grid-template-columns:1fr}.cam-v3-attendance-grid{grid-template-columns:1fr}.cam-v3-welcome h1{font-size:21px}}
+@media(max-width:760px){body.cam-cam-dashboard-v3-mode .main{padding-left:12px;padding-right:12px}.cam-v3-hero{padding:14px}.cam-v3-card{padding:13px}.cam-v3-forecast{grid-template-columns:repeat(4,1fr)}.cam-v3-program-grid{grid-template-columns:repeat(2,1fr)}.cam-v3-enrollment-row{grid-template-columns:1fr}.cam-v3-editor-box{grid-template-columns:1fr}.cam-v3-money-grid.two,.cam-v3-money-grid.three{grid-template-columns:1fr}.cam-v3-attendance-grid{grid-template-columns:1fr}.cam-v3-welcome h1{font-size:21px}}

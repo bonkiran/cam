@@ -13,7 +13,7 @@
     return String(v ?? '').replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]));
   }
 
-  function academyLabel(name) {
+  function camLabel(name) {
     const clean = String(name || 'Academy').trim() || 'Academy';
     return /academy$/i.test(clean) ? clean : `${clean} Academy`;
   }
@@ -111,7 +111,7 @@
     const data = await request(`/api/public/enrollment/${encodeURIComponent(token)}`);
     currentEnrollment = data?.enrollment || {};
     currentSteps = data?.steps || [];
-    const academy = academyLabel(currentEnrollment.academy_name);
+    const academy = camLabel(currentEnrollment.academy_name);
     document.title = `${academy} Parent Enrollment`;
     $('#enrollmentTitle').textContent = `${academy} Parent Enrollment`;
     $('#enrollmentSubtitle').textContent = `Complete the remaining enrollment steps for ${currentEnrollment.player_name || 'your player'}.`;

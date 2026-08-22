@@ -1,16 +1,16 @@
 /* Dashboard-only Owner/Admin polish. Primary Academy navigation ownership is untouched. */
-#academyWorkspace .academy-dashboard-welcome{
+#camWorkspace .cam-dashboard-welcome{
   display:grid !important;
   grid-template-columns:minmax(280px,.8fr) minmax(560px,1.55fr) auto;
   align-items:center;
   gap:24px;
 }
 
-#academyWorkspace .academy-dashboard-welcome > div:first-child{
+#camWorkspace .cam-dashboard-welcome > div:first-child{
   min-width:0;
 }
 
-#academyWorkspace .academy-dashboard-welcome .academy-hero-actions{
+#camWorkspace .cam-dashboard-welcome .cam-hero-actions{
   justify-self:end;
   flex-wrap:nowrap;
 }
@@ -102,7 +102,7 @@
 }
 
 @media(max-width:1380px){
-  #academyWorkspace .academy-dashboard-welcome{
+  #camWorkspace .cam-dashboard-welcome{
     grid-template-columns:minmax(250px,.8fr) minmax(480px,1.4fr) auto;
     gap:18px;
   }
@@ -112,20 +112,20 @@
 }
 
 @media(max-width:1120px){
-  #academyWorkspace .academy-dashboard-welcome{
+  #camWorkspace .cam-dashboard-welcome{
     grid-template-columns:minmax(240px,1fr) minmax(420px,1.35fr);
   }
-  #academyWorkspace .academy-dashboard-welcome .academy-hero-actions{
+  #camWorkspace .cam-dashboard-welcome .cam-hero-actions{
     grid-column:1/-1;
     justify-self:end;
   }
 }
 
 @media(max-width:820px){
-  #academyWorkspace .academy-dashboard-welcome{
+  #camWorkspace .cam-dashboard-welcome{
     grid-template-columns:1fr;
   }
-  #academyWorkspace .academy-dashboard-welcome .academy-hero-actions{
+  #camWorkspace .cam-dashboard-welcome .cam-hero-actions{
     grid-column:auto;
     justify-self:start;
     flex-wrap:wrap;

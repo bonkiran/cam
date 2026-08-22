@@ -65,34 +65,34 @@ def find_by(items, key, value):
 
 
 def ensure_player(payload):
-    players = get("/api/academy/players")
+    players = get("/api/cam/players")
     found = find_by(players, "name", payload["name"])
     if found:
         print("reuse player", found["name"], found["id"])
         return found
-    created = post("/api/academy/players", payload)
+    created = post("/api/cam/players", payload)
     print("created player", created["name"], created["id"])
     return created
 
 
 def ensure_program(payload):
-    programs = get("/api/academy/programs")
+    programs = get("/api/cam/programs")
     found = find_by(programs, "name", payload["name"])
     if found:
         print("reuse program", found["name"], found["id"])
         return found
-    created = post("/api/academy/programs", payload)
+    created = post("/api/cam/programs", payload)
     print("created program", created["name"], created["id"])
     return created
 
 
 def ensure_enrollment(player_id: int, program_id: int, enrollment_type="regular", start_date="2026-08-17", notes=None):
-    rows = get(f"/api/academy/enrollments?player_id={player_id}&program_id={program_id}")
+    rows = get(f"/api/cam/enrollments?player_id={player_id}&program_id={program_id}")
     for row in rows:
         if row.get("status") in {"active", "frozen"}:
             print("reuse enrollment", row["id"], row.get("player_name"), "->", row.get("program_name"))
             return row
-    created = post("/api/academy/enrollments", {
+    created = post("/api/cam/enrollments", {
         "player_id": player_id,
         "program_id": program_id,
         "enrollment_type": enrollment_type,
@@ -104,23 +104,23 @@ def ensure_enrollment(player_id: int, program_id: int, enrollment_type="regular"
 
 
 def ensure_coach(payload):
-    coaches = get("/api/academy/coaches")
+    coaches = get("/api/cam/coaches")
     for coach in coaches:
         if str(coach.get("first_name", "")).casefold() == payload["first_name"].casefold() and str(coach.get("last_name", "")).casefold() == payload["last_name"].casefold():
             print("reuse coach", coach["first_name"], coach["last_name"], coach["id"])
             return coach
-    created = post("/api/academy/coaches", payload)
+    created = post("/api/cam/coaches", payload)
     print("created coach", created["first_name"], created["last_name"], created["id"])
     return created
 
 
 def ensure_coach_player(coach_id: int, player_id: int, role="primary"):
-    rows = get(f"/api/academy/coach-player-assignments?coach_id={coach_id}&player_id={player_id}")
+    rows = get(f"/api/cam/coach-player-assignments?coach_id={coach_id}&player_id={player_id}")
     for row in rows:
         if row.get("status") == "active":
             print("reuse coach-player assignment", row["id"])
             return row
-    created = post("/api/academy/coach-player-assignments", {
+    created = post("/api/cam/coach-player-assignments", {
         "coach_id": coach_id,
         "player_id": player_id,
         "assignment_role": role,
@@ -132,23 +132,23 @@ def ensure_coach_player(coach_id: int, player_id: int, role="primary"):
 
 
 def ensure_batch(payload):
-    batches = get("/api/academy/batches")
+    batches = get("/api/cam/batches")
     found = find_by(batches, "name", payload["name"])
     if found:
         print("reuse batch", found["name"], found["id"])
         return found
-    created = post("/api/academy/batches", payload)
+    created = post("/api/cam/batches", payload)
     print("created batch", created["name"], created["id"])
     return created
 
 
 def ensure_batch_player(batch_id: int, player_id: int, *, waitlist_if_full=False):
-    rows = get(f"/api/academy/batches/{batch_id}/players")
+    rows = get(f"/api/cam/batches/{batch_id}/players")
     for row in rows:
         if int(row.get("player_id", 0)) == player_id and row.get("status") in {"active", "waitlisted"}:
             print("reuse batch player", row["id"], row.get("player_name"), row.get("status"))
             return row
-    created = post(f"/api/academy/batches/{batch_id}/players", {
+    created = post(f"/api/cam/batches/{batch_id}/players", {
         "player_id": player_id,
         "waitlist_if_full": waitlist_if_full,
         "joined_on": "2026-08-17",
@@ -158,13 +158,13 @@ def ensure_batch_player(batch_id: int, player_id: int, *, waitlist_if_full=False
 
 
 def ensure_batch_coach(batch_id: int, coach_id: int):
-    rows = get(f"/api/academy/batch-coach-assignments?batch_id={batch_id}&coach_id={coach_id}")
+    rows = get(f"/api/cam/batch-coach-assignments?batch_id={batch_id}&coach_id={coach_id}")
     for row in rows:
         if row.get("status") == "active":
             print("reuse batch coach assignment", row["id"])
             return row
     query = urllib.parse.urlencode({"batch_id": batch_id})
-    created = post(f"/api/academy/batch-coach-assignments?{query}", {
+    created = post(f"/api/cam/batch-coach-assignments?{query}", {
         "coach_id": coach_id,
         "assignment_role": "primary",
         "start_date": "2026-08-17",
@@ -174,9 +174,9 @@ def ensure_batch_coach(batch_id: int, coach_id: int):
 
 
 def ensure_sessions(batch_id: int):
-    sessions = get(f"/api/academy/sessions?batch_id={batch_id}")
+    sessions = get(f"/api/cam/sessions?batch_id={batch_id}")
     if not sessions:
-        generated = post(f"/api/academy/batches/{batch_id}/generate-sessions", {
+        generated = post(f"/api/cam/batches/{batch_id}/generate-sessions", {
             "start_date": "2026-08-17",
             "end_date": "2026-08-31",
             "weekdays": [0, 2, 5],
@@ -184,14 +184,14 @@ def ensure_sessions(batch_id: int):
             "duration_minutes": 90,
         })
         print("generated sessions", generated)
-        sessions = get(f"/api/academy/sessions?batch_id={batch_id}")
+        sessions = get(f"/api/cam/sessions?batch_id={batch_id}")
     else:
         print("reuse sessions", len(sessions))
     return sessions
 
 
 def seed_attendance(session, player_ids, coach_present=True):
-    current = get(f"/api/academy/sessions/{session['id']}/attendance")
+    current = get(f"/api/cam/sessions/{session['id']}/attendance")
     if current.get("players") and all(row.get("attendance_id") for row in current["players"]):
         print("reuse attendance for session", session["id"])
         return current
@@ -211,7 +211,7 @@ def seed_attendance(session, player_ids, coach_present=True):
             "notes": notes,
             "make_up_eligible": True if status == "absent" else False,
         })
-    saved = request("PUT", f"/api/academy/sessions/{session['id']}/attendance", {
+    saved = request("PUT", f"/api/cam/sessions/{session['id']}/attendance", {
         "players": entries,
         "coach_status": "present" if coach_present else None,
         "coach_notes": "DEMO attendance entry",
@@ -223,7 +223,7 @@ def seed_attendance(session, player_ids, coach_present=True):
 def main():
     wait_for_postgres()
 
-    profile = get("/api/academy/profile")
+    profile = get("/api/cam/profile")
     if not profile:
         raise RuntimeError("Academy profile is not configured. Refusing to create/replace the live Academy profile.")
     print("using existing academy profile:", profile.get("name"))
@@ -321,7 +321,7 @@ def main():
         seed_attendance(target, active_members)
 
     summary = {
-        "academy": profile.get("name"),
+        "cam": profile.get("name"),
         "players": [p["name"] for p in players],
         "programs": [advanced["name"], foundation["name"]],
         "coaches": ["DEMO Priya Shah", "DEMO Daniel Brooks"],

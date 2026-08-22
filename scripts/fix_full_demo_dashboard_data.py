@@ -76,7 +76,7 @@ def wait_for_new_finance_api():
         try:
             storage = get("/api/system/storage")
             if storage and storage.get("database") == "postgresql":
-                payments = get("/api/academy/coach-payments")
+                payments = get("/api/cam/coach-payments")
                 print(f"service ready on attempt {attempt}: PostgreSQL + coach-payments API ({len(payments)} rows)")
                 return
         except Exception as exc:
@@ -101,7 +101,7 @@ def player_payload(player: dict, joined_on: str) -> dict:
 
 
 def set_five_current_month_registrations(today: date) -> list[dict]:
-    players = get("/api/academy/players")
+    players = get("/api/cam/players")
     demo_players = [row for row in players if player_number(row) is not None]
     demo_players.sort(key=lambda row: player_number(row) or 999)
     if len(demo_players) != 45:
@@ -122,7 +122,7 @@ def set_five_current_month_registrations(today: date) -> list[dict]:
             joined = previous_month_start + timedelta(days=(index - 5) % min(28, previous_month_end.day))
         else:
             joined = two_months_start + timedelta(days=(index - 25) % min(28, two_months_end.day))
-        saved = put(f"/api/academy/players/{int(player['id'])}", player_payload(player, joined.isoformat()))
+        saved = put(f"/api/cam/players/{int(player['id'])}", player_payload(player, joined.isoformat()))
         updated.append(saved)
         print("registration date", saved.get("name"), "->", saved.get("joined_on"))
 
@@ -134,7 +134,7 @@ def set_five_current_month_registrations(today: date) -> list[dict]:
 
 
 def seed_coach_salary_payments(today: date) -> list[dict]:
-    coaches = get("/api/academy/coaches")
+    coaches = get("/api/cam/coaches")
     by_preferred = {str(row.get("preferred_name") or ""): row for row in coaches}
     cycle = today.strftime("%Y-%m")
     month_start = today.replace(day=1)
@@ -150,7 +150,7 @@ def seed_coach_salary_payments(today: date) -> list[dict]:
         rate_cents = int(spec["rate_cents"])
         amount_cents = int(round(hours * rate_cents))
         payment = post(
-            "/api/academy/coach-payments",
+            "/api/cam/coach-payments",
             {
                 "coach_id": int(coach["id"]),
                 "amount_cents": amount_cents,
@@ -181,7 +181,7 @@ def main():
 
     current_registrations = set_five_current_month_registrations(today)
     coach_payments = seed_coach_salary_payments(today)
-    summary = get(f"/api/academy/finance/operations-summary?month={cycle}")
+    summary = get(f"/api/cam/finance/operations-summary?month={cycle}")
 
     expected_salary = sum(int(spec["hours"] * spec["rate_cents"]) for spec in COACH_PAYROLL.values())
     if int(summary.get("coach_salary_paid_mtd_cents") or 0) < expected_salary:

@@ -12,8 +12,8 @@
 
     let main = app.querySelector('.main');
     if (!main && typeof window.shell === 'function') {
-      app.innerHTML = window.shell('', 'academy');
-      if (typeof window.wireShell === 'function') window.wireShell('academy');
+      app.innerHTML = window.shell('', 'cam');
+      if (typeof window.wireShell === 'function') window.wireShell('cam');
       main = app.querySelector('.main');
     }
     if (!main) return;
@@ -24,7 +24,7 @@
     // generic placeholder.
     [...main.children].forEach((child) => {
       if (child.classList.contains('topbar')) return;
-      if (child.id === 'academyWorkspace') return;
+      if (child.id === 'camWorkspace') return;
       child.remove();
     });
   }
@@ -36,7 +36,7 @@
   }
 
   window.renderPlaceholder = function renderPlaceholderWithAcademySupport(page) {
-    if (page === 'academy') {
+    if (page === 'cam') {
       preserveAcademyShell();
       return;
     }
@@ -46,7 +46,7 @@
   // app.js invokes router() once before this adapter loads. On a direct Academy
   // URL it may already have painted the legacy placeholder; remove that content
   // synchronously before the browser gets a chance to paint the page.
-  if (currentPage() === 'academy') preserveAcademyShell();
+  if (currentPage() === 'cam') preserveAcademyShell();
 
-  document.documentElement.dataset.academyRouterAdapter = VERSION;
+  document.documentElement.dataset.camRouterAdapter = VERSION;
 })();

@@ -6,45 +6,46 @@ import uvicorn
 # (academies, players, videos, etc.) before dependent Academy modules create tables
 # that reference those core entities.
 from app.main import app
-from app.academy_api import router as academy_router
-from app.academy_programs_api import router as academy_programs_router
-from app.academy_coaches_api import router as academy_coaches_router
-from app.academy_batches_api import router as academy_batches_router
-from app.academy_batch_roster_lifecycle_api import router as academy_batch_roster_router
-from app.academy_attendance_api import router as academy_attendance_router
-from app.academy_player_development_api import router as academy_player_development_router
-from app.academy_matches_api import router as academy_matches_router
-from app.academy_tournaments_api import router as academy_tournaments_router
-from app.academy_fees_api import router as academy_fees_router
-from app.academy_payments_v2_api import router as academy_payments_router
-from app.academy_payment_provider_api import router as academy_payment_provider_router
-from app.academy_finance_operations_api import router as academy_finance_operations_router
-from app.academy_demo_cleanup_api import router as academy_demo_cleanup_router
-from app.academy_auth_api import (
+from app.cam_api import router as academy_router
+from app.cam_programs_api import router as academy_programs_router
+from app.cam_coaches_api import router as academy_coaches_router
+from app.cam_batches_api import router as academy_batches_router
+from app.cam_batch_roster_lifecycle_api import router as academy_batch_roster_router
+from app.cam_attendance_api import router as academy_attendance_router
+from app.cam_player_development_api import router as academy_player_development_router
+from app.cam_matches_api import router as academy_matches_router
+from app.cam_tournaments_api import router as academy_tournaments_router
+from app.cam_fees_api import router as academy_fees_router
+from app.cam_payments_v2_api import router as academy_payments_router
+from app.cam_payment_provider_api import router as academy_payment_provider_router
+from app.cam_finance_operations_api import router as academy_finance_operations_router
+from app.cam_demo_cleanup_api import router as academy_demo_cleanup_router
+from app.cam_auth_api import (
     ROLE_PERMISSIONS,
     _user_row,
     current_access_user,
     require_access_admin,
     router as academy_auth_router,
 )
-from app.academy_registration_api import router as academy_registration_router
-from app.academy_registration_branding_api import router as academy_registration_branding_router
-from app.academy_registration_validation_policy import apply_registration_validation_policy
-from app.academy_enrollment_api import router as academy_enrollment_router
-from app.academy_enrollment_payment_api import router as academy_enrollment_payment_router
-from app.academy_enrollment_completion_api import router as academy_enrollment_completion_router
-from app.academy_parent_billing_api import router as academy_parent_billing_router
-from app.academy_parent_payment_policy_api import router as academy_parent_payment_policy_router
-from app.academy_dashboard_api import router as academy_dashboard_router
-from app.academy_dashboard_enrollment_api import router as academy_dashboard_enrollment_router
-from app.academy_dashboard_v3_api import router as academy_dashboard_v3_router
-from app.academy_current_weather_api import router as academy_current_weather_router
-from app.academy_owner_console_api import router as academy_owner_console_router
-from app.academy_reviews_api import router as academy_reviews_router
-from app.academy_rbac_middleware import install_academy_management_rbac
+from app.cam_registration_api import router as academy_registration_router
+from app.cam_registration_branding_api import router as academy_registration_branding_router
+from app.cam_registration_validation_policy import apply_registration_validation_policy
+from app.cam_enrollment_api import router as academy_enrollment_router
+from app.cam_enrollment_payment_api import router as academy_enrollment_payment_router
+from app.cam_enrollment_completion_api import router as academy_enrollment_completion_router
+from app.cam_parent_billing_api import router as academy_parent_billing_router
+from app.cam_parent_payment_policy_api import router as academy_parent_payment_policy_router
+from app.cam_dashboard_api import router as academy_dashboard_router
+from app.cam_dashboard_enrollment_api import router as academy_dashboard_enrollment_router
+from app.cam_dashboard_v3_api import router as academy_dashboard_v3_router
+from app.cam_current_weather_api import router as academy_current_weather_router
+from app.cam_owner_console_api import router as academy_owner_console_router
+from app.cam_reviews_api import router as academy_reviews_router
+from app.cam_rbac_middleware import install_academy_management_rbac
 from app.biomechanics import router as biomechanics_router
 from app.database import fetch_one
 from app.system_api import router as system_router
+from app.cam_api_legacy_bridge import install_cam_legacy_api_bridge
 
 # Registration process policy: Emergency Contact 1 is required and Emergency
 # Contact 2 is optional. Public registration validates phone and US address data,
@@ -111,7 +112,7 @@ academy_batches_router.routes[:] = [
     route
     for route in academy_batches_router.routes
     if not (
-        getattr(route, "path", None) == "/api/academy/batches/{batch_id}/players"
+        getattr(route, "path", None) == "/api/cam/batches/{batch_id}/players"
         and "POST" in (getattr(route, "methods", set()) or set())
     )
 ]
@@ -123,14 +124,14 @@ academy_parent_billing_router.routes[:] = [
     route
     for route in academy_parent_billing_router.routes
     if not (
-        getattr(route, "path", None) == "/api/academy/parent/invoices/{invoice_id}/pay"
+        getattr(route, "path", None) == "/api/cam/parent/invoices/{invoice_id}/pay"
         and "POST" in (getattr(route, "methods", set()) or set())
     )
 ]
 
 app.include_router(biomechanics_router)
 # Register exact Slice 2D completion routes before broader Academy routers so
-# /api/academy/enrollments/completed cannot be captured by an integer ID route.
+# /api/cam/enrollments/completed cannot be captured by an integer ID route.
 app.include_router(academy_enrollment_completion_router)
 app.include_router(academy_router)
 app.include_router(academy_programs_router)
@@ -178,6 +179,7 @@ app.router.routes.extend(spa_routes)
 # Once the first Owner account exists, the generic Academy management surface
 # becomes Owner/Admin-only. Role-specific APIs keep their own narrower controls.
 install_academy_management_rbac(app)
+install_cam_legacy_api_bridge(app)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))

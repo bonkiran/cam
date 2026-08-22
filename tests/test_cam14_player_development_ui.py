@@ -57,18 +57,18 @@ def test_cam14_training_focus_is_one_session_action_and_passive_evidence_follows
 
     try:
         _wait_for_server(f"{BASE_URL}/api/health")
-        _json_request("PUT", "/api/academy/profile", {"name": "CAM-14 UI Academy", "timezone": "America/New_York"})
-        program = _json_request("POST", "/api/academy/programs", {"name": "U13 Development", "program_type": "group", "status": "active"})
-        coach = _json_request("POST", "/api/academy/coaches", {"first_name": "UI", "last_name": "Moat Coach", "status": "active"})
-        p1 = _json_request("POST", "/api/academy/players", {"name": "UI CAM14 Player One", "status": "active"})
-        p2 = _json_request("POST", "/api/academy/players", {"name": "UI CAM14 Player Two", "status": "active"})
-        batch = _json_request("POST", "/api/academy/batches", {"name": "UI U13 CAM14", "program_id": program["id"], "capacity": 16, "status": "active"})
-        _json_request("POST", f"/api/academy/batch-coach-assignments?batch_id={batch['id']}", {"coach_id": coach["id"], "assignment_role": "primary", "start_date": "2026-08-01"})
-        _json_request("POST", f"/api/academy/batches/{batch['id']}/players", {"player_id": p1["id"], "joined_on": "2026-08-01"})
-        _json_request("POST", f"/api/academy/batches/{batch['id']}/players", {"player_id": p2["id"], "joined_on": "2026-08-01"})
+        _json_request("PUT", "/api/cam/profile", {"name": "CAM-14 UI Academy", "timezone": "America/New_York"})
+        program = _json_request("POST", "/api/cam/programs", {"name": "U13 Development", "program_type": "group", "status": "active"})
+        coach = _json_request("POST", "/api/cam/coaches", {"first_name": "UI", "last_name": "Moat Coach", "status": "active"})
+        p1 = _json_request("POST", "/api/cam/players", {"name": "UI CAM14 Player One", "status": "active"})
+        p2 = _json_request("POST", "/api/cam/players", {"name": "UI CAM14 Player Two", "status": "active"})
+        batch = _json_request("POST", "/api/cam/batches", {"name": "UI U13 CAM14", "program_id": program["id"], "capacity": 16, "status": "active"})
+        _json_request("POST", f"/api/cam/batch-coach-assignments?batch_id={batch['id']}", {"coach_id": coach["id"], "assignment_role": "primary", "start_date": "2026-08-01"})
+        _json_request("POST", f"/api/cam/batches/{batch['id']}/players", {"player_id": p1["id"], "joined_on": "2026-08-01"})
+        _json_request("POST", f"/api/cam/batches/{batch['id']}/players", {"player_id": p2["id"], "joined_on": "2026-08-01"})
         generated = _json_request(
             "POST",
-            f"/api/academy/batches/{batch['id']}/generate-sessions",
+            f"/api/cam/batches/{batch['id']}/generate-sessions",
             {"start_date": "2026-08-24", "end_date": "2026-08-24", "weekdays": [0], "start_time": "18:00", "duration_minutes": 90},
         )
         session_id = int(generated["session_ids"][0])
@@ -77,10 +77,10 @@ def test_cam14_training_focus_is_one_session_action_and_passive_evidence_follows
             browser = playwright.chromium.launch(headless=True)
             page = browser.new_page(viewport={"width": 1600, "height": 1200})
             try:
-                page.goto(f"{BASE_URL}/#academy?tab=attendance", wait_until="domcontentloaded")
+                page.goto(f"{BASE_URL}/#cam?tab=attendance", wait_until="domcontentloaded")
                 expect(page.get_by_role("heading", name="Attendance", exact=True)).to_be_visible(timeout=15000)
                 page.locator("#attendanceSessionSelect").select_option(str(session_id))
-                expect(page.locator("#academyAttendanceForm")).to_have_attribute("data-session-id", str(session_id), timeout=10000)
+                expect(page.locator("#camAttendanceForm")).to_have_attribute("data-session-id", str(session_id), timeout=10000)
 
                 expect(page.get_by_role("heading", name="Today's Development Focus", exact=True)).to_be_visible(timeout=10000)
                 expect(page.get_by_text("does not claim the player improved", exact=False)).to_be_visible()
@@ -94,31 +94,31 @@ def test_cam14_training_focus_is_one_session_action_and_passive_evidence_follows
                 expect(page.locator("[data-selected-count]")).to_have_text("2")
 
                 with page.expect_response(
-                    lambda response: response.url.endswith(f"/api/academy/sessions/{session_id}/development-focus")
+                    lambda response: response.url.endswith(f"/api/cam/sessions/{session_id}/development-focus")
                     and response.request.method == "PUT",
                     timeout=10000,
                 ) as focus_response:
                     page.get_by_role("button", name="Save Training Focus", exact=True).click()
                 assert focus_response.value.ok
-                expect(page.locator(".academy-development-focus-status")).to_contain_text(
+                expect(page.locator(".cam-development-focus-status")).to_contain_text(
                     "evidence will link automatically", timeout=10000
                 )
 
                 page.get_by_role("button", name="Mark All Present", exact=True).click()
-                p2_row = page.locator(".academy-attendance-player", has_text=p2["name"])
+                p2_row = page.locator(".cam-attendance-player", has_text=p2["name"])
                 p2_row.locator('[name="attendance_status"]').select_option("absent")
                 p2_row.locator('[name="absence_reason"]').fill("School")
 
                 with page.expect_response(
-                    lambda response: response.url.endswith(f"/api/academy/sessions/{session_id}/attendance")
+                    lambda response: response.url.endswith(f"/api/cam/sessions/{session_id}/attendance")
                     and response.request.method == "PUT",
                     timeout=10000,
                 ) as attendance_response:
                     page.get_by_role("button", name="Save Attendance", exact=True).click()
                 assert attendance_response.value.ok
 
-                p1_history = _json_request("GET", f"/api/academy/players/{p1['id']}/development-history")
-                p2_history = _json_request("GET", f"/api/academy/players/{p2['id']}/development-history")
+                p1_history = _json_request("GET", f"/api/cam/players/{p1['id']}/development-history")
+                p2_history = _json_request("GET", f"/api/cam/players/{p2['id']}/development-history")
                 assert len(p1_history["evidence"]) == 2
                 assert {row["skill_key"] for row in p1_history["evidence"]} == {"front_foot_movement", "cover_drive"}
                 assert all(row["improvement_claimed"] is False for row in p1_history["evidence"])

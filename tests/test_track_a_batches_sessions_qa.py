@@ -76,33 +76,33 @@ def test_track_a_coach_batch_roster_waitlist_and_future_session_lifecycle():
     _reset_shared_postgres_state()
 
     academy = client.put(
-        "/api/academy/profile",
+        "/api/cam/profile",
         json={"name": "Track A Batches Academy", "timezone": "America/New_York"},
     )
     assert academy.status_code == 200, academy.text
 
     program = _post(
-        "/api/academy/programs",
+        "/api/cam/programs",
         {"name": "Track A U13 Batch Program", "program_type": "group", "status": "active"},
     )
-    primary = _post("/api/academy/coaches", _coach_payload("Primary", "Coach"))
-    support = _post("/api/academy/coaches", _coach_payload("Support", "Coach"))
+    primary = _post("/api/cam/coaches", _coach_payload("Primary", "Coach"))
+    support = _post("/api/cam/coaches", _coach_payload("Support", "Coach"))
 
     players = [
-        _post("/api/academy/players", {"name": f"Track A Batch Player {i}", "status": "active"})
+        _post("/api/cam/players", {"name": f"Track A Batch Player {i}", "status": "active"})
         for i in range(1, 5)
     ]
 
     # QA-017: Coach lifecycle includes explicit deactivate and reactivate.
     primary_id = int(primary["id"])
     deactivated = client.put(
-        f"/api/academy/coaches/{primary_id}",
+        f"/api/cam/coaches/{primary_id}",
         json=_coach_payload("Primary", "Coach", "inactive"),
     )
     assert deactivated.status_code == 200, deactivated.text
     assert deactivated.json()["status"] == "inactive"
     reactivated = client.put(
-        f"/api/academy/coaches/{primary_id}",
+        f"/api/cam/coaches/{primary_id}",
         json=_coach_payload("Primary", "Coach", "active"),
     )
     assert reactivated.status_code == 200, reactivated.text
@@ -110,7 +110,7 @@ def test_track_a_coach_batch_roster_waitlist_and_future_session_lifecycle():
 
     # QA-018 / QA-019: create a capacity-two batch and later fill it exactly.
     batch = _post(
-        "/api/academy/batches",
+        "/api/cam/batches",
         {
             "name": "Track A Capacity Batch",
             "program_id": program["id"],
@@ -125,22 +125,22 @@ def test_track_a_coach_batch_roster_waitlist_and_future_session_lifecycle():
     # QA-024: primary and support assignments coexist. The primary remains the
     # generated-session coach; support is retained as an active assignment.
     primary_assignment = _post(
-        f"/api/academy/batch-coach-assignments?batch_id={batch_id}",
+        f"/api/cam/batch-coach-assignments?batch_id={batch_id}",
         {"coach_id": primary_id, "assignment_role": "primary", "start_date": date.today().isoformat()},
     )
     support_assignment = _post(
-        f"/api/academy/batch-coach-assignments?batch_id={batch_id}",
+        f"/api/cam/batch-coach-assignments?batch_id={batch_id}",
         {"coach_id": support["id"], "assignment_role": "support", "start_date": date.today().isoformat()},
     )
     assert primary_assignment["assignment_role"] == "primary"
     assert support_assignment["assignment_role"] == "support"
-    assignments = client.get(f"/api/academy/batch-coach-assignments?batch_id={batch_id}")
+    assignments = client.get(f"/api/cam/batch-coach-assignments?batch_id={batch_id}")
     assert assignments.status_code == 200, assignments.text
     active_roles = {row["assignment_role"] for row in assignments.json() if row["status"] == "active"}
     assert active_roles == {"primary", "support"}
 
     first_member = _post(
-        f"/api/academy/batches/{batch_id}/players",
+        f"/api/cam/batches/{batch_id}/players",
         {"player_id": players[0]["id"], "joined_on": date.today().isoformat()},
     )
     assert first_member["status"] == "active"
@@ -154,10 +154,10 @@ def test_track_a_coach_batch_roster_waitlist_and_future_session_lifecycle():
         "start_time": "18:30",
         "duration_minutes": 90,
     }
-    generated = _post(f"/api/academy/batches/{batch_id}/generate-sessions", schedule)
+    generated = _post(f"/api/cam/batches/{batch_id}/generate-sessions", schedule)
     assert generated["created_count"] == 1
     session_id = int(generated["session_ids"][0])
-    first_roster = client.get(f"/api/academy/sessions/{session_id}/players")
+    first_roster = client.get(f"/api/cam/sessions/{session_id}/players")
     assert first_roster.status_code == 200
     assert [int(row["player_id"]) for row in first_roster.json()] == [int(players[0]["id"])]
 
@@ -165,48 +165,48 @@ def test_track_a_coach_batch_roster_waitlist_and_future_session_lifecycle():
     # into future scheduled session rosters. This closes the Track A defect found
     # during the permutation sweep.
     second_member = _post(
-        f"/api/academy/batches/{batch_id}/players",
+        f"/api/cam/batches/{batch_id}/players",
         {"player_id": players[1]["id"], "joined_on": date.today().isoformat()},
     )
     assert second_member["status"] == "active"
-    synced_roster = client.get(f"/api/academy/sessions/{session_id}/players").json()
+    synced_roster = client.get(f"/api/cam/sessions/{session_id}/players").json()
     assert {int(row["player_id"]) for row in synced_roster} == {int(players[0]["id"]), int(players[1]["id"])}
 
     # QA-021: duplicate current roster membership is rejected.
     duplicate = client.post(
-        f"/api/academy/batches/{batch_id}/players",
+        f"/api/cam/batches/{batch_id}/players",
         json={"player_id": players[1]["id"]},
     )
     assert duplicate.status_code == 409, duplicate.text
 
-    batch_full = client.get(f"/api/academy/batches/{batch_id}").json()
+    batch_full = client.get(f"/api/cam/batches/{batch_id}").json()
     assert int(batch_full["active_player_count"]) == 2
 
     # QA-020: over-capacity addition rejects by default, then explicitly enters
     # the waitlist when requested. Waitlisted players do not enter sessions.
     over_capacity = client.post(
-        f"/api/academy/batches/{batch_id}/players",
+        f"/api/cam/batches/{batch_id}/players",
         json={"player_id": players[2]["id"]},
     )
     assert over_capacity.status_code == 409, over_capacity.text
     waitlisted = _post(
-        f"/api/academy/batches/{batch_id}/players",
+        f"/api/cam/batches/{batch_id}/players",
         {"player_id": players[2]["id"], "waitlist_if_full": True},
     )
     assert waitlisted["status"] == "waitlisted"
     assert int(waitlisted["player_id"]) == int(players[2]["id"])
-    waitlist_roster = client.get(f"/api/academy/sessions/{session_id}/players").json()
+    waitlist_roster = client.get(f"/api/cam/sessions/{session_id}/players").json()
     assert int(players[2]["id"]) not in {int(row["player_id"]) for row in waitlist_roster}
 
     # QA-026: identical recurring generation is idempotent at the session level.
-    duplicate_generation = _post(f"/api/academy/batches/{batch_id}/generate-sessions", schedule)
+    duplicate_generation = _post(f"/api/cam/batches/{batch_id}/generate-sessions", schedule)
     assert duplicate_generation["created_count"] == 0
     assert duplicate_generation["session_ids"] == []
-    assert len(client.get(f"/api/academy/sessions?batch_id={batch_id}").json()) == 1
+    assert len(client.get(f"/api/cam/sessions?batch_id={batch_id}").json()) == 1
 
     # Promotion while the batch is still full is blocked.
     promote_while_full = client.post(
-        f"/api/academy/batches/{batch_id}/players/{waitlisted['id']}/promote",
+        f"/api/cam/batches/{batch_id}/players/{waitlisted['id']}/promote",
         json={},
     )
     assert promote_while_full.status_code == 409, promote_while_full.text
@@ -214,47 +214,47 @@ def test_track_a_coach_batch_roster_waitlist_and_future_session_lifecycle():
     # QA-022: ending Player 2 preserves membership history but removes the player
     # from today/future scheduled session rosters.
     ended = _post(
-        f"/api/academy/batches/{batch_id}/players/{second_member['id']}/end",
+        f"/api/cam/batches/{batch_id}/players/{second_member['id']}/end",
         {},
     )
     assert ended["status"] == "inactive"
     assert ended["ended_on"] == date.today().isoformat()
-    after_end_roster = client.get(f"/api/academy/sessions/{session_id}/players").json()
+    after_end_roster = client.get(f"/api/cam/sessions/{session_id}/players").json()
     assert {int(row["player_id"]) for row in after_end_roster} == {int(players[0]["id"])}
 
     # QA-023: vacancy opens -> promote the waitlisted player -> future session
     # roster is synchronized exactly once.
     promoted = _post(
-        f"/api/academy/batches/{batch_id}/players/{waitlisted['id']}/promote",
+        f"/api/cam/batches/{batch_id}/players/{waitlisted['id']}/promote",
         {},
     )
     assert promoted["status"] == "active"
-    after_promote_roster = client.get(f"/api/academy/sessions/{session_id}/players").json()
+    after_promote_roster = client.get(f"/api/cam/sessions/{session_id}/players").json()
     assert {int(row["player_id"]) for row in after_promote_roster} == {int(players[0]["id"]), int(players[2]["id"])}
 
     promoted_twice = client.post(
-        f"/api/academy/batches/{batch_id}/players/{waitlisted['id']}/promote",
+        f"/api/cam/batches/{batch_id}/players/{waitlisted['id']}/promote",
         json={},
     )
     assert promoted_twice.status_code == 409, promoted_twice.text
 
-    final_batch = client.get(f"/api/academy/batches/{batch_id}").json()
+    final_batch = client.get(f"/api/cam/batches/{batch_id}").json()
     assert int(final_batch["active_player_count"]) == 2
     assert int(final_batch["waitlist_count"]) == 0
 
     # A waitlisted membership can also be ended without ever touching sessions.
     fourth_waitlist = _post(
-        f"/api/academy/batches/{batch_id}/players",
+        f"/api/cam/batches/{batch_id}/players",
         {"player_id": players[3]["id"], "waitlist_if_full": True},
     )
     assert fourth_waitlist["status"] == "waitlisted"
     ended_waitlist = _post(
-        f"/api/academy/batches/{batch_id}/players/{fourth_waitlist['id']}/end",
+        f"/api/cam/batches/{batch_id}/players/{fourth_waitlist['id']}/end",
         {},
     )
     assert ended_waitlist["status"] == "inactive"
-    assert int(client.get(f"/api/academy/batches/{batch_id}").json()["waitlist_count"]) == 0
+    assert int(client.get(f"/api/cam/batches/{batch_id}").json()["waitlist_count"]) == 0
 
     # Session coach selection still uses the primary, not support, assignment.
-    session = client.get(f"/api/academy/sessions/{session_id}").json()
+    session = client.get(f"/api/cam/sessions/{session_id}").json()
     assert int(session["coach_id"]) == primary_id

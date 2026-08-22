@@ -96,42 +96,42 @@ def test_tournament_type_is_selectable_and_saved_in_browser():
 
     try:
         _wait_for_server(f"{BASE_URL}/api/health")
-        status, _ = _request("PUT", "/api/academy/profile", {"name": "Track A Tournament UI Academy"})
+        status, _ = _request("PUT", "/api/cam/profile", {"name": "Track A Tournament UI Academy"})
         assert status == 200
 
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True)
             page = browser.new_page(viewport={"width": 1600, "height": 1000})
             try:
-                page.goto(f"{BASE_URL}/#academy?tab=tournaments", wait_until="domcontentloaded")
+                page.goto(f"{BASE_URL}/#cam?tab=tournaments", wait_until="domcontentloaded")
                 expect(page.get_by_role("heading", name="Tournaments")).to_be_visible(timeout=15000)
                 page.get_by_role("button", name="Add Tournament").click()
                 expect(page.get_by_role("heading", name="Create Tournament")).to_be_visible(timeout=10000)
 
-                type_select = page.locator('#academyTournamentForm [name="tournament_type"]')
+                type_select = page.locator('#camTournamentForm [name="tournament_type"]')
                 expect(type_select).to_be_visible(timeout=10000)
                 expect(type_select).to_have_value("external")
                 type_select.select_option("internal")
 
-                page.locator('#academyTournamentForm [name="name"]').fill("Track A Browser Internal Cup")
-                page.locator('#academyTournamentForm [name="organizer"]').fill("Track A Tournament UI Academy")
-                page.locator('#academyTournamentForm [name="location"]').fill("Academy Ground")
-                page.locator('#academyTournamentForm [name="start_date"]').fill("2026-09-19")
-                page.locator('#academyTournamentForm [name="end_date"]').fill("2026-09-20")
+                page.locator('#camTournamentForm [name="name"]').fill("Track A Browser Internal Cup")
+                page.locator('#camTournamentForm [name="organizer"]').fill("Track A Tournament UI Academy")
+                page.locator('#camTournamentForm [name="location"]').fill("Academy Ground")
+                page.locator('#camTournamentForm [name="start_date"]').fill("2026-09-19")
+                page.locator('#camTournamentForm [name="end_date"]').fill("2026-09-20")
                 page.get_by_role("button", name="Create Tournament").click()
 
                 expect(page.locator("#toast")).to_contain_text("Tournament created", timeout=10000)
-                expect(page.locator(".academy-tournament-row", has_text="Track A Browser Internal Cup")).to_be_visible(timeout=10000)
+                expect(page.locator(".cam-tournament-row", has_text="Track A Browser Internal Cup")).to_be_visible(timeout=10000)
 
-                status, tournaments = _request("GET", "/api/academy/tournaments")
+                status, tournaments = _request("GET", "/api/cam/tournaments")
                 assert status == 200
                 created = next(row for row in tournaments if row["name"] == "Track A Browser Internal Cup")
                 assert created["tournament_type"] == "internal"
 
                 # Edit form must reload the persisted classification, not fall back
                 # to the new-tournament default.
-                page.locator(".academy-tournament-row", has_text="Track A Browser Internal Cup").get_by_role("button", name="Edit").click()
-                edit_type = page.locator('#academyTournamentForm [name="tournament_type"]')
+                page.locator(".cam-tournament-row", has_text="Track A Browser Internal Cup").get_by_role("button", name="Edit").click()
+                edit_type = page.locator('#camTournamentForm [name="tournament_type"]')
                 expect(edit_type).to_have_value("internal", timeout=10000)
             finally:
                 browser.close()

@@ -5,7 +5,7 @@
   function currentTab() {
     const raw = location.hash.replace(/^#/, '');
     const [page, query = ''] = raw.split('?');
-    if (page !== 'academy') return null;
+    if (page !== 'cam') return null;
     return new URLSearchParams(query).get('tab') || 'overview';
   }
 
@@ -27,10 +27,10 @@
   }
 
   async function membershipsInDisplayOrder() {
-    const batches = await requestJson('/api/academy/batches');
+    const batches = await requestJson('/api/cam/batches');
     const groups = await Promise.all(
       batches.map(async batch => {
-        const memberships = await requestJson(`/api/academy/batches/${batch.id}/players`);
+        const memberships = await requestJson(`/api/cam/batches/${batch.id}/players`);
         return memberships.map(membership => ({ ...membership, batch_name: batch.name }));
       }),
     );
@@ -57,10 +57,10 @@
 
   async function enhanceRoster() {
     if (enhancing || currentTab() !== 'batches') return;
-    const container = document.querySelector('#academyWorkspace .academy-batch-membership-list');
+    const container = document.querySelector('#camWorkspace .cam-batch-membership-list');
     if (!container || container.dataset.rosterLifecycleEnhanced === '1') return;
 
-    const rows = [...container.querySelectorAll('.academy-batch-membership-row')];
+    const rows = [...container.querySelectorAll('.cam-batch-membership-row')];
     if (!rows.length) return;
 
     enhancing = true;
@@ -76,7 +76,7 @@
         if (!['active', 'waitlisted'].includes(String(membership.status))) return;
 
         const actions = document.createElement('div');
-        actions.className = 'academy-program-actions academy-roster-lifecycle-actions';
+        actions.className = 'cam-program-actions cam-roster-lifecycle-actions';
         actions.style.display = 'flex';
         actions.style.gap = '6px';
         actions.style.alignItems = 'center';
@@ -88,7 +88,7 @@
           promote.title = 'Promote this player when batch capacity is available';
           promote.addEventListener('click', () => perform(
             promote,
-            `/api/academy/batches/${membership.batch_id}/players/${membership.id}/promote`,
+            `/api/cam/batches/${membership.batch_id}/players/${membership.id}/promote`,
             `${membership.player_name} promoted to the active roster.`,
           ));
           actions.appendChild(promote);
@@ -101,7 +101,7 @@
         remove.title = membership.status === 'waitlisted' ? 'Remove this player from the waitlist' : 'End this active batch membership';
         remove.addEventListener('click', () => perform(
           remove,
-          `/api/academy/batches/${membership.batch_id}/players/${membership.id}/end`,
+          `/api/cam/batches/${membership.batch_id}/players/${membership.id}/end`,
           `${membership.player_name} removed from the current batch roster.`,
         ));
         actions.appendChild(remove);

@@ -15,7 +15,7 @@
 
   function active() {
     const r = route();
-    return r.page === 'academy' && r.tab === 'overview';
+    return r.page === 'cam' && r.tab === 'overview';
   }
 
   function esc(value = '') {
@@ -70,7 +70,7 @@
   }
 
   function go(tab) {
-    location.hash = tab === 'overview' ? 'academy' : `academy?tab=${encodeURIComponent(tab)}`;
+    location.hash = tab === 'overview' ? 'cam' : `academy?tab=${encodeURIComponent(tab)}`;
   }
 
   function notify(message) {
@@ -289,7 +289,7 @@
     if (!editor || !player) return;
     editor.innerHTML = '<div class="cam-v3-editor-box">Loading active batches…</div>';
     try {
-      const batches = await requestJson('/api/academy/batches');
+      const batches = await requestJson('/api/cam/batches');
       const activeBatches = (Array.isArray(batches) ? batches : []).filter(batch => String(batch.status || '') === 'active');
       const options = activeBatches.map(batch => {
         const activeCount = Number(batch.active_player_count || 0);
@@ -312,7 +312,7 @@
         submit.disabled = true;
         status.textContent = 'Assigning…';
         try {
-          await requestJson(`/api/academy/batches/${batchId}/players`, {method:'POST', body:JSON.stringify({player_id:playerId, waitlist_if_full:false, joined_on:joinedOn})});
+          await requestJson(`/api/cam/batches/${batchId}/players`, {method:'POST', body:JSON.stringify({player_id:playerId, waitlist_if_full:false, joined_on:joinedOn})});
           notify(`${player.player_name} assigned to batch.`);
           await render(true);
         } catch (error) {
@@ -340,16 +340,16 @@
 
   async function render(force = false) {
     if (!active() || rendering) return;
-    const content = $('#academyWorkspace .academy-content');
+    const content = $('#camWorkspace .cam-content');
     if (!content) return;
     if (!force && content.dataset.dashboardV3 === '1' && $('.cam-dashboard-v3', content)) {
       suppressLegacy(content);
       return;
     }
     rendering = true;
-    document.body.classList.add('cam-academy-dashboard-v3-mode');
+    document.body.classList.add('cam-cam-dashboard-v3-mode');
     try {
-      const data = await requestJson('/api/academy/dashboard/v3');
+      const data = await requestJson('/api/cam/dashboard/v3');
       const weather = await loadWeather(data.academy || {});
       if (!active() || !content.isConnected) return;
       lastData = data;
@@ -367,10 +367,10 @@
   function apply() {
     scheduled = false;
     if (!active()) {
-      document.body.classList.remove('cam-academy-dashboard-v3-mode');
+      document.body.classList.remove('cam-cam-dashboard-v3-mode');
       return;
     }
-    document.body.classList.add('cam-academy-dashboard-v3-mode');
+    document.body.classList.add('cam-cam-dashboard-v3-mode');
     render(false);
   }
 
@@ -381,15 +381,15 @@
   }
 
   window.addEventListener('hashchange', () => {
-    if (!active()) document.body.classList.remove('cam-academy-dashboard-v3-mode');
+    if (!active()) document.body.classList.remove('cam-cam-dashboard-v3-mode');
     schedule();
   });
-  window.addEventListener('academy-payments-updated', () => render(true));
-  window.addEventListener('academy-enrollment-completed', () => render(true));
+  window.addEventListener('cam-payments-updated', () => render(true));
+  window.addEventListener('cam-enrollment-completed', () => render(true));
   document.addEventListener('DOMContentLoaded', schedule);
   new MutationObserver(() => {
     if (!active()) return;
-    const content = $('#academyWorkspace .academy-content');
+    const content = $('#camWorkspace .cam-content');
     if (content?.dataset.dashboardV3 === '1') suppressLegacy(content);
     else schedule();
   }).observe(document.documentElement, {childList:true, subtree:true});

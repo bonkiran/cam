@@ -1,15 +1,15 @@
 (() => {
-  const CLASS_NAME = 'academy-route-pending';
-  const STYLE_ID = 'academyRouteGuardStyle';
+  const CLASS_NAME = 'cam-route-pending';
+  const STYLE_ID = 'camRouteGuardStyle';
   const VERSION = '3';
 
   function isAcademyRoute() {
-    return location.hash.replace(/^#/, '').split('?')[0] === 'academy';
+    return location.hash.replace(/^#/, '').split('?')[0] === 'cam';
   }
 
   function ensureStyle() {
     if (document.getElementById(STYLE_ID)) {
-      document.documentElement.dataset.academyRouteGuard = VERSION;
+      document.documentElement.dataset.camRouteGuard = VERSION;
       return;
     }
     const style = document.createElement('style');
@@ -39,12 +39,12 @@
         font-weight: 700;
         z-index: 9999;
       }
-      html.${CLASS_NAME} #academyWorkspace {
+      html.${CLASS_NAME} #camWorkspace {
         visibility: hidden !important;
       }
     `;
     document.head.appendChild(style);
-    document.documentElement.dataset.academyRouteGuard = VERSION;
+    document.documentElement.dataset.camRouteGuard = VERSION;
   }
 
   function setPending() {
@@ -62,11 +62,11 @@
       return;
     }
     if (!document.documentElement.classList.contains(CLASS_NAME)) return;
-    const workspace = document.getElementById('academyWorkspace');
-    const content = workspace && workspace.querySelector('.academy-content');
+    const workspace = document.getElementById('camWorkspace');
+    const content = workspace && workspace.querySelector('.cam-content');
     if (workspace && content) {
       requestAnimationFrame(() => {
-        if (isAcademyRoute() && document.getElementById('academyWorkspace')) {
+        if (isAcademyRoute() && document.getElementById('camWorkspace')) {
           clearPending();
         }
       });
@@ -74,7 +74,7 @@
   }
 
   // The full-page loading guard is needed only when ENTERING Academy from a
-  // different top-level route (or on a direct #academy page load). Switching
+  // different top-level route (or on a direct #cam page load). Switching
   // between Academy tabs must keep the mounted Academy workspace visible.
   let wasAcademyRoute = isAcademyRoute();
   window.addEventListener('hashchange', () => {

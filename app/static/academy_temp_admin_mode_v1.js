@@ -1,5 +1,5 @@
 (() => {
-  const SESSION_KEY = 'cam-academy-session-v1';
+  const SESSION_KEY = 'cam-cam-session-v1';
 
   async function enableTemporaryAdminMode() {
     try {

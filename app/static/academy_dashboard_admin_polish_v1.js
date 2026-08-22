@@ -14,7 +14,7 @@
 
   function dashboardActive(){
     const info=route();
-    return info.page==='academy'&&info.tab==='overview';
+    return info.page==='cam'&&info.tab==='overview';
   }
 
   function esc(v=''){
@@ -86,8 +86,8 @@
     return data||{};
   }
 
-  async function academyProfile(){
-    const data=await jsonFetch('/api/academy/profile');
+  async function camProfile(){
+    const data=await jsonFetch('/api/cam/profile');
     return data?.profile||null;
   }
 
@@ -121,7 +121,7 @@
   }
 
   async function loadOpenMeteoWeather(){
-    const profile=await academyProfile();
+    const profile=await camProfile();
     if(!profile||(!profile.city&&!profile.postal_code)){
       return {provider:'Open-Meteo',configured:true,status:'location_required',location:profile||{}};
     }
@@ -215,9 +215,9 @@
 
   async function ensureWeather(){
     if(!dashboardActive())return;
-    const hero=$('#academyWorkspace .academy-dashboard-welcome');
+    const hero=$('#camWorkspace .cam-dashboard-welcome');
     if(!hero)return;
-    const actions=$('.academy-hero-actions',hero);
+    const actions=$('.cam-hero-actions',hero);
     if(!actions)return;
     let card=$('.cam-dashboard-current-weather',hero);
     if(!card){
@@ -245,7 +245,7 @@
 
   function polishDashboardLabels(){
     if(!dashboardActive())return;
-    const content=$('#academyWorkspace .academy-content');
+    const content=$('#camWorkspace .cam-content');
     if(!content)return;
 
     const batches=exactElement(content,'Batch Breakdown');

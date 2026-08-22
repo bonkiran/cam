@@ -83,7 +83,7 @@ def _bootstrap_owner() -> str:
 
 
 def _create_user(owner_token: str, payload: dict) -> None:
-    response = client.post("/api/academy/access/users", json=payload, headers=_auth(owner_token))
+    response = client.post("/api/cam/access/users", json=payload, headers=_auth(owner_token))
     assert response.status_code == 201, response.text
 
 
@@ -97,21 +97,21 @@ def test_track_a_attendance_statuses_correction_and_role_boundaries():
     _reset_shared_postgres_state()
 
     profile = client.put(
-        "/api/academy/profile",
+        "/api/cam/profile",
         json={"name": "Track A Attendance Academy", "timezone": "America/New_York"},
     )
     assert profile.status_code == 200, profile.text
 
     program = _post(
-        "/api/academy/programs",
+        "/api/cam/programs",
         {"name": "Track A Attendance U13", "program_type": "group", "status": "active"},
     )
     session_coach = _post(
-        "/api/academy/coaches",
+        "/api/cam/coaches",
         {"first_name": "Assigned", "last_name": "Coach", "status": "active"},
     )
     other_coach = _post(
-        "/api/academy/coaches",
+        "/api/cam/coaches",
         {"first_name": "Unassigned", "last_name": "Coach", "status": "active"},
     )
 
@@ -128,7 +128,7 @@ def test_track_a_attendance_statuses_correction_and_role_boundaries():
         }
         players.append(
             _post(
-                "/api/academy/players",
+                "/api/cam/players",
                 {
                     "name": f"Attendance QA Player {index + 1}",
                     "status": "active",
@@ -138,7 +138,7 @@ def test_track_a_attendance_statuses_correction_and_role_boundaries():
         )
 
     batch = _post(
-        "/api/academy/batches",
+        "/api/cam/batches",
         {
             "name": "Track A Attendance Batch",
             "program_id": program["id"],
@@ -148,15 +148,15 @@ def test_track_a_attendance_statuses_correction_and_role_boundaries():
     )
     batch_id = int(batch["id"])
     _post(
-        f"/api/academy/batch-coach-assignments?batch_id={batch_id}",
+        f"/api/cam/batch-coach-assignments?batch_id={batch_id}",
         {"coach_id": session_coach["id"], "assignment_role": "primary", "start_date": date.today().isoformat()},
     )
     for player in players:
-        _post(f"/api/academy/batches/{batch_id}/players", {"player_id": player["id"]})
+        _post(f"/api/cam/batches/{batch_id}/players", {"player_id": player["id"]})
 
     session_day = date.today() + timedelta(days=7)
     generated = _post(
-        f"/api/academy/batches/{batch_id}/generate-sessions",
+        f"/api/cam/batches/{batch_id}/generate-sessions",
         {
             "start_date": session_day.isoformat(),
             "end_date": session_day.isoformat(),
@@ -181,7 +181,7 @@ def test_track_a_attendance_statuses_correction_and_role_boundaries():
         "coach_status": "present",
         "coach_notes": "Session coach present",
     }
-    saved = client.put(f"/api/academy/sessions/{session_id}/attendance", json=attendance_payload)
+    saved = client.put(f"/api/cam/sessions/{session_id}/attendance", json=attendance_payload)
     assert saved.status_code == 200, saved.text
     rows = {int(row["player_id"]): row for row in saved.json()["players"]}
     assert rows[int(players[0]["id"])]["attendance_status"] == "present"
@@ -230,7 +230,7 @@ def test_track_a_attendance_statuses_correction_and_role_boundaries():
     # staff attendance endpoint. Future Coach Workspace APIs will need a second
     # assignment-aware check, but the current pilot boundary is secure by default.
     coach_attempt = client.put(
-        f"/api/academy/sessions/{session_id}/attendance",
+        f"/api/cam/sessions/{session_id}/attendance",
         json=attendance_payload,
         headers=_auth(coach_token),
     )
@@ -239,7 +239,7 @@ def test_track_a_attendance_statuses_correction_and_role_boundaries():
     # QA-038: Parent can never edit attendance through the generic management API,
     # even for a linked child.
     parent_attempt = client.put(
-        f"/api/academy/sessions/{session_id}/attendance",
+        f"/api/cam/sessions/{session_id}/attendance",
         json=attendance_payload,
         headers=_auth(parent_token),
     )
@@ -258,7 +258,7 @@ def test_track_a_attendance_statuses_correction_and_role_boundaries():
         "coach_status": "present",
     }
     corrected = client.put(
-        f"/api/academy/sessions/{session_id}/attendance",
+        f"/api/cam/sessions/{session_id}/attendance",
         json=corrected_payload,
         headers=_auth(owner_token),
     )
@@ -270,7 +270,7 @@ def test_track_a_attendance_statuses_correction_and_role_boundaries():
     assert corrected_row["notes"] == "Corrected after coach review"
 
     history = client.get(
-        f"/api/academy/attendance/history?session_id={session_id}&entity_type=player&subject_id={players[0]['id']}",
+        f"/api/cam/attendance/history?session_id={session_id}&entity_type=player&subject_id={players[0]['id']}",
         headers=_auth(owner_token),
     )
     assert history.status_code == 200, history.text
@@ -280,7 +280,7 @@ def test_track_a_attendance_statuses_correction_and_role_boundaries():
     assert latest["after"]["status"] == "late"
 
     attendance_after = client.get(
-        f"/api/academy/sessions/{session_id}/attendance",
+        f"/api/cam/sessions/{session_id}/attendance",
         headers=_auth(owner_token),
     )
     assert attendance_after.status_code == 200

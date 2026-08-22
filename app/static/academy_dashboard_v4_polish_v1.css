@@ -1,18 +1,18 @@
 /* Approved C17 dashboard prototype polish */
-body.c17-academy-mode #academyWorkspace>.academy-primary-nav,
-body.c17-academy-mode #academyWorkspace>.academy-tabs{display:none!important}
-body.c17-academy-mode #academyWorkspace{padding-top:0!important}
-body.c17-academy-mode #academyWorkspace .academy-content{padding-top:8px!important}
+body.c17-cam-mode #camWorkspace>.cam-primary-nav,
+body.c17-cam-mode #camWorkspace>.cam-tabs{display:none!important}
+body.c17-cam-mode #camWorkspace{padding-top:0!important}
+body.c17-cam-mode #camWorkspace .cam-content{padding-top:8px!important}
 
 .c17-svg{display:block;width:1em;height:1em}
 .c17-nav-svg{width:18px;height:18px;stroke-width:2}
 .c17-title-svg{width:17px;height:17px;stroke-width:2}
 .c17-program-person{display:inline-block;width:14px;height:14px;margin-left:7px;vertical-align:-1px;stroke-width:2}
 
-body.c17-academy-mode .c17-nav-item{padding:12px 13px;gap:12px;border-radius:9px}
-body.c17-academy-mode .c17-nav-item i{width:22px;height:22px;font-size:0;color:#d9ebe1}
-body.c17-academy-mode .c17-nav-item b{font-size:14px;line-height:1.2;font-weight:800;letter-spacing:-.01em}
-body.c17-academy-mode .c17-sidebar-nav{gap:5px}
+body.c17-cam-mode .c17-nav-item{padding:12px 13px;gap:12px;border-radius:9px}
+body.c17-cam-mode .c17-nav-item i{width:22px;height:22px;font-size:0;color:#d9ebe1}
+body.c17-cam-mode .c17-nav-item b{font-size:14px;line-height:1.2;font-weight:800;letter-spacing:-.01em}
+body.c17-cam-mode .c17-sidebar-nav{gap:5px}
 
 .c17-dashboard{gap:10px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#143b28}
 .c17-card,.c17-hero{border-radius:12px;border-color:#d9e6de;box-shadow:0 5px 18px rgba(22,66,45,.055)}
@@ -72,7 +72,7 @@ body.c17-academy-mode .c17-sidebar-nav{gap:5px}
   .c17-finance-row{grid-template-columns:1fr}
 }
 @media(max-width:780px){
-  body.c17-academy-mode .c17-nav-item b{font-size:13px}
+  body.c17-cam-mode .c17-nav-item b{font-size:13px}
   .c17-card-title h2{font-size:15px}
   .c17-table-wrap td{font-size:12px}
 }

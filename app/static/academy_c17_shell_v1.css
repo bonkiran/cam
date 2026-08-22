@@ -1,18 +1,18 @@
 /* C17 Cricket Academy navigation shell */
-body.c17-academy-mode .topbar{display:none!important}
-body.c17-academy-mode .main{padding-top:0!important}
-body.c17-academy-mode #academyWorkspace .academy-tabs{display:none!important}
-body.c17-academy-mode #academyWorkspace{padding-top:0!important}
-body.c17-academy-mode #academyWorkspace .academy-content{padding-top:10px!important}
-body.c17-academy-mode .sidebar .nav>*:not(.c17-sidebar-nav){display:none!important}
-body.c17-academy-mode .sidebar .nav{display:block!important}
+body.c17-cam-mode .topbar{display:none!important}
+body.c17-cam-mode .main{padding-top:0!important}
+body.c17-cam-mode #camWorkspace .cam-tabs{display:none!important}
+body.c17-cam-mode #camWorkspace{padding-top:0!important}
+body.c17-cam-mode #camWorkspace .cam-content{padding-top:10px!important}
+body.c17-cam-mode .sidebar .nav>*:not(.c17-sidebar-nav){display:none!important}
+body.c17-cam-mode .sidebar .nav{display:block!important}
 .c17-sidebar-nav{display:flex;flex-direction:column;gap:4px;width:100%}
 .c17-nav-item{display:flex;align-items:center;gap:12px;width:100%;border:0;background:transparent;color:#d8e8df;padding:11px 12px;border-radius:9px;text-align:left;cursor:pointer;transition:background .15s ease,color .15s ease,transform .15s ease}
 .c17-nav-item i{display:grid;place-items:center;width:20px;font-style:normal;font-size:15px;color:#cde3d5}.c17-nav-item b{font-size:13px;font-weight:800}
 .c17-nav-item:hover{background:rgba(255,255,255,.08);color:#fff}.c17-nav-item.active{background:linear-gradient(135deg,#22aa67,#28b66f);color:#fff;box-shadow:0 8px 18px rgba(17,142,81,.23)}
 .c17-nav-item.active i{color:#fff}
-body.c17-academy-mode .sidebar{background:linear-gradient(180deg,#063e2d 0%,#043126 58%,#062c28 100%)!important}
-body.c17-academy-mode .sidebar .brand{display:flex!important;align-items:center!important;gap:10px!important;padding:2px 3px 17px!important;color:#fff!important}
+body.c17-cam-mode .sidebar{background:linear-gradient(180deg,#063e2d 0%,#043126 58%,#062c28 100%)!important}
+body.c17-cam-mode .sidebar .brand{display:flex!important;align-items:center!important;gap:10px!important;padding:2px 3px 17px!important;color:#fff!important}
 .c17-brand-logo{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.2))}.c17-brand-copy{display:flex;flex-direction:column;line-height:1.05}.c17-brand-copy strong{font-size:22px;letter-spacing:.03em;color:#fff}.c17-brand-copy span{margin-top:5px;font-size:11px;font-weight:800;letter-spacing:.04em;color:#f3f7f5;white-space:nowrap}
-body.c17-academy-mode .profile{border-color:rgba(255,255,255,.12)!important;background:rgba(255,255,255,.04)!important}
+body.c17-cam-mode .profile{border-color:rgba(255,255,255,.12)!important;background:rgba(255,255,255,.04)!important}
 @media(max-width:780px){.c17-brand-logo{width:38px;height:38px}.c17-brand-copy strong{font-size:18px}.c17-brand-copy span{font-size:9px}}

@@ -19,7 +19,7 @@
       try {
         const payload = JSON.parse(init.body);
         if (!payload.tournament_type) {
-          payload.tournament_type = document.querySelector('#academyTournamentForm [name="tournament_type"]')?.value || 'external';
+          payload.tournament_type = document.querySelector('#camTournamentForm [name="tournament_type"]')?.value || 'external';
           init = { ...init, body: JSON.stringify(payload) };
         }
       } catch (_) {}
@@ -31,7 +31,7 @@
     const id = Number(form.dataset.tournamentId || 0);
     if (!id) return;
     try {
-      const response = await priorFetch(`/api/academy/tournaments/${id}`, { cache: 'no-store' });
+      const response = await priorFetch(`/api/cam/tournaments/${id}`, { cache: 'no-store' });
       if (!response.ok) return;
       const tournament = await response.json();
       select.value = tournament.tournament_type || 'external';
@@ -39,13 +39,13 @@
   }
 
   function enhanceForm() {
-    const form = document.querySelector('#academyTournamentForm');
+    const form = document.querySelector('#camTournamentForm');
     if (!form || form.dataset.tournamentTypeEnhanced === '1') return;
-    const grid = form.querySelector('.academy-form-grid');
+    const grid = form.querySelector('.cam-form-grid');
     if (!grid) return;
 
     const label = document.createElement('label');
-    label.className = 'academy-field';
+    label.className = 'cam-field';
     label.innerHTML = `
       <span>Tournament Type *</span>
       <select name="tournament_type" required>

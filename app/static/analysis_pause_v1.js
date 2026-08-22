@@ -39,7 +39,7 @@
     if (!PAUSED || !ANALYSIS_ROUTES.has(currentPage())) return;
     // Use replaceState so stale #analysis?id=... bookmarks are neutralized before
     // app.js handles the same hashchange event and attempts /api/videos/... calls.
-    history.replaceState(null, '', `${location.pathname}${location.search}#academy`);
+    history.replaceState(null, '', `${location.pathname}${location.search}#cam`);
   }
 
   function markAnalysisPaused() {

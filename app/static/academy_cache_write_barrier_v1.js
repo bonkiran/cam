@@ -13,9 +13,9 @@
     }
   }
 
-  window.fetch = function academyWriteBarrierFetch(input, init = {}) {
+  window.fetch = function camWriteBarrierFetch(input, init = {}) {
     const info = requestInfo(input, init);
-    if (!info || info.url.origin !== window.location.origin || !info.url.pathname.startsWith('/api/academy/')) {
+    if (!info || info.url.origin !== window.location.origin || !info.url.pathname.startsWith('/api/cam/')) {
       return previousFetch(input, init);
     }
 

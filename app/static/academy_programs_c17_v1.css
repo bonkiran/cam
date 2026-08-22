@@ -1,11 +1,11 @@
 /* C17 Programs page: Dashboard-style header and a single operations toolbar. */
-body.c17-academy-mode .academy-tabs,
-body.c17-academy-mode .academy-primary-nav,
-body.c17-academy-mode .academy-owner-context-nav {
+body.c17-cam-mode .cam-tabs,
+body.c17-cam-mode .cam-primary-nav,
+body.c17-cam-mode .cam-owner-context-nav {
   display:none !important;
 }
 
-body.c17-academy-mode .c17-program-operations-panel {
+body.c17-cam-mode .c17-program-operations-panel {
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -18,7 +18,7 @@ body.c17-academy-mode .c17-program-operations-panel {
   box-shadow:0 10px 28px rgba(20,64,43,.07);
 }
 
-body.c17-academy-mode .c17-program-operations-copy h2 {
+body.c17-cam-mode .c17-program-operations-copy h2 {
   margin:0 0 5px;
   color:var(--c17-panel-title-color,#123f2a);
   font-size:var(--c17-panel-title-size,15px);
@@ -26,14 +26,14 @@ body.c17-academy-mode .c17-program-operations-copy h2 {
   font-weight:var(--c17-panel-title-weight,900);
 }
 
-body.c17-academy-mode .c17-program-operations-copy p {
+body.c17-cam-mode .c17-program-operations-copy p {
   margin:0;
   color:var(--c17-support-color,#61766a);
   font-size:var(--c17-support-size,11px);
   line-height:var(--c17-body-line,1.4);
 }
 
-body.c17-academy-mode .c17-program-operations-actions {
+body.c17-cam-mode .c17-program-operations-actions {
   display:flex;
   align-items:center;
   justify-content:flex-end;
@@ -41,7 +41,7 @@ body.c17-academy-mode .c17-program-operations-actions {
   flex-wrap:wrap;
 }
 
-body.c17-academy-mode .c17-program-operations-actions button {
+body.c17-cam-mode .c17-program-operations-actions button {
   white-space:nowrap;
   border-radius:8px;
   font-size:11px;
@@ -53,11 +53,11 @@ body.c17-academy-mode .c17-program-operations-actions button {
 }
 
 @media(max-width:1000px){
-  body.c17-academy-mode .c17-program-operations-panel{
+  body.c17-cam-mode .c17-program-operations-panel{
     align-items:flex-start;
     flex-direction:column;
   }
-  body.c17-academy-mode .c17-program-operations-actions{
+  body.c17-cam-mode .c17-program-operations-actions{
     justify-content:flex-start;
     width:100%;
   }

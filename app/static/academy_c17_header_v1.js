@@ -45,8 +45,8 @@
     return '🌤️';
   }
 
-  async function academyContext() {
-    if (!contextPromise) contextPromise = requestJson('/api/academy/dashboard/v3');
+  async function camContext() {
+    if (!contextPromise) contextPromise = requestJson('/api/cam/dashboard/v3');
     return contextPromise;
   }
 
@@ -124,7 +124,7 @@
 
   async function hero({title='Enrollment', subtitle='C17 Academy Enrollment'} = {}) {
     let context = {};
-    try { context = await academyContext(); } catch (error) { console.warn('C17 page context unavailable:', error); }
+    try { context = await camContext(); } catch (error) { console.warn('C17 page context unavailable:', error); }
     const weather = await loadWeather(context?.academy || {});
     return `<section class="c17-hero c17-page-hero"><div class="c17-welcome"><h1>${esc(title)}</h1><p>${esc(subtitle)}</p></div>${weatherMarkup(weather)}</section>`;
   }

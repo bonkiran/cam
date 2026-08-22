@@ -32,12 +32,12 @@
   }
 
   function enhanceNameFields() {
-    enhanceNameField('#academyProfileForm', 'Academy Name');
-    enhanceNameField('#academyPlayerForm', 'Player name');
+    enhanceNameField('#camProfileForm', 'Academy Name');
+    enhanceNameField('#camPlayerForm', 'Player name');
   }
 
   function enhanceWebsiteField(root = document) {
-    const form = root.querySelector?.('#academyProfileForm');
+    const form = root.querySelector?.('#camProfileForm');
     const input = form?.querySelector('input[name="website"]');
     if (!form || !input || input.dataset.websiteValidationEnhanced === '1') return;
 

@@ -32,16 +32,16 @@
     return `${year}-${month}`;
   }
   function moneyCard(label,value,note){
-    return `<div class="academy-owner-money-card"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(note)}</small></div>`;
+    return `<div class="cam-owner-money-card"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(note)}</small></div>`;
   }
   async function enhanceDashboard(){
     const info=route();
-    if(info.page!=='academy'||info.tab!=='overview')return;
-    const outgoings=$('#academyWorkspace .academy-owner-outgoings');
-    const grid=outgoings?$('.academy-owner-money-grid',outgoings):null;
+    if(info.page!=='cam'||info.tab!=='overview')return;
+    const outgoings=$('#camWorkspace .cam-owner-outgoings');
+    const grid=outgoings?$('.cam-owner-money-grid',outgoings):null;
     if(!grid||grid.dataset.financeOps==='1')return;
     try{
-      const summary=await api(`/api/academy/finance/operations-summary?month=${encodeURIComponent(currentMonth())}`);
+      const summary=await api(`/api/cam/finance/operations-summary?month=${encodeURIComponent(currentMonth())}`);
       grid.innerHTML=[
         moneyCard('Coach Salary Paid',money(summary.coach_salary_paid_mtd_cents),`${Number(summary.coach_salary_payment_count||0)} coach payments · ${Number(summary.coach_rates_configured||0)} rates configured`),
         moneyCard('Facility Payments',money(summary.facility_payments_mtd_cents),`${Number(summary.facility_expense_count||0)} paid facility expenses`),
@@ -65,20 +65,20 @@
   }
   async function enhanceFinance(){
     const info=route();
-    if(info.page!=='academy'||info.tab!=='fees'||loading)return;
-    const content=$('#academyWorkspace .academy-content');
+    if(info.page!=='cam'||info.tab!=='fees'||loading)return;
+    const content=$('#camWorkspace .cam-content');
     if(!content||$('#camFinanceOperations',content))return;
     loading=true;
     try{
       const month=currentMonth();
       const [summary,rates,coachPayments,expenses]=await Promise.all([
-        api(`/api/academy/finance/operations-summary?month=${encodeURIComponent(month)}`),
-        api('/api/academy/coach-rates?status=active'),
-        api(`/api/academy/coach-payments?month=${encodeURIComponent(month)}&status=paid`),
-        api(`/api/academy/expenses?month=${encodeURIComponent(month)}`),
+        api(`/api/cam/finance/operations-summary?month=${encodeURIComponent(month)}`),
+        api('/api/cam/coach-rates?status=active'),
+        api(`/api/cam/coach-payments?month=${encodeURIComponent(month)}&status=paid`),
+        api(`/api/cam/expenses?month=${encodeURIComponent(month)}`),
       ]);
       if(route().tab!=='fees'||!content.isConnected)return;
-      const academyExpenses=expenses.filter(row=>row.expense_type==='academy');
+      const camExpenses=expenses.filter(row=>row.expense_type==='cam');
       const facilityExpenses=expenses.filter(row=>row.expense_type==='facility');
       const section=document.createElement('section');
       section.id='camFinanceOperations';
@@ -90,10 +90,10 @@
           ${moneyCard('Facility Expenses',money(summary.facility_payments_mtd_cents),`${Number(summary.facility_expense_count||0)} paid this month`)}
         </div>
         <div class="cam-finance-ops-grid">
-          <article class="panel"><div class="panel-head"><div><h2>Coach Salary Payments</h2><p>Recorded coach compensation paid during ${esc(month)}.</p></div></div><div class="cam-finance-ops-list">${coachPayments.length?coachPayments.map(paymentRow).join(''):'<div class="academy-dash-empty">No coach salary payments this month.</div>'}</div></article>
-          <article class="panel"><div class="panel-head"><div><h2>Coach Rates</h2><p>Current compensation rates used for payroll calculation.</p></div></div><div class="cam-finance-ops-list">${rates.length?rates.map(rateRow).join(''):'<div class="academy-dash-empty">No coach rates configured.</div>'}</div></article>
-          <article class="panel"><div class="panel-head"><div><h2>Academy Expenses</h2><p>Operating expenses for ${esc(month)}.</p></div></div><div class="cam-finance-ops-list">${academyExpenses.length?academyExpenses.map(expenseRow).join(''):'<div class="academy-dash-empty">No academy expenses this month.</div>'}</div></article>
-          <article class="panel"><div class="panel-head"><div><h2>Facility Expenses</h2><p>Ground, net and facility payments for ${esc(month)}.</p></div></div><div class="cam-finance-ops-list">${facilityExpenses.length?facilityExpenses.map(expenseRow).join(''):'<div class="academy-dash-empty">No facility expenses this month.</div>'}</div></article>
+          <article class="panel"><div class="panel-head"><div><h2>Coach Salary Payments</h2><p>Recorded coach compensation paid during ${esc(month)}.</p></div></div><div class="cam-finance-ops-list">${coachPayments.length?coachPayments.map(paymentRow).join(''):'<div class="cam-dash-empty">No coach salary payments this month.</div>'}</div></article>
+          <article class="panel"><div class="panel-head"><div><h2>Coach Rates</h2><p>Current compensation rates used for payroll calculation.</p></div></div><div class="cam-finance-ops-list">${rates.length?rates.map(rateRow).join(''):'<div class="cam-dash-empty">No coach rates configured.</div>'}</div></article>
+          <article class="panel"><div class="panel-head"><div><h2>Academy Expenses</h2><p>Operating expenses for ${esc(month)}.</p></div></div><div class="cam-finance-ops-list">${camExpenses.length?camExpenses.map(expenseRow).join(''):'<div class="cam-dash-empty">No academy expenses this month.</div>'}</div></article>
+          <article class="panel"><div class="panel-head"><div><h2>Facility Expenses</h2><p>Ground, net and facility payments for ${esc(month)}.</p></div></div><div class="cam-finance-ops-list">${facilityExpenses.length?facilityExpenses.map(expenseRow).join(''):'<div class="cam-dash-empty">No facility expenses this month.</div>'}</div></article>
         </div>`;
       content.appendChild(section);
     }catch(error){
@@ -113,7 +113,7 @@
     setTimeout(apply,40);
   }
   window.addEventListener('hashchange',schedule);
-  window.addEventListener('academy-payments-updated',schedule);
+  window.addEventListener('cam-payments-updated',schedule);
   document.addEventListener('DOMContentLoaded',schedule);
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
   schedule();

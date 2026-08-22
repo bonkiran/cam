@@ -1,8 +1,8 @@
 (() => {
-  const SESSION_KEY='cam-academy-session-v1';
+  const SESSION_KEY='cam-cam-session-v1';
   const nativeFetch=window.fetch.bind(window);
 
-  window.fetch=async function academySessionFetch(input,init={}){
+  window.fetch=async function camSessionFetch(input,init={}){
     let url;
     try{
       url=new URL(typeof input==='string'?input:input.url,window.location.href);
@@ -10,7 +10,7 @@
       return nativeFetch(input,init);
     }
 
-    if(url.origin!==window.location.origin||!url.pathname.startsWith('/api/academy/')){
+    if(url.origin!==window.location.origin||!url.pathname.startsWith('/api/cam/')){
       return nativeFetch(input,init);
     }
 
@@ -22,7 +22,7 @@
 
     const response=await nativeFetch(input,{...init,headers});
     if(response.status===401){
-      window.dispatchEvent(new CustomEvent('cam:academy-auth-required',{detail:{path:url.pathname}}));
+      window.dispatchEvent(new CustomEvent('cam:cam-auth-required',{detail:{path:url.pathname}}));
     }
     return response;
   };

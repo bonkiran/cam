@@ -21,31 +21,31 @@
       ['Payment Ledger','Payments, receipts, refunds and family-credit activity.'],
       ['Teams, Matches & Tournaments','Competition rosters, fixtures and tournament schedule.']
     ];
-    return `<section class="academy-section-head"><div><span class="academy-kicker">ACADEMY OPERATIONS</span><h1>Reports</h1><p>Operational and financial reporting will live inside Academy rather than as a separate top-level navigation item.</p></div></section>
-      <article class="panel"><div class="panel-head"><div><h2>Academy Reports</h2><p>The reporting workspace is positioned here now; report generation/export is part of the upcoming Academy completion work.</p></div><span class="academy-badge">PLANNED</span></div>
-      <div class="academy-module-grid">${reports.map(([title,text])=>`<article class="academy-module" style="cursor:default"><span class="academy-module-icon">▤</span><span class="academy-module-copy"><strong>${title}</strong><small>${text}</small></span><span class="academy-module-meta">Planned</span></article>`).join('')}</div></article>`;
+    return `<section class="cam-section-head"><div><span class="cam-kicker">ACADEMY OPERATIONS</span><h1>Reports</h1><p>Operational and financial reporting will live inside Academy rather than as a separate top-level navigation item.</p></div></section>
+      <article class="panel"><div class="panel-head"><div><h2>Academy Reports</h2><p>The reporting workspace is positioned here now; report generation/export is part of the upcoming Academy completion work.</p></div><span class="cam-badge">PLANNED</span></div>
+      <div class="cam-module-grid">${reports.map(([title,text])=>`<article class="cam-module" style="cursor:default"><span class="cam-module-icon">▤</span><span class="cam-module-copy"><strong>${title}</strong><small>${text}</small></span><span class="cam-module-meta">Planned</span></article>`).join('')}</div></article>`;
   }
 
   function ensureReportsTab(){
-    const tabs=qs('#academyWorkspace .academy-tabs');
+    const tabs=qs('#camWorkspace .cam-tabs');
     if(!tabs)return;
 
-    let button=qs('[data-academy-reports-tab]',tabs);
+    let button=qs('[data-cam-reports-tab]',tabs);
     if(!button){
       button=document.createElement('button');
       button.type='button';
-      button.dataset.academyReportsTab='1';
+      button.dataset.camReportsTab='1';
       button.textContent='Reports';
-      button.onclick=()=>{location.hash='academy?tab=reports';};
+      button.onclick=()=>{location.hash='cam?tab=reports';};
       tabs.appendChild(button);
     }
 
     // Keep Reports immediately beside Player Reviews when that tab is present.
-    const reviews=qs('[data-academy-reviews-tab]',tabs);
+    const reviews=qs('[data-cam-reviews-tab]',tabs);
     if(reviews && reviews.nextElementSibling!==button) reviews.after(button);
 
     const info=route();
-    if(info.page==='academy'&&info.tab==='reports'){
+    if(info.page==='cam'&&info.tab==='reports'){
       qsa('button',tabs).forEach(btn=>btn.classList.toggle('active',btn===button));
     } else {
       button.classList.remove('active');
@@ -54,11 +54,11 @@
 
   function renderReports(){
     const info=route();
-    if(info.page!=='academy'||info.tab!=='reports')return;
-    const content=qs('#academyWorkspace .academy-content');
+    if(info.page!=='cam'||info.tab!=='reports')return;
+    const content=qs('#camWorkspace .cam-content');
     if(!content)return;
-    if(!qs('.academy-reports-shell',content)){
-      content.innerHTML=`<section class="academy-reports-shell">${reportsView()}</section>`;
+    if(!qs('.cam-reports-shell',content)){
+      content.innerHTML=`<section class="cam-reports-shell">${reportsView()}</section>`;
     }
   }
 

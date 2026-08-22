@@ -90,7 +90,7 @@
     if (label) label.remove();
   }
 
-  function academyLabel(name) {
+  function camLabel(name) {
     const clean = String(name || 'Academy').trim() || 'Academy';
     return /academy$/i.test(clean) ? clean : `${clean} Academy`;
   }
@@ -104,7 +104,7 @@
       const response = await fetch(`/api/public/registration/${encodeURIComponent(token)}/branding`, {cache:'no-store'});
       if (!response.ok) return;
       const data = await response.json();
-      const title = `${academyLabel(data?.academy_name)} Player Registration`;
+      const title = `${camLabel(data?.academy_name)} Player Registration`;
       const heading = document.querySelector('.registration-intro h1');
       if (heading) heading.textContent = title;
       const brandSubtitle = document.querySelector('.registration-brand small');

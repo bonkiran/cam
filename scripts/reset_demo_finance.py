@@ -45,7 +45,7 @@ def wait_for_cleanup_api():
             if storage and storage.get("database") == "postgresql":
                 result = request(
                     "POST",
-                    "/api/academy/demo-data/cleanup-finance",
+                    "/api/cam/demo-data/cleanup-finance",
                     {"confirm": "RESET_DEMO_FINANCE"},
                     retries=1,
                 )

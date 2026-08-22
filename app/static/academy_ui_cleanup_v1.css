@@ -1,4 +1,4 @@
-body.cam-academy-context #academyWorkspace .academy-owner-context-nav{
+body.cam-cam-context #camWorkspace .cam-owner-context-nav{
   display:flex;
   align-items:center;
   gap:6px;
@@ -13,7 +13,7 @@ body.cam-academy-context #academyWorkspace .academy-owner-context-nav{
   overflow-x:auto;
 }
 
-body.cam-academy-context #academyWorkspace .academy-owner-context-nav button{
+body.cam-cam-context #camWorkspace .cam-owner-context-nav button{
   min-height:32px;
   padding:6px 11px;
   border-radius:7px;
@@ -24,17 +24,17 @@ body.cam-academy-context #academyWorkspace .academy-owner-context-nav button{
   box-shadow:none;
 }
 
-body.cam-academy-context #academyWorkspace .academy-owner-context-nav button:not(.active){
+body.cam-cam-context #camWorkspace .cam-owner-context-nav button:not(.active){
   background:transparent;
   color:#49665b;
 }
 
-body.cam-academy-context #academyWorkspace .academy-owner-context-nav button.active{
+body.cam-cam-context #camWorkspace .cam-owner-context-nav button.active{
   background:#e8f3ed;
   color:#134c37;
 }
 
-#academyWorkspace .academy-content.cam-academy-loading{
+#camWorkspace .cam-content.cam-cam-loading{
   min-height:440px;
 }
 
@@ -60,101 +60,101 @@ body.cam-academy-context #academyWorkspace .academy-owner-context-nav button.act
   100%{background-position:-100% 0}
 }
 
-body.cam-academy-context #academyWorkspace .academy-content > .warning:only-child{
+body.cam-cam-context #camWorkspace .cam-content > .warning:only-child{
   margin:0;
 }
 
-body.cam-academy-context #academyWorkspace .academy-owner-settings-shell,
-body.cam-academy-context #academyWorkspace .academy-reports-shell{
+body.cam-cam-context #camWorkspace .cam-owner-settings-shell,
+body.cam-cam-context #camWorkspace .cam-reports-shell{
   max-width:1180px;
 }
 
-#academyWorkspace .academy-content.cam-owner-dashboard-polished{
+#camWorkspace .cam-content.cam-owner-dashboard-polished{
   overflow:visible;
 }
 
-#academyWorkspace .cam-owner-dashboard-polished .academy-hero,
-#academyWorkspace .cam-owner-dashboard-polished .academy-stats,
-#academyWorkspace .cam-owner-dashboard-polished .academy-owner-dashboard-snapshot,
-#academyWorkspace .cam-owner-dashboard-polished .academy-dashboard-grid{
+#camWorkspace .cam-owner-dashboard-polished .cam-hero,
+#camWorkspace .cam-owner-dashboard-polished .cam-stats,
+#camWorkspace .cam-owner-dashboard-polished .cam-owner-dashboard-snapshot,
+#camWorkspace .cam-owner-dashboard-polished .cam-dashboard-grid{
   min-width:0;
 }
 
-#academyWorkspace .cam-owner-dashboard-polished .academy-owner-dashboard-snapshot,
-#academyWorkspace .cam-owner-dashboard-polished .academy-dashboard-grid{
+#camWorkspace .cam-owner-dashboard-polished .cam-owner-dashboard-snapshot,
+#camWorkspace .cam-owner-dashboard-polished .cam-dashboard-grid{
   gap:16px;
 }
 
-#academyWorkspace .cam-owner-dashboard-polished .panel,
-#academyWorkspace .cam-owner-dashboard-polished article,
-#academyWorkspace .cam-owner-dashboard-polished section{
+#camWorkspace .cam-owner-dashboard-polished .panel,
+#camWorkspace .cam-owner-dashboard-polished article,
+#camWorkspace .cam-owner-dashboard-polished section{
   min-width:0;
 }
 
-#academyWorkspace .cam-owner-dashboard-polished .panel-head,
-#academyWorkspace .cam-owner-dashboard-polished .academy-form-title,
-#academyWorkspace .cam-owner-dashboard-polished .academy-hero{
+#camWorkspace .cam-owner-dashboard-polished .panel-head,
+#camWorkspace .cam-owner-dashboard-polished .cam-form-title,
+#camWorkspace .cam-owner-dashboard-polished .cam-hero{
   gap:16px;
 }
 
-#academyWorkspace .cam-owner-dashboard-polished .panel-head > div,
-#academyWorkspace .cam-owner-dashboard-polished .academy-form-title > div,
-#academyWorkspace .cam-owner-dashboard-polished .academy-hero > div:first-child{
+#camWorkspace .cam-owner-dashboard-polished .panel-head > div,
+#camWorkspace .cam-owner-dashboard-polished .cam-form-title > div,
+#camWorkspace .cam-owner-dashboard-polished .cam-hero > div:first-child{
   min-width:0;
 }
 
-#academyWorkspace .cam-owner-dashboard-polished .panel-head button,
-#academyWorkspace .cam-owner-dashboard-polished .academy-hero-actions button,
-#academyWorkspace .cam-owner-dashboard-polished .academy-owner-session-actions button{
+#camWorkspace .cam-owner-dashboard-polished .panel-head button,
+#camWorkspace .cam-owner-dashboard-polished .cam-hero-actions button,
+#camWorkspace .cam-owner-dashboard-polished .cam-owner-session-actions button{
   flex:0 0 auto;
   max-width:100%;
   white-space:nowrap;
 }
 
-#academyWorkspace .cam-owner-dashboard-polished .academy-owner-session-actions{
+#camWorkspace .cam-owner-dashboard-polished .cam-owner-session-actions{
   display:flex;
   flex-wrap:wrap;
   justify-content:flex-end;
   gap:8px;
 }
 
-#academyWorkspace .cam-owner-dashboard-polished .academy-dash-session{
+#camWorkspace .cam-owner-dashboard-polished .cam-dash-session{
   grid-template-columns:minmax(0,1fr) auto !important;
   align-items:center;
   gap:12px;
 }
 
-#academyWorkspace .cam-owner-dashboard-polished .academy-dash-session > *{
+#camWorkspace .cam-owner-dashboard-polished .cam-dash-session > *{
   min-width:0;
 }
 
-#academyWorkspace .cam-owner-dashboard-polished .academy-owner-money-card small,
-#academyWorkspace .cam-owner-dashboard-polished .academy-dash-empty,
-#academyWorkspace .cam-owner-dashboard-polished [class*="weather"] small{
+#camWorkspace .cam-owner-dashboard-polished .cam-owner-money-card small,
+#camWorkspace .cam-owner-dashboard-polished .cam-dash-empty,
+#camWorkspace .cam-owner-dashboard-polished [class*="weather"] small{
   color:#6f7f77;
 }
 
-#academyWorkspace .cam-owner-dashboard-polished .academy-owner-money-card strong:empty::after{
+#camWorkspace .cam-owner-dashboard-polished .cam-owner-money-card strong:empty::after{
   content:'—';
 }
 
 @media (max-width:1100px){
-  #academyWorkspace .cam-owner-dashboard-polished .academy-owner-dashboard-snapshot,
-  #academyWorkspace .cam-owner-dashboard-polished .academy-dashboard-grid{
+  #camWorkspace .cam-owner-dashboard-polished .cam-owner-dashboard-snapshot,
+  #camWorkspace .cam-owner-dashboard-polished .cam-dashboard-grid{
     grid-template-columns:1fr !important;
   }
 }
 
 @media (max-width:900px){
   .cam-ui-loading-skeleton{grid-template-columns:1fr;}
-  body.cam-academy-context #academyWorkspace .academy-owner-context-nav{width:100%;}
-  #academyWorkspace .cam-owner-dashboard-polished .academy-hero,
-  #academyWorkspace .cam-owner-dashboard-polished .panel-head,
-  #academyWorkspace .cam-owner-dashboard-polished .academy-form-title{
+  body.cam-cam-context #camWorkspace .cam-owner-context-nav{width:100%;}
+  #camWorkspace .cam-owner-dashboard-polished .cam-hero,
+  #camWorkspace .cam-owner-dashboard-polished .panel-head,
+  #camWorkspace .cam-owner-dashboard-polished .cam-form-title{
     align-items:flex-start;
     flex-direction:column;
   }
-  #academyWorkspace .cam-owner-dashboard-polished .academy-owner-session-actions{
+  #camWorkspace .cam-owner-dashboard-polished .cam-owner-session-actions{
     justify-content:flex-start;
   }
 }

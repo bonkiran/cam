@@ -5,14 +5,14 @@
   let originalBrand = null;
 
   const ITEMS = [
-    {label:'Dashboard', icon:'⌂', target:'academy', active:r => r.page==='academy' && r.tab==='overview'},
-    {label:'Enrollment', icon:'✎', target:'academy?tab=registration', active:r => r.page==='academy' && r.tab==='registration'},
-    {label:'Players', icon:'♙', target:'academy?tab=players', active:r => r.page==='academy' && r.tab==='players'},
-    {label:'Programs', icon:'▤', target:'academy?tab=programs', active:r => r.page==='academy' && r.tab==='programs'},
-    {label:'Coaches', icon:'♟', target:'academy?tab=coaches', active:r => r.page==='academy' && r.tab==='coaches'},
-    {label:'Finance', icon:'$', target:'academy?tab=fees', active:r => r.page==='academy' && r.tab==='fees'},
-    {label:'Reports', icon:'▥', target:'academy?tab=reports', active:r => r.page==='academy' && r.tab==='reports'},
-    {label:'Settings', icon:'⚙', target:'academy?tab=setup', active:r => r.page==='academy' && r.tab==='setup'},
+    {label:'Dashboard', icon:'⌂', target:'cam', active:r => r.page==='cam' && r.tab==='overview'},
+    {label:'Enrollment', icon:'✎', target:'cam?tab=registration', active:r => r.page==='cam' && r.tab==='registration'},
+    {label:'Players', icon:'♙', target:'cam?tab=players', active:r => r.page==='cam' && r.tab==='players'},
+    {label:'Programs', icon:'▤', target:'cam?tab=programs', active:r => r.page==='cam' && r.tab==='programs'},
+    {label:'Coaches', icon:'♟', target:'cam?tab=coaches', active:r => r.page==='cam' && r.tab==='coaches'},
+    {label:'Finance', icon:'$', target:'cam?tab=fees', active:r => r.page==='cam' && r.tab==='fees'},
+    {label:'Reports', icon:'▥', target:'cam?tab=reports', active:r => r.page==='cam' && r.tab==='reports'},
+    {label:'Settings', icon:'⚙', target:'cam?tab=setup', active:r => r.page==='cam' && r.tab==='setup'},
     {label:'Integrations', icon:'↔', target:'integrations', active:r => r.page==='integrations'},
     {label:'Insights', icon:'⌁', target:'insights', active:r => r.page==='insights'},
     {label:'Help & Support', icon:'?', target:'help', active:r => r.page==='help'}
@@ -25,9 +25,9 @@
     return {page:page || 'dashboard', tab:new URLSearchParams(query).get('tab') || 'overview'};
   }
 
-  function academyMode() {
+  function camMode() {
     const page = route().page;
-    return page === 'academy' || page === 'integrations';
+    return page === 'cam' || page === 'integrations';
   }
 
   function brandMarkup() {
@@ -38,7 +38,7 @@
     const brand = $('.sidebar .brand');
     if (!brand) return;
     if (originalBrand === null) originalBrand = brand.innerHTML;
-    if (academyMode()) {
+    if (camMode()) {
       if (!brand.dataset.c17Brand) {
         brand.innerHTML = brandMarkup();
         brand.dataset.c17Brand = '1';
@@ -85,7 +85,7 @@
 
   function ensureAcademyNav() {
     const nav = $('.sidebar .nav');
-    if (!nav || !academyMode()) return;
+    if (!nav || !camMode()) return;
     let holder = $(':scope > .c17-sidebar-nav', nav);
     if (!holder) {
       holder = document.createElement('div');
@@ -102,8 +102,8 @@
 
   function apply() {
     scheduled = false;
-    const mode = academyMode();
-    document.body.classList.toggle('c17-academy-mode', mode);
+    const mode = camMode();
+    document.body.classList.toggle('c17-cam-mode', mode);
     ensureBrand();
     if (mode) ensureAcademyNav();
     else $$('.c17-sidebar-nav').forEach(el => el.remove());

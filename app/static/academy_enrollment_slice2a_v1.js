@@ -1,7 +1,7 @@
 (() => {
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  let academyName = 'Academy';
+  let camName = 'Academy';
 
   function esc(v = '') {
     return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -24,7 +24,7 @@
     else console.log(message);
   }
 
-  function academyLabel(name = academyName) {
+  function camLabel(name = camName) {
     const clean = String(name || 'Academy').trim() || 'Academy';
     return /academy$/i.test(clean) ? clean : `${clean} Academy`;
   }
@@ -34,7 +34,7 @@
   }
 
   function applicationId(review) {
-    const kicker = review.querySelector('.academy-kicker')?.textContent || '';
+    const kicker = review.querySelector('.cam-kicker')?.textContent || '';
     const match = kicker.match(/APPLICATION\s*#\s*(\d+)/i);
     return match ? Number(match[1]) : null;
   }
@@ -70,7 +70,7 @@
 
   async function markSent(enrollmentId, channel) {
     try {
-      await requestJson(`/api/academy/enrollments/${enrollmentId}/sent`, {
+      await requestJson(`/api/cam/enrollments/${enrollmentId}/sent`, {
         method: 'POST',
         body: JSON.stringify({channel}),
       });
@@ -80,7 +80,7 @@
   }
 
   function enrollmentMessage(review, enrollment) {
-    return `Hi ${parentName(review)}, ${playerName(review)}'s registration with ${academyLabel(enrollment.academy_name)} has been approved. Please complete enrollment securely in CAM using this link: ${enrollment.enrollment_url}`;
+    return `Hi ${parentName(review)}, ${playerName(review)}'s registration with ${camLabel(enrollment.academy_name)} has been approved. Please complete enrollment securely in CAM using this link: ${enrollment.enrollment_url}`;
   }
 
   function showEnrollmentShare(review, enrollment) {
@@ -96,7 +96,7 @@
     const email = parentEmail(review);
     const sms = `sms:${phone}?body=${encodeURIComponent(message)}`;
     const whatsapp = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    const mailto = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(`${academyLabel(enrollment.academy_name)} Player Enrollment`)}&body=${encodeURIComponent(message)}`;
+    const mailto = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(`${camLabel(enrollment.academy_name)} Player Enrollment`)}&body=${encodeURIComponent(message)}`;
     host.innerHTML = `<div class="cam-share-box"><strong>Enrollment link ready for ${esc(parentName(review))}</strong><div class="cam-share-url">${esc(enrollment.enrollment_url)}</div><div class="cam-share-actions"><button data-enroll-share="sms">Text Message</button><button data-enroll-share="whatsapp">WhatsApp</button>${email && email !== '—' ? '<button data-enroll-share="email">Email</button>' : ''}<button data-enroll-share="copy">Copy Link</button></div><small style="display:block;margin-top:9px;color:#647d70">Enrollment status: ${esc(enrollment.status || 'created')}</small></div>`;
     $('[data-enroll-share="sms"]', host)?.addEventListener('click', async () => { await markSent(enrollment.id, 'sms'); location.href = sms; });
     $('[data-enroll-share="whatsapp"]', host)?.addEventListener('click', async () => { await markSent(enrollment.id, 'whatsapp'); window.open(whatsapp, '_blank', 'noopener'); });
@@ -111,7 +111,7 @@
     button.disabled = true;
     button.textContent = 'Approving…';
     try {
-      const enrollment = await requestJson(`/api/academy/enrollments/from-registration/${appId}`, {method:'POST', body:'{}'});
+      const enrollment = await requestJson(`/api/cam/enrollments/from-registration/${appId}`, {method:'POST', body:'{}'});
       notify('Registration approved. Enrollment link is ready.');
       $$('.cam-review-actions button', review).forEach(btn => btn.disabled = true);
       button.textContent = 'Approved';
@@ -136,7 +136,7 @@
     button.textContent = 'Generate Enrollment Link';
     actions.appendChild(button);
     try {
-      const existing = await requestJson(`/api/academy/enrollments/by-application/${appId}`);
+      const existing = await requestJson(`/api/cam/enrollments/by-application/${appId}`);
       button.textContent = `Generate New Enrollment Link · ${existing.status || 'created'}`;
     } catch {}
     button.addEventListener('click', () => createEnrollmentLink(review, button));
@@ -166,8 +166,8 @@
 
   async function loadBranding() {
     try {
-      const data = await requestJson('/api/academy/registration/branding');
-      academyName = data?.academy_name || 'Academy';
+      const data = await requestJson('/api/cam/registration/branding');
+      camName = data?.academy_name || 'Academy';
     } catch {}
   }
 

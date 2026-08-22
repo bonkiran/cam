@@ -2,140 +2,140 @@
    Goal: keep the Academy dashboard compact while maintaining comfortable desktop readability.
    This stylesheet is scoped to Dashboard v2 so other Academy workflows keep their existing density. */
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] {
+#camWorkspace .cam-content[data-dashboard-v2="1"] {
   font-size: 14px;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-kicker {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-kicker {
   font-size: 10px;
   line-height: 1.35;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-hero p,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .panel-head p,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] article.panel > p,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] article.panel > div > p {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-hero p,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .panel-head p,
+#camWorkspace .cam-content[data-dashboard-v2="1"] article.panel > p,
+#camWorkspace .cam-content[data-dashboard-v2="1"] article.panel > div > p {
   font-size: 13px;
   line-height: 1.5;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] article.panel small {
+#camWorkspace .cam-content[data-dashboard-v2="1"] article.panel small {
   font-size: 12px;
   line-height: 1.4;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-stat span {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-stat span {
   font-size: 12px;
   line-height: 1.35;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-stat small {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-stat small {
   font-size: 12px;
   line-height: 1.4;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-matches > h3,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-weather > h3,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-session-block > h3 {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-matches > h3,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-weather > h3,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-session-block > h3 {
   font-size: 13px;
   line-height: 1.35;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-session-block > h3 span {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-session-block > h3 span {
   min-width: 22px;
   height: 22px;
   font-size: 11px;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-match strong,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-session strong,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-attendance strong,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .cam-new-enrollment-player strong {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-match strong,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-session strong,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-attendance strong,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-new-enrollment-player strong {
   font-size: 14px;
   line-height: 1.35;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-match small,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-session small,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-attendance small,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .cam-new-enrollment-player small {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-match small,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-session small,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-attendance small,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-new-enrollment-player small {
   font-size: 12px;
   line-height: 1.45;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-date,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-session > span,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-confirmations span,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-attendance-counts span {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-date,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-session > span,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-confirmations span,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-attendance-counts span {
   font-size: 12px;
   line-height: 1.4;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-confirmations small {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-confirmations small {
   font-size: 11.5px;
   line-height: 1.4;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-weather-days strong,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-weather-state strong {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-weather-days strong,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-weather-state strong {
   font-size: 13px;
   line-height: 1.35;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-weather-days small,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-weather-state span {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-weather-days small,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-weather-state span {
   font-size: 12px;
   line-height: 1.5;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-mobile-note,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-empty {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-mobile-note,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-empty {
   font-size: 12px;
   line-height: 1.5;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .cam-weather-primary span,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .cam-weather-measure span {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-weather-primary span,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-weather-measure span {
   font-size: 10px;
   line-height: 1.35;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .cam-weather-primary small,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .cam-weather-measure small {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-weather-primary small,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-weather-measure small {
   font-size: 12px;
   line-height: 1.4;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .cam-weather-primary em {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-weather-primary em {
   font-size: 10px;
   line-height: 1.35;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .cam-weather-muted strong {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-weather-muted strong {
   font-size: 13px;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .cam-new-enrollment-actions > span:first-child {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-new-enrollment-actions > span:first-child {
   font-size: 13px;
   line-height: 1.4;
 }
 
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .cam-batch-assignment-heading span,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .cam-batch-assignment-box span,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .cam-batch-assignment-status,
-#academyWorkspace .academy-content[data-dashboard-v2="1"] .cam-batch-assignment-error {
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-batch-assignment-heading span,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-batch-assignment-box span,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-batch-assignment-status,
+#camWorkspace .cam-content[data-dashboard-v2="1"] .cam-batch-assignment-error {
   font-size: 12.5px;
   line-height: 1.45;
 }
 
 @media (max-width: 900px) {
-  #academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-hero p,
-  #academyWorkspace .academy-content[data-dashboard-v2="1"] .panel-head p,
-  #academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-stat span,
-  #academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-stat small,
-  #academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-match small,
-  #academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-session small,
-  #academyWorkspace .academy-content[data-dashboard-v2="1"] .academy-dash-attendance small {
+  #camWorkspace .cam-content[data-dashboard-v2="1"] .cam-hero p,
+  #camWorkspace .cam-content[data-dashboard-v2="1"] .panel-head p,
+  #camWorkspace .cam-content[data-dashboard-v2="1"] .cam-stat span,
+  #camWorkspace .cam-content[data-dashboard-v2="1"] .cam-stat small,
+  #camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-match small,
+  #camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-session small,
+  #camWorkspace .cam-content[data-dashboard-v2="1"] .cam-dash-attendance small {
     font-size: 13px;
   }
 }

@@ -54,122 +54,122 @@
 .c17-type-kpi-label{color:var(--c17-kpi-label-color)!important;font-size:var(--c17-kpi-label-size)!important;font-weight:var(--c17-kpi-label-weight)!important}
 .c17-type-kpi-value{color:var(--c17-kpi-value-color)!important;font-size:var(--c17-kpi-value-size)!important;font-weight:var(--c17-kpi-value-weight)!important}
 
-body.c17-academy-mode #academyWorkspace,
-body.c17-academy-mode #academyWorkspace button,
-body.c17-academy-mode #academyWorkspace input,
-body.c17-academy-mode #academyWorkspace select,
-body.c17-academy-mode #academyWorkspace textarea{font-family:inherit}
+body.c17-cam-mode #camWorkspace,
+body.c17-cam-mode #camWorkspace button,
+body.c17-cam-mode #camWorkspace input,
+body.c17-cam-mode #camWorkspace select,
+body.c17-cam-mode #camWorkspace textarea{font-family:inherit}
 
 /* Shared page header/weather already follows the Dashboard scale. Keep it as the page-header template. */
-body.c17-academy-mode #academyWorkspace .c17-welcome h1{color:var(--c17-page-title-color);font-size:var(--c17-page-title-size);line-height:var(--c17-page-title-line);font-weight:var(--c17-page-title-weight)}
-body.c17-academy-mode #academyWorkspace .c17-welcome p{color:var(--c17-page-subtitle-color);font-size:var(--c17-page-subtitle-size);font-weight:var(--c17-page-subtitle-weight)}
+body.c17-cam-mode #camWorkspace .c17-welcome h1{color:var(--c17-page-title-color);font-size:var(--c17-page-title-size);line-height:var(--c17-page-title-line);font-weight:var(--c17-page-title-weight)}
+body.c17-cam-mode #camWorkspace .c17-welcome p{color:var(--c17-page-subtitle-color);font-size:var(--c17-page-subtitle-size);font-weight:var(--c17-page-subtitle-weight)}
 
 /* Generic panel/table/form rules. These apply automatically to operational pages. */
-body.c17-academy-mode #academyWorkspace .panel-head h2,
-body.c17-academy-mode #academyWorkspace .panel-head h3,
-body.c17-academy-mode #academyWorkspace .academy-form-title h2,
-body.c17-academy-mode #academyWorkspace .academy-form-section h2,
-body.c17-academy-mode #academyWorkspace .academy-form-section h3{margin-top:0;color:var(--c17-panel-title-color);font-size:var(--c17-panel-title-size);line-height:var(--c17-panel-title-line);font-weight:var(--c17-panel-title-weight);letter-spacing:0}
-body.c17-academy-mode #academyWorkspace .panel-head p,
-body.c17-academy-mode #academyWorkspace .panel-head small,
-body.c17-academy-mode #academyWorkspace .academy-form-title p,
-body.c17-academy-mode #academyWorkspace .academy-form-section p{color:var(--c17-support-color);font-size:var(--c17-support-size);line-height:var(--c17-body-line);font-weight:400}
-body.c17-academy-mode #academyWorkspace table th{color:var(--c17-table-head-color);font-size:var(--c17-table-head-size);font-weight:var(--c17-table-head-weight)}
-body.c17-academy-mode #academyWorkspace table td{color:var(--c17-body-color);font-size:var(--c17-body-size);line-height:var(--c17-body-line);font-weight:400}
-body.c17-academy-mode #academyWorkspace table td strong{color:var(--c17-body-color);font-size:var(--c17-body-size);font-weight:var(--c17-body-strong-weight)}
-body.c17-academy-mode #academyWorkspace table td small{color:var(--c17-muted-color);font-size:var(--c17-muted-size);line-height:1.35;font-weight:400}
-body.c17-academy-mode #academyWorkspace label{color:var(--c17-label-color);font-size:var(--c17-label-size);font-weight:var(--c17-label-weight)}
-body.c17-academy-mode #academyWorkspace input,
-body.c17-academy-mode #academyWorkspace select,
-body.c17-academy-mode #academyWorkspace textarea{color:var(--c17-body-color);font-size:var(--c17-body-size);font-weight:400}
-body.c17-academy-mode #academyWorkspace button{font-size:var(--c17-action-size);line-height:1.2;font-weight:var(--c17-action-weight)}
+body.c17-cam-mode #camWorkspace .panel-head h2,
+body.c17-cam-mode #camWorkspace .panel-head h3,
+body.c17-cam-mode #camWorkspace .cam-form-title h2,
+body.c17-cam-mode #camWorkspace .cam-form-section h2,
+body.c17-cam-mode #camWorkspace .cam-form-section h3{margin-top:0;color:var(--c17-panel-title-color);font-size:var(--c17-panel-title-size);line-height:var(--c17-panel-title-line);font-weight:var(--c17-panel-title-weight);letter-spacing:0}
+body.c17-cam-mode #camWorkspace .panel-head p,
+body.c17-cam-mode #camWorkspace .panel-head small,
+body.c17-cam-mode #camWorkspace .cam-form-title p,
+body.c17-cam-mode #camWorkspace .cam-form-section p{color:var(--c17-support-color);font-size:var(--c17-support-size);line-height:var(--c17-body-line);font-weight:400}
+body.c17-cam-mode #camWorkspace table th{color:var(--c17-table-head-color);font-size:var(--c17-table-head-size);font-weight:var(--c17-table-head-weight)}
+body.c17-cam-mode #camWorkspace table td{color:var(--c17-body-color);font-size:var(--c17-body-size);line-height:var(--c17-body-line);font-weight:400}
+body.c17-cam-mode #camWorkspace table td strong{color:var(--c17-body-color);font-size:var(--c17-body-size);font-weight:var(--c17-body-strong-weight)}
+body.c17-cam-mode #camWorkspace table td small{color:var(--c17-muted-color);font-size:var(--c17-muted-size);line-height:1.35;font-weight:400}
+body.c17-cam-mode #camWorkspace label{color:var(--c17-label-color);font-size:var(--c17-label-size);font-weight:var(--c17-label-weight)}
+body.c17-cam-mode #camWorkspace input,
+body.c17-cam-mode #camWorkspace select,
+body.c17-cam-mode #camWorkspace textarea{color:var(--c17-body-color);font-size:var(--c17-body-size);font-weight:400}
+body.c17-cam-mode #camWorkspace button{font-size:var(--c17-action-size);line-height:1.2;font-weight:var(--c17-action-weight)}
 
 /* Enrollment panel titles and supporting copy. */
-body.c17-academy-mode .cam-registration-compose h2,
-body.c17-academy-mode .cam-registration-tracker h2,
-body.c17-academy-mode .cam-registration-review h2,
-body.c17-academy-mode .c17-player-records-head h2,
-body.c17-academy-mode .c17-unassigned-head h2,
-body.c17-academy-mode .c17-player-batch-head h3,
-body.c17-academy-mode .c17-players-page .academy-form-title h2,
-body.c17-academy-mode .c17-players-page .academy-form-section h2{margin-top:0;color:var(--c17-panel-title-color);font-size:var(--c17-panel-title-size);line-height:var(--c17-panel-title-line);font-weight:var(--c17-panel-title-weight);letter-spacing:0}
-body.c17-academy-mode .cam-registration-compose h2,
-body.c17-academy-mode .cam-registration-tracker h2,
-body.c17-academy-mode .cam-registration-review h2,
-body.c17-academy-mode .c17-player-records-head h2,
-body.c17-academy-mode .c17-unassigned-head h2{margin-bottom:5px}
-body.c17-academy-mode .cam-registration-compose p,
-body.c17-academy-mode .cam-registration-tracker p,
-body.c17-academy-mode .cam-registration-review p,
-body.c17-academy-mode .c17-player-records-head p,
-body.c17-academy-mode .c17-unassigned-head p,
-body.c17-academy-mode .c17-player-batch-head p,
-body.c17-academy-mode .c17-players-page .academy-form-title p,
-body.c17-academy-mode .c17-players-page .academy-form-section p{margin-top:0;color:var(--c17-support-color);font-size:var(--c17-support-size);line-height:var(--c17-body-line);font-weight:400}
+body.c17-cam-mode .cam-registration-compose h2,
+body.c17-cam-mode .cam-registration-tracker h2,
+body.c17-cam-mode .cam-registration-review h2,
+body.c17-cam-mode .c17-player-records-head h2,
+body.c17-cam-mode .c17-unassigned-head h2,
+body.c17-cam-mode .c17-player-batch-head h3,
+body.c17-cam-mode .c17-players-page .cam-form-title h2,
+body.c17-cam-mode .c17-players-page .cam-form-section h2{margin-top:0;color:var(--c17-panel-title-color);font-size:var(--c17-panel-title-size);line-height:var(--c17-panel-title-line);font-weight:var(--c17-panel-title-weight);letter-spacing:0}
+body.c17-cam-mode .cam-registration-compose h2,
+body.c17-cam-mode .cam-registration-tracker h2,
+body.c17-cam-mode .cam-registration-review h2,
+body.c17-cam-mode .c17-player-records-head h2,
+body.c17-cam-mode .c17-unassigned-head h2{margin-bottom:5px}
+body.c17-cam-mode .cam-registration-compose p,
+body.c17-cam-mode .cam-registration-tracker p,
+body.c17-cam-mode .cam-registration-review p,
+body.c17-cam-mode .c17-player-records-head p,
+body.c17-cam-mode .c17-unassigned-head p,
+body.c17-cam-mode .c17-player-batch-head p,
+body.c17-cam-mode .c17-players-page .cam-form-title p,
+body.c17-cam-mode .c17-players-page .cam-form-section p{margin-top:0;color:var(--c17-support-color);font-size:var(--c17-support-size);line-height:var(--c17-body-line);font-weight:400}
 
 /* KPI typography is shared with Dashboard program cards. */
-body.c17-academy-mode .cam-registration-kpi span,
-body.c17-academy-mode .cam-registration-kpi small,
-body.c17-academy-mode .academy-stat span{color:var(--c17-kpi-label-color);font-size:var(--c17-kpi-label-size);font-weight:var(--c17-kpi-label-weight)}
-body.c17-academy-mode .cam-registration-kpi strong,
-body.c17-academy-mode .academy-stat strong{color:var(--c17-kpi-value-color);font-size:var(--c17-kpi-value-size);line-height:1;font-weight:var(--c17-kpi-value-weight)}
-body.c17-academy-mode .academy-stat small{color:var(--c17-muted-color);font-size:var(--c17-muted-size);font-weight:400}
+body.c17-cam-mode .cam-registration-kpi span,
+body.c17-cam-mode .cam-registration-kpi small,
+body.c17-cam-mode .cam-stat span{color:var(--c17-kpi-label-color);font-size:var(--c17-kpi-label-size);font-weight:var(--c17-kpi-label-weight)}
+body.c17-cam-mode .cam-registration-kpi strong,
+body.c17-cam-mode .cam-stat strong{color:var(--c17-kpi-value-color);font-size:var(--c17-kpi-value-size);line-height:1;font-weight:var(--c17-kpi-value-weight)}
+body.c17-cam-mode .cam-stat small{color:var(--c17-muted-color);font-size:var(--c17-muted-size);font-weight:400}
 
 /* Enrollment tracking = Dashboard table typography. */
-body.c17-academy-mode .cam-tracker-row{color:var(--c17-body-color);font-size:var(--c17-body-size);line-height:var(--c17-body-line);font-weight:400}
-body.c17-academy-mode .cam-tracker-row.header{color:var(--c17-table-head-color);font-size:var(--c17-table-head-size);font-weight:var(--c17-table-head-weight)}
-body.c17-academy-mode .cam-tracker-row strong{color:var(--c17-body-color);font-size:var(--c17-body-size);font-weight:var(--c17-body-strong-weight)}
-body.c17-academy-mode .cam-tracker-row small{color:var(--c17-muted-color);font-size:var(--c17-muted-size);line-height:1.35;font-weight:400}
-body.c17-academy-mode .cam-status{font-size:var(--c17-muted-size);font-weight:900}
+body.c17-cam-mode .cam-tracker-row{color:var(--c17-body-color);font-size:var(--c17-body-size);line-height:var(--c17-body-line);font-weight:400}
+body.c17-cam-mode .cam-tracker-row.header{color:var(--c17-table-head-color);font-size:var(--c17-table-head-size);font-weight:var(--c17-table-head-weight)}
+body.c17-cam-mode .cam-tracker-row strong{color:var(--c17-body-color);font-size:var(--c17-body-size);font-weight:var(--c17-body-strong-weight)}
+body.c17-cam-mode .cam-tracker-row small{color:var(--c17-muted-color);font-size:var(--c17-muted-size);line-height:1.35;font-weight:400}
+body.c17-cam-mode .cam-status{font-size:var(--c17-muted-size);font-weight:900}
 
 /* Player roster = Dashboard table body. */
-body.c17-academy-mode .c17-player-batch-panel .academy-player-row,
-body.c17-academy-mode .c17-unassigned-list .academy-player-row{color:var(--c17-body-color);font-size:var(--c17-body-size);line-height:var(--c17-body-line);font-weight:400}
-body.c17-academy-mode .c17-player-batch-panel .academy-player-row strong,
-body.c17-academy-mode .c17-unassigned-list .academy-player-row strong{color:var(--c17-body-color);font-size:var(--c17-body-size);line-height:1.25;font-weight:var(--c17-body-strong-weight)}
-body.c17-academy-mode .c17-player-batch-panel .academy-player-row small,
-body.c17-academy-mode .c17-unassigned-list .academy-player-row small{color:var(--c17-muted-color);font-size:var(--c17-muted-size);line-height:1.35;font-weight:400}
-body.c17-academy-mode .c17-player-batch-empty,
-body.c17-academy-mode .c17-unassigned-empty{color:#798a80;font-size:var(--c17-body-size);line-height:var(--c17-body-line);font-weight:400}
-body.c17-academy-mode .c17-player-batch-count,
-body.c17-academy-mode .c17-unassigned-count{color:#1b6b45;font-size:var(--c17-body-size);font-weight:900}
+body.c17-cam-mode .c17-player-batch-panel .cam-player-row,
+body.c17-cam-mode .c17-unassigned-list .cam-player-row{color:var(--c17-body-color);font-size:var(--c17-body-size);line-height:var(--c17-body-line);font-weight:400}
+body.c17-cam-mode .c17-player-batch-panel .cam-player-row strong,
+body.c17-cam-mode .c17-unassigned-list .cam-player-row strong{color:var(--c17-body-color);font-size:var(--c17-body-size);line-height:1.25;font-weight:var(--c17-body-strong-weight)}
+body.c17-cam-mode .c17-player-batch-panel .cam-player-row small,
+body.c17-cam-mode .c17-unassigned-list .cam-player-row small{color:var(--c17-muted-color);font-size:var(--c17-muted-size);line-height:1.35;font-weight:400}
+body.c17-cam-mode .c17-player-batch-empty,
+body.c17-cam-mode .c17-unassigned-empty{color:#798a80;font-size:var(--c17-body-size);line-height:var(--c17-body-line);font-weight:400}
+body.c17-cam-mode .c17-player-batch-count,
+body.c17-cam-mode .c17-unassigned-count{color:#1b6b45;font-size:var(--c17-body-size);font-weight:900}
 
 /* Programs and enrollments: override older page-specific mini-fonts with the Dashboard standard. */
-body.c17-academy-mode .academy-program-row strong,
-body.c17-academy-mode .academy-enrollment-row strong,
-body.c17-academy-mode .academy-program-empty strong{color:var(--c17-body-color);font-size:var(--c17-body-size);line-height:1.25;font-weight:var(--c17-body-strong-weight)}
-body.c17-academy-mode .academy-program-row small,
-body.c17-academy-mode .academy-enrollment-row small,
-body.c17-academy-mode .academy-programs-note,
-body.c17-academy-mode .academy-enrollment-meta span{color:var(--c17-muted-color);font-size:var(--c17-muted-size);line-height:1.4;font-weight:400}
-body.c17-academy-mode .academy-program-tags span,
-body.c17-academy-mode .academy-program-status{font-size:var(--c17-muted-size);font-weight:900}
-body.c17-academy-mode .academy-program-actions button,
-body.c17-academy-mode .academy-enrollment-actions button{font-size:var(--c17-action-size);font-weight:var(--c17-action-weight)}
-body.c17-academy-mode .academy-program-empty{color:var(--c17-muted-color);font-size:var(--c17-body-size);line-height:var(--c17-body-line)}
+body.c17-cam-mode .cam-program-row strong,
+body.c17-cam-mode .cam-enrollment-row strong,
+body.c17-cam-mode .cam-program-empty strong{color:var(--c17-body-color);font-size:var(--c17-body-size);line-height:1.25;font-weight:var(--c17-body-strong-weight)}
+body.c17-cam-mode .cam-program-row small,
+body.c17-cam-mode .cam-enrollment-row small,
+body.c17-cam-mode .cam-programs-note,
+body.c17-cam-mode .cam-enrollment-meta span{color:var(--c17-muted-color);font-size:var(--c17-muted-size);line-height:1.4;font-weight:400}
+body.c17-cam-mode .cam-program-tags span,
+body.c17-cam-mode .cam-program-status{font-size:var(--c17-muted-size);font-weight:900}
+body.c17-cam-mode .cam-program-actions button,
+body.c17-cam-mode .cam-enrollment-actions button{font-size:var(--c17-action-size);font-weight:var(--c17-action-weight)}
+body.c17-cam-mode .cam-program-empty{color:var(--c17-muted-color);font-size:var(--c17-body-size);line-height:var(--c17-body-line)}
 
 /* Coaches use the same roster-body hierarchy as Players. */
-body.c17-academy-mode .academy-coach-copy strong,
-body.c17-academy-mode .academy-coach-assignment-row strong{color:var(--c17-body-color);font-size:var(--c17-body-size);line-height:1.25;font-weight:var(--c17-body-strong-weight)}
-body.c17-academy-mode .academy-coach-copy small,
-body.c17-academy-mode .academy-coach-assignment-row small{color:var(--c17-muted-color);font-size:var(--c17-muted-size);line-height:1.35;font-weight:400}
+body.c17-cam-mode .cam-coach-copy strong,
+body.c17-cam-mode .cam-coach-assignment-row strong{color:var(--c17-body-color);font-size:var(--c17-body-size);line-height:1.25;font-weight:var(--c17-body-strong-weight)}
+body.c17-cam-mode .cam-coach-copy small,
+body.c17-cam-mode .cam-coach-assignment-row small{color:var(--c17-muted-color);font-size:var(--c17-muted-size);line-height:1.35;font-weight:400}
 
 /* Existing forms/buttons inherit the standard without changing their functional styling. */
-body.c17-academy-mode .cam-registration-fields label,
-body.c17-academy-mode .cam-review-note label,
-body.c17-academy-mode .c17-players-page .academy-field > span,
-body.c17-academy-mode .c17-players-page .academy-form-grid label{color:var(--c17-label-color);font-size:var(--c17-label-size);font-weight:var(--c17-label-weight)}
-body.c17-academy-mode .cam-registration-fields input,
-body.c17-academy-mode .cam-registration-fields select,
-body.c17-academy-mode .cam-registration-review textarea,
-body.c17-academy-mode .c17-players-page input,
-body.c17-academy-mode .c17-players-page select,
-body.c17-academy-mode .c17-players-page textarea{color:var(--c17-body-color);font-size:var(--c17-body-size);font-weight:400}
-body.c17-academy-mode .cam-registration-page button,
-body.c17-academy-mode .c17-players-page button{border-radius:8px;font-size:var(--c17-action-size);line-height:1.2;font-weight:var(--c17-action-weight)}
-body.c17-academy-mode .cam-registration-page button.primary,
-body.c17-academy-mode .cam-registration-page .cam-row-actions button.review,
-body.c17-academy-mode .c17-players-page button.primary{border-color:#087b45;background:#087b45;color:#fff;box-shadow:0 5px 12px rgba(8,123,69,.17)}
-body.c17-academy-mode .cam-registration-page button:not(.primary):not(.review):not(.danger):not(.warn),
-body.c17-academy-mode .c17-players-page button.secondary,
-body.c17-academy-mode .c17-players-page .academy-row-actions button{border:1px solid #cfe0d5;background:#fff;color:#245d3d}
+body.c17-cam-mode .cam-registration-fields label,
+body.c17-cam-mode .cam-review-note label,
+body.c17-cam-mode .c17-players-page .cam-field > span,
+body.c17-cam-mode .c17-players-page .cam-form-grid label{color:var(--c17-label-color);font-size:var(--c17-label-size);font-weight:var(--c17-label-weight)}
+body.c17-cam-mode .cam-registration-fields input,
+body.c17-cam-mode .cam-registration-fields select,
+body.c17-cam-mode .cam-registration-review textarea,
+body.c17-cam-mode .c17-players-page input,
+body.c17-cam-mode .c17-players-page select,
+body.c17-cam-mode .c17-players-page textarea{color:var(--c17-body-color);font-size:var(--c17-body-size);font-weight:400}
+body.c17-cam-mode .cam-registration-page button,
+body.c17-cam-mode .c17-players-page button{border-radius:8px;font-size:var(--c17-action-size);line-height:1.2;font-weight:var(--c17-action-weight)}
+body.c17-cam-mode .cam-registration-page button.primary,
+body.c17-cam-mode .cam-registration-page .cam-row-actions button.review,
+body.c17-cam-mode .c17-players-page button.primary{border-color:#087b45;background:#087b45;color:#fff;box-shadow:0 5px 12px rgba(8,123,69,.17)}
+body.c17-cam-mode .cam-registration-page button:not(.primary):not(.review):not(.danger):not(.warn),
+body.c17-cam-mode .c17-players-page button.secondary,
+body.c17-cam-mode .c17-players-page .cam-row-actions button{border:1px solid #cfe0d5;background:#fff;color:#245d3d}

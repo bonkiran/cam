@@ -13,9 +13,9 @@ def test_payment_provider_integrations_ui_is_loaded_and_provider_neutral():
     assert "academy_payment_provider_integrations_v2.js?v=3" in index
     assert "academy_payment_provider_integrations_v1.js?v=1" not in index
 
-    assert "/api/academy/payment-providers" in js
-    assert "/api/academy/payment-providers/${provider}/test-connection" in js
-    assert "/api/academy/payment-providers/select" in js
+    assert "/api/cam/payment-providers" in js
+    assert "/api/cam/payment-providers/${provider}/test-connection" in js
+    assert "/api/cam/payment-providers/select" in js
     assert "Stripe + Square compatibility" in js
     assert "CAM_STRIPE_SECRET_KEY" in js
     assert "CAM_SQUARE_ACCESS_TOKEN" in js

@@ -15,7 +15,7 @@
 
   function active() {
     const r = route();
-    return r.page === 'academy' && r.tab === 'overview';
+    return r.page === 'cam' && r.tab === 'overview';
   }
 
   function esc(value = '') {
@@ -74,7 +74,7 @@
   }
 
   function go(tab) {
-    location.hash = tab === 'overview' ? 'academy' : `academy?tab=${encodeURIComponent(tab)}`;
+    location.hash = tab === 'overview' ? 'cam' : `academy?tab=${encodeURIComponent(tab)}`;
   }
 
   function notify(message) {
@@ -179,7 +179,7 @@
 
   async function enrollmentTrackerFromProcess2(data) {
     try {
-      const rows = await requestJson('/api/academy/enrollments');
+      const rows = await requestJson('/api/cam/enrollments');
       const asOf = localDate(data.as_of) || new Date();
       const month = asOf.getMonth();
       const year = asOf.getFullYear();
@@ -333,7 +333,7 @@
     if (!editor) { editor = document.createElement('div'); editor.className='c17-batch-editor'; cell.appendChild(editor); }
     editor.innerHTML = '<div class="c17-editor">Loading active batches…</div>';
     try {
-      const batches = await requestJson('/api/academy/batches');
+      const batches = await requestJson('/api/cam/batches');
       const activeBatches = (Array.isArray(batches) ? batches : []).filter(batch => String(batch.status || '') === 'active');
       const options = activeBatches.map(batch => {
         const activeCount = Number(batch.active_player_count || 0), capacity = Number(batch.capacity || 0);
@@ -349,7 +349,7 @@
         if (!batchId) return;
         const status = $('.c17-editor-status', form); status.textContent='Assigning…';
         try {
-          await requestJson(`/api/academy/batches/${batchId}/players`, {method:'POST', body:JSON.stringify({player_id:playerId,waitlist_if_full:false,joined_on:joinedOn})});
+          await requestJson(`/api/cam/batches/${batchId}/players`, {method:'POST', body:JSON.stringify({player_id:playerId,waitlist_if_full:false,joined_on:joinedOn})});
           notify(`${player.player_name} assigned to batch.`); await render(true);
         } catch (error) { status.textContent = error.message || 'Assignment failed.'; }
       };
@@ -358,19 +358,19 @@
 
   function wire(root) {
     $$('.c17-assign-batch', root).forEach(button => button.onclick = () => openBatchEditor(button));
-    $$('[data-open-registration]', root).forEach(button => button.onclick = () => { location.hash='academy?tab=registration'; });
+    $$('[data-open-registration]', root).forEach(button => button.onclick = () => { location.hash='cam?tab=registration'; });
     $$('[data-dashboard-tab]', root).forEach(button => button.onclick = () => go(button.dataset.dashboardTab));
   }
 
   async function render(force = false) {
     if (!active() || rendering) return;
-    const content = $('#academyWorkspace .academy-content');
+    const content = $('#camWorkspace .cam-content');
     if (!content) return;
     if (!force && content.dataset.dashboardV4 === '1' && $('.c17-dashboard', content)) return;
     rendering = true;
     document.body.classList.add('c17-dashboard-active');
     try {
-      let data = await requestJson('/api/academy/dashboard/v3');
+      let data = await requestJson('/api/cam/dashboard/v3');
       data = await enrollmentTrackerFromProcess2(data);
       const weather = await loadWeather(data.academy || {});
       if (!active() || !content.isConnected) return;
@@ -393,8 +393,8 @@
 
   function schedule() { if (scheduled) return; scheduled = true; requestAnimationFrame(apply); }
   window.addEventListener('hashchange', schedule);
-  window.addEventListener('academy-payments-updated', () => render(true));
-  window.addEventListener('academy-enrollment-completed', () => render(true));
+  window.addEventListener('cam-payments-updated', () => render(true));
+  window.addEventListener('cam-enrollment-completed', () => render(true));
   document.addEventListener('DOMContentLoaded', schedule);
   new MutationObserver(() => { if (active()) schedule(); }).observe(document.documentElement, {childList:true, subtree:true});
   schedule();

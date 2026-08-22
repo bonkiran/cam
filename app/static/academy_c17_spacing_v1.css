@@ -1,7 +1,7 @@
 /* C17 layout spacing standard.
    Source of truth: approved Dashboard spacing in academy_dashboard_v4.css.
    Use the same 12px rhythm between major panels/sections across Academy pages. */
-body.c17-academy-mode #academyWorkspace .academy-content{
+body.c17-cam-mode #camWorkspace .cam-content{
   --c17-page-gap:12px;
   --c17-panel-gap:12px;
   --c17-grid-gap:12px;
@@ -13,52 +13,52 @@ body.c17-academy-mode #academyWorkspace .academy-content{
 }
 
 /* Major page wrappers follow the Dashboard's 12px vertical rhythm. */
-body.c17-academy-mode #academyWorkspace .cam-registration-page,
-body.c17-academy-mode #academyWorkspace .c17-players-page,
-body.c17-academy-mode #academyWorkspace .c17-dashboard{
+body.c17-cam-mode #camWorkspace .cam-registration-page,
+body.c17-cam-mode #camWorkspace .c17-players-page,
+body.c17-cam-mode #camWorkspace .c17-dashboard{
   gap:var(--c17-page-gap)!important;
 }
 
 /* Players keeps a legacy #playerEditor node inside its editor host.
    When that editor is empty, the host must not consume a grid slot/gap. */
-body.c17-academy-mode #academyWorkspace .c17-player-editor-host{
+body.c17-cam-mode #camWorkspace .c17-player-editor-host{
   display:none!important;
 }
-body.c17-academy-mode #academyWorkspace .c17-player-editor-host:has(> #playerEditor:not(:empty)){
+body.c17-cam-mode #camWorkspace .c17-player-editor-host:has(> #playerEditor:not(:empty)){
   display:block!important;
 }
 
 /* Major multi-panel rows/grids use the same horizontal and vertical gap. */
-body.c17-academy-mode #academyWorkspace .cam-registration-kpis,
-body.c17-academy-mode #academyWorkspace .cam-registration-grid,
-body.c17-academy-mode #academyWorkspace .c17-player-batch-grid,
-body.c17-academy-mode #academyWorkspace .academy-stats,
-body.c17-academy-mode #academyWorkspace .academy-programs-grid,
-body.c17-academy-mode #academyWorkspace .academy-dashboard-grid,
-body.c17-academy-mode #academyWorkspace .academy-two-col,
-body.c17-academy-mode #academyWorkspace .academy-side-stack,
-body.c17-academy-mode #academyWorkspace .c17-two-col,
-body.c17-academy-mode #academyWorkspace .c17-enrollment-grid,
-body.c17-academy-mode #academyWorkspace .c17-session-grid,
-body.c17-academy-mode #academyWorkspace .c17-events-grid{
+body.c17-cam-mode #camWorkspace .cam-registration-kpis,
+body.c17-cam-mode #camWorkspace .cam-registration-grid,
+body.c17-cam-mode #camWorkspace .c17-player-batch-grid,
+body.c17-cam-mode #camWorkspace .cam-stats,
+body.c17-cam-mode #camWorkspace .cam-programs-grid,
+body.c17-cam-mode #camWorkspace .cam-dashboard-grid,
+body.c17-cam-mode #camWorkspace .cam-two-col,
+body.c17-cam-mode #camWorkspace .cam-side-stack,
+body.c17-cam-mode #camWorkspace .c17-two-col,
+body.c17-cam-mode #camWorkspace .c17-enrollment-grid,
+body.c17-cam-mode #camWorkspace .c17-session-grid,
+body.c17-cam-mode #camWorkspace .c17-events-grid{
   gap:var(--c17-grid-gap)!important;
 }
 
 /* Let the shared parent gap control section spacing instead of legacy margins. */
-body.c17-academy-mode #academyWorkspace .academy-content > .academy-section-head,
-body.c17-academy-mode #academyWorkspace .academy-content > .academy-stats,
-body.c17-academy-mode #academyWorkspace .academy-content > .academy-program-editor,
-body.c17-academy-mode #academyWorkspace .academy-content > .academy-session-panel,
-body.c17-academy-mode #academyWorkspace .academy-content > .panel,
-body.c17-academy-mode #academyWorkspace .cam-registration-page > .cam-registration-review{
+body.c17-cam-mode #camWorkspace .cam-content > .cam-section-head,
+body.c17-cam-mode #camWorkspace .cam-content > .cam-stats,
+body.c17-cam-mode #camWorkspace .cam-content > .cam-program-editor,
+body.c17-cam-mode #camWorkspace .cam-content > .cam-session-panel,
+body.c17-cam-mode #camWorkspace .cam-content > .panel,
+body.c17-cam-mode #camWorkspace .cam-registration-page > .cam-registration-review{
   margin-top:0!important;
   margin-bottom:0!important;
 }
 
 /* C17 page heroes sit flush in the same section stack as Dashboard. */
-body.c17-academy-mode #academyWorkspace .academy-content > .c17-hero,
-body.c17-academy-mode #academyWorkspace .cam-registration-page > .c17-hero,
-body.c17-academy-mode #academyWorkspace .c17-players-page > .c17-hero{
+body.c17-cam-mode #camWorkspace .cam-content > .c17-hero,
+body.c17-cam-mode #camWorkspace .cam-registration-page > .c17-hero,
+body.c17-cam-mode #camWorkspace .c17-players-page > .c17-hero{
   margin-top:0!important;
   margin-bottom:0!important;
 }

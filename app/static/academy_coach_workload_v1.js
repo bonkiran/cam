@@ -6,7 +6,7 @@
   function tabFromHash() {
     const raw = location.hash.replace(/^#/, '');
     const [page, query = ''] = raw.split('?');
-    if (page !== 'academy') return null;
+    if (page !== 'cam') return null;
     return new URLSearchParams(query).get('tab') || 'overview';
   }
 
@@ -24,7 +24,7 @@
 
   async function applyWorkload() {
     if (running || tabFromHash() !== 'coaches') return;
-    const rows = [...document.querySelectorAll('.academy-coach-row[data-coach-row]')];
+    const rows = [...document.querySelectorAll('.cam-coach-row[data-coach-row]')];
     if (!rows.length) return;
 
     const signature = rows.map(row => row.dataset.coachRow).join(',');
@@ -34,7 +34,7 @@
     try {
       const workloads = await Promise.all(rows.map(async row => {
         const coachId = Number(row.dataset.coachRow);
-        const data = await json(`/api/academy/coaches/${coachId}/workload`);
+        const data = await json(`/api/cam/coaches/${coachId}/workload`);
         return { row, data };
       }));
 
@@ -43,7 +43,7 @@
       workloads.forEach(({ row, data }) => {
         totalSessions += Number(data.session_count || 0);
         totalMinutes += Number(data.total_minutes || 0);
-        const tags = row.querySelector('.academy-program-tags');
+        const tags = row.querySelector('.cam-program-tags');
         if (tags) {
           let tag = tags.querySelector('[data-coach-workload]');
           if (!tag) {
@@ -57,7 +57,7 @@
         row.dataset.workloadApplied = '1';
       });
 
-      const stat = [...document.querySelectorAll('.academy-stat')].find(card =>
+      const stat = [...document.querySelectorAll('.cam-stat')].find(card =>
         card.querySelector('span')?.textContent?.trim() === 'Session workload'
       );
       if (stat) {
