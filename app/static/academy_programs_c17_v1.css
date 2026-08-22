@@ -46,6 +46,10 @@ body.c17-academy-mode .c17-program-operations-actions button {
   border-radius:8px;
   font-size:11px;
   font-weight:800;
+  border-color:#087b45!important;
+  background:#087b45!important;
+  color:#fff!important;
+  box-shadow:0 5px 12px rgba(8,123,69,.17)!important;
 }
 
 @media(max-width:1000px){
