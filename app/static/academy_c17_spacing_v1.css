@@ -19,6 +19,15 @@ body.c17-academy-mode #academyWorkspace .c17-dashboard{
   gap:var(--c17-page-gap)!important;
 }
 
+/* Players keeps a legacy #playerEditor node inside its editor host.
+   When that editor is empty, the host must not consume a grid slot/gap. */
+body.c17-academy-mode #academyWorkspace .c17-player-editor-host{
+  display:none!important;
+}
+body.c17-academy-mode #academyWorkspace .c17-player-editor-host:has(> #playerEditor:not(:empty)){
+  display:block!important;
+}
+
 /* Major multi-panel rows/grids use the same horizontal and vertical gap. */
 body.c17-academy-mode #academyWorkspace .cam-registration-kpis,
 body.c17-academy-mode #academyWorkspace .cam-registration-grid,
