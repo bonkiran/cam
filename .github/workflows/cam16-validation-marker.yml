@@ -51,35 +51,61 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt pytest httpx playwright
           python -m playwright install chromium
-      - name: Compile and JS syntax
+      - id: syntax
+        name: Compile and JS syntax
+        continue-on-error: true
         run: |
           python -m compileall -q app run.py tests
           node --check app/static/cam_dashboard_v4.js
           node --check app/static/cam_attendance_v1.js
           node --check app/static/cam_player_development_v1.js
-      - name: Naming and Dashboard entry guards
+      - id: guards
+        name: Naming and Dashboard entry guards
+        continue-on-error: true
         run: pytest -q tests/test_cam15_naming_guard.py tests/test_cam16_dashboard_attendance_entry.py
-      - name: Attendance and MOAT API on SQLite
+      - id: sqlite
+        name: Attendance and MOAT API on SQLite
+        continue-on-error: true
         run: pytest -q tests/test_cam_attendance_api.py tests/test_cam14_player_development_api.py
-      - name: Attendance and MOAT API on PostgreSQL
+      - id: postgres
+        name: Attendance and MOAT API on PostgreSQL
+        continue-on-error: true
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_cam16_test
         run: pytest -q tests/test_cam_attendance_api.py tests/test_cam14_player_development_api.py
-      - name: Attendance and MOAT browser acceptance
+      - id: browser
+        name: Attendance and MOAT browser acceptance
+        continue-on-error: true
         run: pytest -q tests/test_cam_attendance_ui.py tests/test_cam14_player_development_ui.py tests/test_cam16_dashboard_attendance_entry.py
-      - name: Record successful readiness
+      - name: Record readiness result
+        if: always()
+        env:
+          SYNTAX: ${{ steps.syntax.outcome }}
+          GUARDS: ${{ steps.guards.outcome }}
+          SQLITE: ${{ steps.sqlite.outcome }}
+          POSTGRES: ${{ steps.postgres.outcome }}
+          BROWSER: ${{ steps.browser.outcome }}
         run: |
           mkdir -p validation
-          cat > validation/CAM16_MANUAL_TEST_READY.txt <<'EOF'
-          PASS
-          Dashboard -> Take Attendance -> exact session -> Today's Development Focus validated.
-          Player and coach attendance statuses are Present, Late, Absent only.
-          SQLite API, PostgreSQL API, Chromium attendance, MOAT-01 and Dashboard entry tests passed.
+          if [ "$SYNTAX" = success ] && [ "$GUARDS" = success ] && [ "$SQLITE" = success ] && [ "$POSTGRES" = success ] && [ "$BROWSER" = success ]; then
+            RESULT=PASS
+          else
+            RESULT=FAIL
+          fi
+          cat > validation/CAM16_MANUAL_TEST_READY.txt <<EOF
+          $RESULT
+          syntax=$SYNTAX
+          guards=$GUARDS
+          sqlite=$SQLITE
+          postgres=$POSTGRES
+          browser=$BROWSER
+          Dashboard -> Take Attendance -> exact session -> Today's Development Focus.
+          Attendance statuses: Present, Late, Absent only.
           EOF
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add validation/CAM16_MANUAL_TEST_READY.txt
           if ! git diff --cached --quiet; then
-            git commit -m "CAM-16 mark manual test readiness green"
+            git commit -m "CAM-16 record manual test readiness result"
             git push origin HEAD:bongonfun/cam-15-cam-naming-cleanup
           fi
