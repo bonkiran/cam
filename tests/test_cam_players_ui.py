@@ -74,6 +74,11 @@ def test_cam_player_ui_end_to_end():
                 expect(page.locator(".cam-player-row", has_text=player_name)).to_have_count(1)
                 page.get_by_role("button", name="Cancel").click()
 
+                # The current Players page re-renders the directory after form actions.
+                # Re-resolve the row before continuing instead of holding a stale DOM locator.
+                player_row = page.locator(".cam-player-row", has_text=player_name)
+                expect(player_row).to_be_visible(timeout=10000)
+
                 # TC3: enrich player record and verify all values survive save/reopen.
                 player_row.get_by_role("button", name="Edit").click()
                 form = page.locator("#camPlayerForm")
