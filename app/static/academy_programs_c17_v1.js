@@ -17,6 +17,25 @@
     return r.page === 'academy' && r.tab === 'programs';
   }
 
+  function esc(value = '') {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function notify(message) {
+    if (typeof window.toast === 'function') window.toast(message);
+    else console.log(message);
+  }
+
+  async function requestJson(url, options = {}) {
+    const headers = {...(options.headers || {})};
+    if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+    const response = await fetch(url, {cache:'no-store', ...options, headers});
+    let data = null;
+    try { data = await response.json(); } catch {}
+    if (!response.ok) throw new Error(data?.detail || `Request failed (${response.status})`);
+    return data;
+  }
+
   function hideLegacyProgramTabs() {
     document.querySelectorAll('.academy-tabs, .academy-primary-nav').forEach(node => {
       node.style.display = 'none';
@@ -34,8 +53,94 @@
     button.type = 'button';
     button.className = 'secondary';
     button.textContent = `＋ ${label}`;
-    button.addEventListener('click', () => goToCreateAction(action, hash));
+    if (action === 'create-sessions') {
+      button.addEventListener('click', openInlineSessions);
+    } else {
+      button.addEventListener('click', () => goToCreateAction(action, hash));
+    }
     return button;
+  }
+
+  function scheduleForm(batches) {
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const options = batches.map(batch => `<option value="${Number(batch.id)}">${esc(batch.name || `Batch ${batch.id}`)}</option>`).join('');
+    return `<form id="c17ProgramScheduleForm" class="panel academy-form-card">
+      <div class="academy-form-title">
+        <div><span class="academy-kicker">RECURRING SCHEDULE</span><h2>Generate Batch Sessions</h2><p>Dates/times are stored in the Academy timezone. Existing identical occurrences are not duplicated.</p></div>
+        <button type="button" class="secondary" data-close-program-schedule>Cancel</button>
+      </div>
+      <div class="academy-form-grid three">
+        <label class="academy-field"><span>Batch *</span><select name="batch_id" required><option value="">Select</option>${options}</select></label>
+        <label class="academy-field"><span>Start Date *</span><input type="date" name="start_date" required></label>
+        <label class="academy-field"><span>End Date *</span><input type="date" name="end_date" required></label>
+        <label class="academy-field"><span>Start Time *</span><input type="time" name="start_time" value="19:00" required></label>
+        <label class="academy-field"><span>Duration (minutes) *</span><input type="number" name="duration_minutes" value="60" required></label>
+      </div>
+      <div class="academy-weekdays"><span>Training days *</span>${days.map((day, index) => `<label><input type="checkbox" name="weekday" value="${index}"> ${day}</label>`).join('')}</div>
+      <div class="academy-form-actions"><span id="c17ProgramScheduleStatus"></span><button type="submit" class="primary">Generate Sessions</button></div>
+    </form>`;
+  }
+
+  async function openInlineSessions() {
+    if (!isProgramsPage()) return;
+    const content = $('#academyWorkspace .academy-content');
+    const host = $('#c17ProgramInlineAction', content || document);
+    if (!content || !host) return;
+
+    host.innerHTML = '<div class="panel academy-loading">Loading active batches…</div>';
+    try {
+      const batches = await requestJson('/api/academy/batches');
+      if (!isProgramsPage() || !host.isConnected) return;
+      const activeBatches = (Array.isArray(batches) ? batches : []).filter(batch => String(batch.status || 'active').toLowerCase() === 'active');
+      if (!activeBatches.length) {
+        host.innerHTML = '';
+        notify('Create an active batch before generating sessions.');
+        return;
+      }
+
+      host.innerHTML = scheduleForm(activeBatches);
+      $('[data-close-program-schedule]', host)?.addEventListener('click', () => { host.innerHTML = ''; });
+      const form = $('#c17ProgramScheduleForm', host);
+      if (form) {
+        form.addEventListener('submit', async event => {
+          event.preventDefault();
+          const status = $('#c17ProgramScheduleStatus', form);
+          const submit = $('button[type="submit"]', form);
+          const data = new FormData(form);
+          const weekdays = data.getAll('weekday').map(Number);
+          if (!weekdays.length) {
+            if (status) status.textContent = 'Select at least one training day.';
+            return;
+          }
+
+          if (submit) submit.disabled = true;
+          if (status) status.textContent = 'Generating…';
+          try {
+            const batchId = Number(data.get('batch_id'));
+            const result = await requestJson(`/api/academy/batches/${batchId}/generate-sessions`, {
+              method:'POST',
+              body:JSON.stringify({
+                start_date:data.get('start_date'),
+                end_date:data.get('end_date'),
+                weekdays,
+                start_time:data.get('start_time'),
+                duration_minutes:Number(data.get('duration_minutes'))
+              })
+            });
+            const count = Number(result?.created_count || 0);
+            if (status) status.textContent = `${count} session${count === 1 ? '' : 's'} generated.`;
+            notify(`${count} session${count === 1 ? '' : 's'} generated.`);
+          } catch (error) {
+            if (status) status.textContent = error.message;
+          } finally {
+            if (submit) submit.disabled = false;
+          }
+        });
+      }
+      host.scrollIntoView({behavior:'smooth', block:'start'});
+    } catch (error) {
+      host.innerHTML = `<div class="warning">${esc(error.message)}</div>`;
+    }
   }
 
   async function enhanceProgramsPage() {
@@ -79,6 +184,15 @@
       actions.appendChild(buildButton('Create Tournaments', 'create-tournament', 'academy?tab=tournaments'));
 
       hero.insertAdjacentElement('afterend', toolbar);
+
+      const stats = $('.academy-stats', content);
+      if (stats && !$('#c17ProgramInlineAction', content)) {
+        const inlineHost = document.createElement('div');
+        inlineHost.id = 'c17ProgramInlineAction';
+        inlineHost.className = 'academy-program-editor c17-program-inline-action';
+        stats.insertAdjacentElement('afterend', inlineHost);
+      }
+
       content.dataset.c17ProgramsHub = '1';
     } catch (error) {
       console.error('Could not build C17 Programs header/actions', error);
@@ -95,7 +209,6 @@
     const r = route();
     const map = {
       'create-batch': {tab:'batches', selector:'#openBatchForm'},
-      'create-sessions': {tab:'batches', selector:'#openBatchSchedule'},
       'create-match': {tab:'teams', selector:'#openFixtureForm'},
       'create-tournament': {tab:'tournaments', selector:'#openTournamentForm'}
     };
