@@ -1,0 +1,44 @@
+/* C17 Cricket Academy refinements for Academy Dashboard v3. */
+body.cam-cam-dashboard-v3-mode .sidebar .brand.cam-c17-sidebar-brand{display:flex;align-items:center;gap:10px;padding:2px 4px}
+body.cam-cam-dashboard-v3-mode .sidebar .brand.cam-c17-sidebar-brand img{width:42px;height:42px;object-fit:contain;flex:0 0 auto;filter:drop-shadow(0 2px 5px rgba(0,0,0,.18))}
+body.cam-cam-dashboard-v3-mode .sidebar .brand.cam-c17-sidebar-brand strong{color:#fff;font-size:15px;line-height:1.15;letter-spacing:.01em;white-space:normal}
+
+.cam-v3-enrollment-prototype{display:grid;grid-template-columns:minmax(240px,.34fr) minmax(0,1.66fr);gap:14px}
+.cam-v3-links-sent{display:flex;min-height:180px;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.cam-v3-links-sent .cam-v3-card-title{align-self:stretch;align-items:flex-start;text-align:left;margin-bottom:10px}
+.cam-v3-links-sent .cam-v3-card-title h2{font-size:16px;line-height:1.25}
+.cam-v3-links-count{display:block;margin-top:3px;color:#145d3b;font-size:36px;line-height:1;font-weight:900}
+.cam-v3-links-note{display:block;margin-top:9px;color:#61786a;font-size:13px}
+.cam-v3-tracker-prototype{min-width:0}
+.cam-v3-tracker-prototype>.cam-v3-card-title{margin-bottom:10px}
+.cam-v3-tracker-prototype>.cam-v3-card-title h2{font-size:17px}
+.cam-v3-tracker-prototype .cam-v3-table-wrap th{font-size:11px;padding:10px 12px}
+.cam-v3-tracker-prototype .cam-v3-table-wrap td{font-size:13px;padding:10px 12px}
+.cam-v3-tracker-prototype .cam-v3-table-wrap td strong{font-size:12px}
+.cam-v3-tracker-prototype .cam-v3-table-wrap td small{font-size:11px;line-height:1.35}
+.cam-v3-view-all-links{margin-top:10px;border:0;background:transparent;color:#177347;font-size:12px;font-weight:800;cursor:pointer;padding:4px 0}
+.cam-v3-view-all-links:hover{text-decoration:underline}
+
+.cam-v3-finance-grid.cam-v3-finance-stack{grid-template-columns:1fr}
+.cam-v3-finance-stack .cam-v3-card{width:100%}
+.cam-v3-finance-stack .cam-v3-money-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cam-v3-finance-stack .cam-v3-money-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+
+/* Keep the current-weather side visually substantial when the 7-day strip is present. */
+.cam-v3-weather{grid-template-columns:minmax(220px,.75fr) minmax(0,2.25fr)}
+.cam-v3-weather-current small{font-size:12px}
+.cam-v3-forecast-day b,.cam-v3-forecast-day small{font-size:10px}
+.cam-v3-forecast-day strong{font-size:14px}
+.cam-v3-forecast-day em{font-size:12px}
+
+@media(max-width:1080px){
+  .cam-v3-enrollment-prototype{grid-template-columns:1fr}
+  .cam-v3-links-sent{min-height:auto;align-items:flex-start;text-align:left}
+  .cam-v3-links-count{font-size:30px}
+  .cam-v3-finance-stack .cam-v3-money-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  body.cam-cam-dashboard-v3-mode .sidebar .brand.cam-c17-sidebar-brand strong{font-size:13px}
+  body.cam-cam-dashboard-v3-mode .sidebar .brand.cam-c17-sidebar-brand img{width:36px;height:36px}
+  .cam-v3-finance-stack .cam-v3-money-grid.two,.cam-v3-finance-stack .cam-v3-money-grid.three{grid-template-columns:1fr}
+}

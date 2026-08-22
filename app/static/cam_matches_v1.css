@@ -1,0 +1,16 @@
+/* Teams & Matches — functional competition operations. */
+.cam-match-team-list,.cam-match-list{display:grid;gap:9px;margin-top:10px}
+.cam-match-team-row,.cam-match-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;border:1px solid #e1e9e4;background:#fff;border-radius:12px;padding:12px 13px}
+.cam-match-team-row strong,.cam-match-row strong{display:block;color:#183f2c;font-size:9.5px}
+.cam-match-team-row small,.cam-match-row small{display:block;color:#7d8981;font-size:7.5px;margin-top:4px;line-height:1.45}
+.cam-match-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap}
+.cam-match-actions button{border:1px solid #d8e5dc;background:#fff;color:#2b704a;border-radius:8px;padding:6px 8px;font-size:7.5px;font-weight:800;cursor:pointer}
+.cam-match-actions button:hover{border-color:#a9cdb6;background:#f6fbf7}.cam-match-actions button:disabled{opacity:.4;cursor:not-allowed}
+.cam-match-roster-picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.cam-match-roster-picker label{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:7px;align-items:center;border:1px solid #dce7df;border-radius:10px;background:#fbfdfb;padding:9px 10px;color:#345743;font-size:8px;font-weight:800}
+.cam-match-roster-picker input{grid-row:1/3;accent-color:#28774e}.cam-match-roster-picker small{display:block;color:#89958d;font-size:7px;font-weight:500;margin-top:2px}
+.cam-match-stats{display:grid;gap:8px}.cam-match-stats-head{display:flex;justify-content:space-between;align-items:end;border-bottom:1px solid #e7ece8;padding-bottom:8px}.cam-match-stats-head strong{font-size:10px;color:#234b35}.cam-match-stats-head small{font-size:7px;color:#89938c}
+.cam-match-stat-row{display:grid;grid-template-columns:minmax(135px,1.5fr) repeat(5,minmax(72px,.7fr));gap:8px;align-items:end;border:1px solid #e3ebe5;background:#fbfdfb;border-radius:11px;padding:10px}
+.cam-match-stat-row>strong{align-self:center;color:#244e36;font-size:8.5px}.cam-match-stat-row .cam-field span{font-size:6.8px}.cam-match-stat-row .cam-field input{padding:7px 8px;font-size:8px}
+@media(max-width:1180px){.cam-match-roster-picker{grid-template-columns:repeat(2,minmax(0,1fr))}.cam-match-stat-row{grid-template-columns:minmax(130px,1.2fr) repeat(3,minmax(70px,.7fr))}}
+@media(max-width:760px){.cam-match-team-row,.cam-match-row{grid-template-columns:1fr}.cam-match-actions{justify-content:flex-start}.cam-match-roster-picker{grid-template-columns:1fr}.cam-match-stat-row{grid-template-columns:1fr 1fr}.cam-match-stat-row>strong{grid-column:1/-1}}

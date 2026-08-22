@@ -38,7 +38,7 @@ def put(path: str, payload: dict, token: str | None = None, expected=(200,)):
 
 def setup_owner_and_family():
     profile = client.put(
-        "/api/academy/profile",
+        "/api/cam/profile",
         json={
             "name": "CAM Manual Fix Academy",
             "email": "academy@example.test",
@@ -60,7 +60,7 @@ def setup_owner_and_family():
     owner_token = bootstrap.json()["token"]
 
     player = post(
-        "/api/academy/players",
+        "/api/cam/players",
         {
             "name": "Dashboard Player",
             "status": "active",
@@ -81,12 +81,12 @@ def setup_owner_and_family():
     )
     guardian_id = int(player["guardians"][0]["id"])
     program = post(
-        "/api/academy/programs",
+        "/api/cam/programs",
         {"name": "Dashboard Program", "program_type": "group", "status": "active"},
         owner_token,
     )
     enrollment = post(
-        "/api/academy/enrollments",
+        "/api/cam/enrollments",
         {
             "player_id": player["id"],
             "program_id": program["id"],
@@ -96,7 +96,7 @@ def setup_owner_and_family():
         owner_token,
     )
     fee_plan = post(
-        "/api/academy/fee-plans",
+        "/api/cam/fee-plans",
         {
             "name": "Dashboard Monthly",
             "amount_cents": 17500,
@@ -109,7 +109,7 @@ def setup_owner_and_family():
         owner_token,
     )
     account = post(
-        "/api/academy/billing-accounts",
+        "/api/cam/billing-accounts",
         {
             "account_name": "Dashboard Family",
             "player_ids": [player["id"]],
@@ -120,13 +120,13 @@ def setup_owner_and_family():
         owner_token,
     )
     put(
-        f"/api/academy/enrollments/{enrollment['id']}/billing",
+        f"/api/cam/enrollments/{enrollment['id']}/billing",
         {"fee_plan_id": fee_plan["id"], "discount_type": "none", "discount_value": 0},
         owner_token,
     )
     today = date.today()
     invoice = post(
-        "/api/academy/invoices/from-enrollment",
+        "/api/cam/invoices/from-enrollment",
         {
             "account_id": account["id"],
             "enrollment_id": enrollment["id"],
@@ -137,7 +137,7 @@ def setup_owner_and_family():
         owner_token,
     )
     parent_user = post(
-        "/api/academy/access/users",
+        "/api/cam/access/users",
         {
             "display_name": "Dashboard Parent",
             "email": "parent.login@example.test",
@@ -154,12 +154,12 @@ def setup_owner_and_family():
     )
     parent_token = login["token"]
     method = post(
-        "/api/academy/parent/payment-methods/sandbox",
+        "/api/cam/parent/payment-methods/sandbox",
         {"card_number": "4242424242424242", "exp_month": 12, "exp_year": 2034, "cvc": "123", "make_default": True},
         parent_token,
     )
     coach = post(
-        "/api/academy/coaches",
+        "/api/cam/coaches",
         {"first_name": "Smoke", "last_name": "Coach", "status": "active", "specialties": ["Batting"]},
         owner_token,
     )
@@ -259,14 +259,14 @@ def seed_dashboard_operations(data: dict, as_of: date):
 def test_parent_partial_payment_is_rejected_and_full_payment_succeeds():
     data = setup_owner_and_family()
     partial = client.post(
-        f"/api/academy/parent/invoices/{data['invoice']['id']}/pay",
+        f"/api/cam/parent/invoices/{data['invoice']['id']}/pay",
         json={"payment_method_id": data["method"]["id"], "amount_cents": 5000},
         headers=auth(data["parent_token"]),
     )
     assert partial.status_code == 409, partial.text
     assert "full invoice balance" in partial.text
     unchanged = client.get(
-        "/api/academy/parent/billing",
+        "/api/cam/parent/billing",
         headers=auth(data["parent_token"]),
     )
     assert unchanged.status_code == 200, unchanged.text
@@ -274,25 +274,25 @@ def test_parent_partial_payment_is_rejected_and_full_payment_succeeds():
     assert int(invoice["balance_due_cents"]) == 17500
 
     full = client.post(
-        f"/api/academy/parent/invoices/{data['invoice']['id']}/pay",
+        f"/api/cam/parent/invoices/{data['invoice']['id']}/pay",
         json={"payment_method_id": data["method"]["id"]},
         headers=auth(data["parent_token"]),
     )
     assert full.status_code == 200, full.text
     assert int(full.json()["payment"]["amount_cents"]) == 17500
-    paid = client.get("/api/academy/parent/billing", headers=auth(data["parent_token"])).json()
+    paid = client.get("/api/cam/parent/billing", headers=auth(data["parent_token"])).json()
     assert int(paid["accounts"][0]["invoices"][0]["balance_due_cents"]) == 0
 
-    first_dashboard = client.get("/api/academy/dashboard/operations", headers=auth(data["owner_token"]))
+    first_dashboard = client.get("/api/cam/dashboard/operations", headers=auth(data["owner_token"]))
     assert first_dashboard.status_code == 200, first_dashboard.text
     as_of = date.fromisoformat(first_dashboard.json()["as_of"])
     match_id = seed_dashboard_operations(data, as_of)
 
-    dashboard = client.get("/api/academy/dashboard/operations", headers=auth(data["owner_token"]))
+    dashboard = client.get("/api/cam/dashboard/operations", headers=auth(data["owner_token"]))
     assert dashboard.status_code == 200, dashboard.text
     body = dashboard.json()
     assert body["user"]["display_name"] == "Gayatri Owner"
-    assert body["academy"]["name"] == "CAM Manual Fix Academy"
+    assert body["cam"]["name"] == "CAM Manual Fix Academy"
     assert body["metrics"]["fee_received_mtd_cents"] >= 17500
     assert body["metrics"]["fee_pending_cents"] == 10000
     assert body["metrics"]["fee_late_cents"] == 5000
@@ -308,7 +308,7 @@ def test_parent_partial_payment_is_rejected_and_full_payment_succeeds():
     assert body["upcoming_matches"][0]["confirmed"] == 0
 
     confirmation = client.put(
-        f"/api/academy/matches/{match_id}/confirmations/{data['player']['id']}",
+        f"/api/cam/matches/{match_id}/confirmations/{data['player']['id']}",
         json={"status": "confirmed"},
         headers=auth(data["owner_token"]),
     )
@@ -316,6 +316,6 @@ def test_parent_partial_payment_is_rejected_and_full_payment_succeeds():
     assert confirmation.json()["summary"]["confirmed"] == 1
     assert confirmation.json()["summary"]["awaiting"] == 0
 
-    refreshed = client.get("/api/academy/dashboard/operations", headers=auth(data["owner_token"])).json()
+    refreshed = client.get("/api/cam/dashboard/operations", headers=auth(data["owner_token"])).json()
     assert refreshed["upcoming_matches"][0]["confirmed"] == 1
     assert refreshed["upcoming_matches"][0]["awaiting"] == 0

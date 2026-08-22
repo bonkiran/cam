@@ -1,0 +1,14 @@
+/* Slice 2A — Programs & Enrollment */
+.cam-programs-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.4fr);gap:14px;align-items:start}
+.cam-programs-panel{padding:18px}.cam-programs-panel .panel-head{margin-bottom:12px}
+.cam-program-list,.cam-enrollment-list{display:grid;gap:9px}
+.cam-program-row,.cam-enrollment-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border:1px solid #e1e9e4;border-radius:10px;background:#fff}
+.cam-program-row strong,.cam-enrollment-row strong{display:block;color:#214a34;font-size:9px}.cam-program-row small,.cam-enrollment-row small{display:block;color:#7d8981;font-size:7.5px;line-height:1.45;margin-top:3px}
+.cam-program-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.cam-program-tags span{font-size:6.8px;font-weight:800;padding:3px 6px;border-radius:999px;background:#eef7f1;color:#356c4b;border:1px solid #dcebe1}
+.cam-program-actions,.cam-enrollment-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.cam-program-actions button,.cam-enrollment-actions button{border:1px solid #dce7df;background:#fff;color:#2d6f4b;border-radius:7px;padding:6px 8px;font-size:7px;font-weight:800;cursor:pointer}.cam-enrollment-actions .danger{color:#9a493b;border-color:#ecd9d5}.cam-enrollment-actions .warn{color:#8b681e;border-color:#eadfbf}
+.cam-program-status{display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;font-size:6.8px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;background:#eaf6ee;color:#28724a;border:1px solid #d5eadc}.cam-program-status.inactive,.cam-program-status.cancelled{background:#f3f4f3;color:#747b76;border-color:#e0e3e1}.cam-program-status.frozen{background:#fff7e7;color:#95681c;border-color:#efdfbc}
+.cam-program-editor{margin-bottom:14px}.cam-program-editor:empty{display:none}
+.cam-programs-note{padding:11px 12px;border-radius:9px;background:#f6faf7;border:1px solid #e0ebe3;color:#65756a;font-size:7.5px;line-height:1.5;margin-top:12px}.cam-programs-note strong{color:#2a6444}
+.cam-program-empty{padding:18px;text-align:center;border:1px dashed #d9e5dd;border-radius:10px;color:#7e8982;font-size:8px}.cam-program-empty strong{display:block;color:#315d43;font-size:9px;margin-bottom:4px}
+.cam-enrollment-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.cam-enrollment-meta span{font-size:7px;color:#67766d}.cam-enrollment-type{font-weight:900;text-transform:uppercase;color:#2c704a!important}
+@media(max-width:1000px){.cam-programs-grid{grid-template-columns:1fr}}

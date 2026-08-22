@@ -121,18 +121,18 @@ def test_batch_roster_remove_and_waitlist_promote_in_browser():
     try:
         _wait_for_server(f"{BASE_URL}/api/health")
 
-        status, _ = _request("PUT", "/api/academy/profile", {"name": "Track A Browser Academy"})
+        status, _ = _request("PUT", "/api/cam/profile", {"name": "Track A Browser Academy"})
         assert status == 200
-        program = _post("/api/academy/programs", {"name": "Track A Browser U13", "program_type": "group", "status": "active"})
-        player1 = _post("/api/academy/players", {"name": "Browser Active Player", "status": "active"})
-        player2 = _post("/api/academy/players", {"name": "Browser Waitlist Player", "status": "active"})
+        program = _post("/api/cam/programs", {"name": "Track A Browser U13", "program_type": "group", "status": "active"})
+        player1 = _post("/api/cam/players", {"name": "Browser Active Player", "status": "active"})
+        player2 = _post("/api/cam/players", {"name": "Browser Waitlist Player", "status": "active"})
         batch = _post(
-            "/api/academy/batches",
+            "/api/cam/batches",
             {"name": "Track A Browser Batch", "program_id": program["id"], "capacity": 1, "status": "active"},
         )
-        _post(f"/api/academy/batches/{batch['id']}/players", {"player_id": player1["id"]})
+        _post(f"/api/cam/batches/{batch['id']}/players", {"player_id": player1["id"]})
         _post(
-            f"/api/academy/batches/{batch['id']}/players",
+            f"/api/cam/batches/{batch['id']}/players",
             {"player_id": player2["id"], "waitlist_if_full": True},
         )
 
@@ -140,11 +140,11 @@ def test_batch_roster_remove_and_waitlist_promote_in_browser():
             browser = playwright.chromium.launch(headless=True)
             page = browser.new_page(viewport={"width": 1600, "height": 1000})
             try:
-                page.goto(f"{BASE_URL}/#academy?tab=batches", wait_until="domcontentloaded")
+                page.goto(f"{BASE_URL}/#cam?tab=batches", wait_until="domcontentloaded")
                 expect(page.get_by_role("heading", name="Batches & Sessions")).to_be_visible(timeout=15000)
 
-                active_row = page.locator(".academy-batch-membership-row", has_text="Browser Active Player")
-                waitlist_row = page.locator(".academy-batch-membership-row", has_text="Browser Waitlist Player")
+                active_row = page.locator(".cam-batch-membership-row", has_text="Browser Active Player")
+                waitlist_row = page.locator(".cam-batch-membership-row", has_text="Browser Waitlist Player")
                 expect(active_row).to_be_visible(timeout=10000)
                 expect(waitlist_row).to_be_visible(timeout=10000)
                 expect(active_row.get_by_role("button", name="Remove")).to_be_visible(timeout=10000)
@@ -160,25 +160,25 @@ def test_batch_roster_remove_and_waitlist_promote_in_browser():
                 # a full rare-action refresh so all batch/session counts reload.
                 active_row.get_by_role("button", name="Remove").click()
                 expect(page.get_by_role("heading", name="Batches & Sessions")).to_be_visible(timeout=15000)
-                expect(page.locator(".academy-batch-membership-row", has_text="Browser Active Player")).to_contain_text("inactive")
+                expect(page.locator(".cam-batch-membership-row", has_text="Browser Active Player")).to_contain_text("inactive")
 
-                waitlist_row = page.locator(".academy-batch-membership-row", has_text="Browser Waitlist Player")
+                waitlist_row = page.locator(".cam-batch-membership-row", has_text="Browser Waitlist Player")
                 expect(waitlist_row.get_by_role("button", name="Promote")).to_be_visible(timeout=10000)
                 waitlist_row.get_by_role("button", name="Promote").click()
 
                 expect(page.get_by_role("heading", name="Batches & Sessions")).to_be_visible(timeout=15000)
-                promoted_row = page.locator(".academy-batch-membership-row", has_text="Browser Waitlist Player")
+                promoted_row = page.locator(".cam-batch-membership-row", has_text="Browser Waitlist Player")
                 expect(promoted_row).to_contain_text("active", timeout=10000)
                 expect(promoted_row.get_by_role("button", name="Remove")).to_be_visible(timeout=10000)
                 expect(promoted_row.get_by_role("button", name="Promote")).to_have_count(0)
 
-                status, memberships = _request("GET", f"/api/academy/batches/{batch['id']}/players")
+                status, memberships = _request("GET", f"/api/cam/batches/{batch['id']}/players")
                 assert status == 200
                 states = {row["player_name"]: row["status"] for row in memberships}
                 assert states["Browser Active Player"] == "inactive"
                 assert states["Browser Waitlist Player"] == "active"
 
-                status, batch_after = _request("GET", f"/api/academy/batches/{batch['id']}")
+                status, batch_after = _request("GET", f"/api/cam/batches/{batch['id']}")
                 assert status == 200
                 assert int(batch_after["active_player_count"]) == 1
                 assert int(batch_after["waitlist_count"]) == 0

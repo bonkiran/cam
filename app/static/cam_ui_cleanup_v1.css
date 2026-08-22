@@ -1,0 +1,160 @@
+body.cam-cam-context #camWorkspace .cam-owner-context-nav{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  width:max-content;
+  max-width:100%;
+  margin:0 0 14px;
+  padding:5px;
+  border:1px solid rgba(24,77,58,.12);
+  border-radius:10px;
+  background:rgba(255,255,255,.78);
+  box-shadow:none;
+  overflow-x:auto;
+}
+
+body.cam-cam-context #camWorkspace .cam-owner-context-nav button{
+  min-height:32px;
+  padding:6px 11px;
+  border-radius:7px;
+  border:0;
+  font-size:12px;
+  font-weight:700;
+  white-space:nowrap;
+  box-shadow:none;
+}
+
+body.cam-cam-context #camWorkspace .cam-owner-context-nav button:not(.active){
+  background:transparent;
+  color:#49665b;
+}
+
+body.cam-cam-context #camWorkspace .cam-owner-context-nav button.active{
+  background:#e8f3ed;
+  color:#134c37;
+}
+
+#camWorkspace .cam-content.cam-cam-loading{
+  min-height:440px;
+}
+
+.cam-ui-loading-skeleton{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+  margin-top:18px;
+  opacity:.72;
+}
+
+.cam-ui-loading-skeleton > div{
+  min-height:128px;
+  border:1px solid rgba(28,65,52,.08);
+  border-radius:14px;
+  background:linear-gradient(100deg,rgba(242,246,244,.9) 20%,rgba(255,255,255,.95) 42%,rgba(242,246,244,.9) 64%);
+  background-size:240% 100%;
+  animation:camSkeletonSweep 1.35s ease-in-out infinite;
+}
+
+@keyframes camSkeletonSweep{
+  0%{background-position:100% 0}
+  100%{background-position:-100% 0}
+}
+
+body.cam-cam-context #camWorkspace .cam-content > .warning:only-child{
+  margin:0;
+}
+
+body.cam-cam-context #camWorkspace .cam-owner-settings-shell,
+body.cam-cam-context #camWorkspace .cam-reports-shell{
+  max-width:1180px;
+}
+
+#camWorkspace .cam-content.cam-owner-dashboard-polished{
+  overflow:visible;
+}
+
+#camWorkspace .cam-owner-dashboard-polished .cam-hero,
+#camWorkspace .cam-owner-dashboard-polished .cam-stats,
+#camWorkspace .cam-owner-dashboard-polished .cam-owner-dashboard-snapshot,
+#camWorkspace .cam-owner-dashboard-polished .cam-dashboard-grid{
+  min-width:0;
+}
+
+#camWorkspace .cam-owner-dashboard-polished .cam-owner-dashboard-snapshot,
+#camWorkspace .cam-owner-dashboard-polished .cam-dashboard-grid{
+  gap:16px;
+}
+
+#camWorkspace .cam-owner-dashboard-polished .panel,
+#camWorkspace .cam-owner-dashboard-polished article,
+#camWorkspace .cam-owner-dashboard-polished section{
+  min-width:0;
+}
+
+#camWorkspace .cam-owner-dashboard-polished .panel-head,
+#camWorkspace .cam-owner-dashboard-polished .cam-form-title,
+#camWorkspace .cam-owner-dashboard-polished .cam-hero{
+  gap:16px;
+}
+
+#camWorkspace .cam-owner-dashboard-polished .panel-head > div,
+#camWorkspace .cam-owner-dashboard-polished .cam-form-title > div,
+#camWorkspace .cam-owner-dashboard-polished .cam-hero > div:first-child{
+  min-width:0;
+}
+
+#camWorkspace .cam-owner-dashboard-polished .panel-head button,
+#camWorkspace .cam-owner-dashboard-polished .cam-hero-actions button,
+#camWorkspace .cam-owner-dashboard-polished .cam-owner-session-actions button{
+  flex:0 0 auto;
+  max-width:100%;
+  white-space:nowrap;
+}
+
+#camWorkspace .cam-owner-dashboard-polished .cam-owner-session-actions{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+#camWorkspace .cam-owner-dashboard-polished .cam-dash-session{
+  grid-template-columns:minmax(0,1fr) auto !important;
+  align-items:center;
+  gap:12px;
+}
+
+#camWorkspace .cam-owner-dashboard-polished .cam-dash-session > *{
+  min-width:0;
+}
+
+#camWorkspace .cam-owner-dashboard-polished .cam-owner-money-card small,
+#camWorkspace .cam-owner-dashboard-polished .cam-dash-empty,
+#camWorkspace .cam-owner-dashboard-polished [class*="weather"] small{
+  color:#6f7f77;
+}
+
+#camWorkspace .cam-owner-dashboard-polished .cam-owner-money-card strong:empty::after{
+  content:'—';
+}
+
+@media (max-width:1100px){
+  #camWorkspace .cam-owner-dashboard-polished .cam-owner-dashboard-snapshot,
+  #camWorkspace .cam-owner-dashboard-polished .cam-dashboard-grid{
+    grid-template-columns:1fr !important;
+  }
+}
+
+@media (max-width:900px){
+  .cam-ui-loading-skeleton{grid-template-columns:1fr;}
+  body.cam-cam-context #camWorkspace .cam-owner-context-nav{width:100%;}
+  #camWorkspace .cam-owner-dashboard-polished .cam-hero,
+  #camWorkspace .cam-owner-dashboard-polished .panel-head,
+  #camWorkspace .cam-owner-dashboard-polished .cam-form-title{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  #camWorkspace .cam-owner-dashboard-polished .cam-owner-session-actions{
+    justify-content:flex-start;
+  }
+}

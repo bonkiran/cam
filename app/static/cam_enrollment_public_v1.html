@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CAM Parent Enrollment</title>
+  <link rel="stylesheet" href="/static/cam_enrollment_public_v1.css?v=3" />
+</head>
+<body>
+  <main class="enrollment-shell">
+    <header class="brand-row">
+      <div class="brand-mark">🏏</div>
+      <div>
+        <strong>CRICK<span>ANALYSIS</span></strong>
+        <small>Secure Parent Enrollment</small>
+      </div>
+    </header>
+
+    <section id="enrollmentLoading" class="card state-card">Loading your enrollment…</section>
+
+    <section id="enrollmentError" class="card state-card error" hidden>
+      <h1>Enrollment link unavailable</h1>
+      <p id="enrollmentErrorText">This enrollment link could not be opened.</p>
+    </section>
+
+    <section id="enrollmentPortal" hidden>
+      <section class="hero card">
+        <span class="kicker">PLAYER ONBOARDING · PROCESS 2</span>
+        <h1 id="enrollmentTitle">Academy Enrollment</h1>
+        <p id="enrollmentSubtitle">Complete the remaining steps to finish enrollment.</p>
+        <div class="hero-meta">
+          <div><span>Player</span><strong id="enrollmentPlayer">—</strong></div>
+          <div><span>Parent</span><strong id="enrollmentParent">—</strong></div>
+          <div><span>Status</span><strong id="enrollmentStatus">—</strong></div>
+        </div>
+      </section>
+
+      <section class="card progress-card">
+        <h2>Enrollment Steps</h2>
+        <div class="steps" id="enrollmentSteps"></div>
+      </section>
+
+      <section class="card welcome-card" id="welcomeCard">
+        <h2>Welcome to Enrollment</h2>
+        <p>Your registration has been approved. The next steps will keep your agreements, payment setup, and enrollment records inside CAM.</p>
+        <ul>
+          <li>Review enrollment summary</li>
+          <li>Accept academy agreements and documents</li>
+          <li>Set up monthly tuition payment securely</li>
+          <li>Complete enrollment and retain your document copies</li>
+        </ul>
+        <button id="startEnrollment" type="button">Start Enrollment</button>
+      </section>
+
+      <section class="card next-card" id="nextCard" hidden>
+        <span class="check">✓</span>
+        <h2>Enrollment started</h2>
+        <p>Your secure enrollment session is active. Your agreements and documents are ready for review.</p>
+        <button id="openAgreements" type="button">Continue to Agreements &amp; Documents</button>
+      </section>
+
+      <section class="card agreements-card" id="agreementsCard" hidden>
+        <div class="agreements-head">
+          <div>
+            <span class="kicker light">SLICE 2B · TEST FLOW</span>
+            <h2>Agreements &amp; Documents</h2>
+            <p>Review each required document separately before providing your electronic signature.</p>
+          </div>
+          <span class="test-badge">TEST SAMPLES ONLY</span>
+        </div>
+        <div class="test-notice">
+          These two documents are sample/test documents for CAM workflow validation only. They are not production legal documents.
+        </div>
+        <div id="agreementDocuments" class="document-list"></div>
+
+        <section class="signature-panel" id="signaturePanel">
+          <h3>Electronic Signature</h3>
+          <p>After reviewing both documents, confirm each agreement and type your full legal name.</p>
+          <label class="signature-field">
+            <span>Parent / Guardian Full Legal Name *</span>
+            <input id="legalSignerName" type="text" autocomplete="name" maxlength="160" placeholder="Enter full legal name" />
+          </label>
+          <label class="consent-row">
+            <input id="electronicSignatureConsent" type="checkbox" />
+            <span>I agree to use electronic records and electronic signatures for this enrollment. I understand that typing my name and selecting “Agree &amp; Continue” constitutes my electronic signature.</span>
+          </label>
+          <button id="acceptAgreements" type="button">Agree &amp; Continue</button>
+          <p id="agreementError" class="inline-error" hidden></p>
+        </section>
+      </section>
+
+      <section class="card next-card" id="documentsAcceptedCard" hidden>
+        <span class="check">✓</span>
+        <h2>Agreements accepted</h2>
+        <p>Your document acceptance has been recorded. Fees &amp; Payment is the next CAM enrollment stage.</p>
+        <button id="openPayment" type="button">Continue to Fees &amp; Payment</button>
+      </section>
+
+      <section class="card payment-card" id="paymentCard" hidden>
+        <div class="agreements-head">
+          <div>
+            <span class="kicker light">SLICE 2C · SANDBOX PAYMENT SETUP</span>
+            <h2>Fees &amp; Payment</h2>
+            <p>Review the monthly tuition schedule, authorize recurring billing, and securely save a payment method.</p>
+          </div>
+          <span class="test-badge" id="paymentEnvironmentBadge">SANDBOX</span>
+        </div>
+
+        <div class="payment-summary-grid">
+          <div><span>Fee Plan</span><strong id="paymentFeePlan">—</strong></div>
+          <div><span>Monthly Tuition</span><strong id="paymentMonthlyAmount">—</strong></div>
+          <div><span>Due Today</span><strong id="paymentDueToday">—</strong></div>
+          <div><span>First Charge</span><strong id="paymentFirstCharge">—</strong></div>
+        </div>
+        <div class="payment-scope-note">
+          Tournament, match, camp, travel, equipment and other variable charges are not included in this monthly authorization. CAM will require separate parent approval for those charges.
+        </div>
+
+        <section class="payment-section">
+          <h3>Billing Address</h3>
+          <label class="consent-row compact">
+            <input id="useParentBillingAddress" type="checkbox" checked />
+            <span>Use the verified parent address from registration.</span>
+          </label>
+          <div class="saved-address" id="parentBillingAddress">Loading address…</div>
+          <div id="alternateBillingAddress" class="billing-address-grid" hidden>
+            <label class="field full"><span>Street Address *</span><input id="billingAddress1" autocomplete="address-line1" /></label>
+            <label class="field full"><span>Address Line 2</span><input id="billingAddress2" autocomplete="address-line2" /></label>
+            <label class="field"><span>City *</span><input id="billingCity" autocomplete="address-level2" /></label>
+            <label class="field"><span>State *</span><input id="billingState" autocomplete="address-level1" maxlength="30" /></label>
+            <label class="field"><span>ZIP *</span><input id="billingZip" autocomplete="postal-code" inputmode="numeric" maxlength="5" /></label>
+          </div>
+        </section>
+
+        <section class="payment-section authorization-box">
+          <h3>Recurring Payment Authorization</h3>
+          <p id="recurringConsentText">Loading recurring-payment terms…</p>
+          <label class="consent-row">
+            <input id="recurringPaymentConsent" type="checkbox" />
+            <span>I authorize the recurring monthly tuition schedule shown above and understand that the first charge date is shown before I save my payment method.</span>
+          </label>
+        </section>
+
+        <section class="payment-section secure-payment-box">
+          <div class="secure-payment-head">
+            <div>
+              <h3>Secure Payment Method</h3>
+              <p>Card details are entered directly into the selected payment provider's secure component. CAM does not store full card numbers or CVC/CVV.</p>
+            </div>
+            <strong id="paymentProviderName">—</strong>
+          </div>
+          <button id="beginPaymentSetup" type="button">Continue to Secure Payment Method</button>
+          <div id="providerPaymentPanel" hidden>
+            <div id="paymentElement" class="payment-element-host"></div>
+            <button id="confirmPaymentSetup" type="button">Save Payment Method &amp; Continue</button>
+          </div>
+          <p id="paymentError" class="inline-error" hidden></p>
+        </section>
+      </section>
+
+      <section class="card next-card" id="paymentCompleteCard" hidden>
+        <span class="check">✓</span>
+        <h2>Payment method added</h2>
+        <p>Your monthly tuition authorization and secure payment method have been recorded.</p>
+        <div class="payment-complete-summary">
+          <div><span>Saved Method</span><strong id="savedPaymentMethod">—</strong></div>
+          <div><span>First Payment</span><strong id="savedFirstPayment">—</strong></div>
+        </div>
+        <div class="coming-soon">Next: Complete Enrollment</div>
+      </section>
+    </section>
+  </main>
+  <script src="/static/cam_enrollment_public_v1.js?v=3"></script>
+  <script src="/static/cam_enrollment_complete_v1.js?v=1"></script>
+</body>
+</html>

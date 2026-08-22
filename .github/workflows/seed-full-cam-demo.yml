@@ -1,0 +1,61 @@
+name: Seed Full CAM Manual-Test Data
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/reset_demo_finance.py'
+      - 'scripts/capture_demo_finance_baseline.py'
+      - 'scripts/seed_full_cam_demo.py'
+      - 'scripts/fix_full_demo_dashboard_data.py'
+      - 'scripts/verify_full_demo_dashboard.py'
+      - '.github/workflows/seed-full-cam-demo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-full-cam-seeder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate seeder syntax
+        run: >-
+          python -m py_compile
+          scripts/reset_demo_finance.py
+          scripts/capture_demo_finance_baseline.py
+          scripts/seed_full_cam_demo.py
+          scripts/fix_full_demo_dashboard_data.py
+          scripts/verify_full_demo_dashboard.py
+
+  seed-full-cam-data:
+    if: github.event_name == 'workflow_dispatch'
+    needs: validate-full-cam-seeder
+    runs-on: ubuntu-latest
+    env:
+      CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
+      DEMO_FINANCE_BASELINE_PATH: demo_finance_baseline.json
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Remove prior DEMO finance fixture records
+        run: python scripts/reset_demo_finance.py
+      - name: Capture preserved non-DEMO finance baseline
+        run: python scripts/capture_demo_finance_baseline.py
+      - name: Seed comprehensive CAM manual-test dataset
+        run: python scripts/seed_full_cam_demo.py
+      - name: Correct dashboard registration dates and seed coach salary payments
+        run: python scripts/fix_full_demo_dashboard_data.py
+      - name: Reconcile DEMO contribution over preserved baseline
+        run: python scripts/verify_full_demo_dashboard.py

@@ -22,8 +22,8 @@ def get(path: str):
 
 def main():
     month = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m")
-    dashboard = get("/api/academy/dashboard/operations")
-    finance = get(f"/api/academy/finance/operations-summary?month={month}")
+    dashboard = get("/api/cam/dashboard/operations")
+    finance = get(f"/api/cam/finance/operations-summary?month={month}")
     metrics = dashboard.get("metrics") or {}
 
     baseline = {

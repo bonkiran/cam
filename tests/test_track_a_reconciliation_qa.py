@@ -70,19 +70,19 @@ def _reset_shared_postgres_state() -> None:
 def test_reconcile_qa_046_052_053_exact_fee_and_manual_payment_permutations():
     _reset_shared_postgres_state()
 
-    profile = client.put("/api/academy/profile", json={"name": "Track A Reconciliation Academy"})
+    profile = client.put("/api/cam/profile", json={"name": "Track A Reconciliation Academy"})
     assert profile.status_code == 200, profile.text
 
-    p1 = _post("/api/academy/players", {"name": "Reconcile Cash Player", "status": "active"})
-    p2 = _post("/api/academy/players", {"name": "Reconcile Check Player", "status": "active"})
+    p1 = _post("/api/cam/players", {"name": "Reconcile Cash Player", "status": "active"})
+    p2 = _post("/api/cam/players", {"name": "Reconcile Check Player", "status": "active"})
     program = _post(
-        "/api/academy/programs",
+        "/api/cam/programs",
         {"name": "1-to-1 Private Coaching", "program_type": "private", "status": "active"},
     )
 
     # QA-046: a private 1-to-1 service can use a per-session fee plan.
     plan = _post(
-        "/api/academy/fee-plans",
+        "/api/cam/fee-plans",
         {
             "name": "Private Coaching Per Session",
             "amount_cents": 7500,
@@ -97,22 +97,22 @@ def test_reconcile_qa_046_052_053_exact_fee_and_manual_payment_permutations():
     assert int(plan["program_id"]) == int(program["id"])
 
     e1 = _post(
-        "/api/academy/enrollments",
+        "/api/cam/enrollments",
         {"player_id": p1["id"], "program_id": program["id"], "enrollment_type": "regular", "start_date": "2026-09-01"},
     )
     e2 = _post(
-        "/api/academy/enrollments",
+        "/api/cam/enrollments",
         {"player_id": p2["id"], "program_id": program["id"], "enrollment_type": "regular", "start_date": "2026-09-01"},
     )
     for enrollment in (e1, e2):
         response = client.put(
-            f"/api/academy/enrollments/{enrollment['id']}/billing",
+            f"/api/cam/enrollments/{enrollment['id']}/billing",
             json={"fee_plan_id": plan["id"], "discount_type": "none", "discount_value": 0},
         )
         assert response.status_code == 200, response.text
 
     account = _post(
-        "/api/academy/billing-accounts",
+        "/api/cam/billing-accounts",
         {
             "account_name": "Reconciliation Family",
             "player_ids": [p1["id"], p2["id"]],
@@ -121,17 +121,17 @@ def test_reconcile_qa_046_052_053_exact_fee_and_manual_payment_permutations():
         },
     )
     i1 = _post(
-        "/api/academy/invoices/from-enrollment",
+        "/api/cam/invoices/from-enrollment",
         {"account_id": account["id"], "enrollment_id": e1["id"], "issue_date": "2026-09-01", "due_date": "2026-09-15"},
     )
     i2 = _post(
-        "/api/academy/invoices/from-enrollment",
+        "/api/cam/invoices/from-enrollment",
         {"account_id": account["id"], "enrollment_id": e2["id"], "issue_date": "2026-09-01", "due_date": "2026-09-15"},
     )
 
     # QA-052: full cash payment closes the invoice and produces a receipt.
     cash = _post(
-        "/api/academy/payments",
+        "/api/cam/payments",
         {
             "account_id": account["id"],
             "amount_cents": 7500,
@@ -142,16 +142,16 @@ def test_reconcile_qa_046_052_053_exact_fee_and_manual_payment_permutations():
         },
     )
     assert cash["method"] == "cash"
-    cash_invoice = client.get(f"/api/academy/invoices/{i1['id']}").json()
+    cash_invoice = client.get(f"/api/cam/invoices/{i1['id']}").json()
     assert cash_invoice["status"] == "paid"
     assert int(cash_invoice["balance_due_cents"]) == 0
-    cash_receipt = client.get(f"/api/academy/payments/{cash['id']}/receipt")
+    cash_receipt = client.get(f"/api/cam/payments/{cash['id']}/receipt")
     assert cash_receipt.status_code == 200, cash_receipt.text
     assert cash_receipt.json()["receipt_number"].startswith("RCT-")
 
     # QA-053: partial check payment leaves the exact remaining balance.
     check = _post(
-        "/api/academy/payments",
+        "/api/cam/payments",
         {
             "account_id": account["id"],
             "amount_cents": 3000,
@@ -163,7 +163,7 @@ def test_reconcile_qa_046_052_053_exact_fee_and_manual_payment_permutations():
         },
     )
     assert check["method"] == "check"
-    check_invoice = client.get(f"/api/academy/invoices/{i2['id']}").json()
+    check_invoice = client.get(f"/api/cam/invoices/{i2['id']}").json()
     assert check_invoice["status"] == "partially_paid"
     assert int(check_invoice["amount_paid_cents"]) == 3000
     assert int(check_invoice["balance_due_cents"]) == 4500
@@ -172,7 +172,7 @@ def test_reconcile_qa_046_052_053_exact_fee_and_manual_payment_permutations():
 def test_reconcile_qa_070_payment_method_default_replace_remove_and_ownership():
     _reset_shared_postgres_state()
 
-    profile = client.put("/api/academy/profile", json={"name": "Track A Payment Method Academy"})
+    profile = client.put("/api/cam/profile", json={"name": "Track A Payment Method Academy"})
     assert profile.status_code == 200, profile.text
 
     bootstrap = client.post(
@@ -185,7 +185,7 @@ def test_reconcile_qa_070_payment_method_default_replace_remove_and_ownership():
 
     def create_parent(suffix: str):
         player = _post(
-            "/api/academy/players",
+            "/api/cam/players",
             {
                 "name": f"{suffix} Player",
                 "status": "active",
@@ -205,7 +205,7 @@ def test_reconcile_qa_070_payment_method_default_replace_remove_and_ownership():
         )
         guardian_id = int(player["guardians"][0]["id"])
         user = _post(
-            "/api/academy/access/users",
+            "/api/cam/access/users",
             {
                 "display_name": f"{suffix} Parent",
                 "email": f"portal-{suffix.lower()}@example.test",
@@ -223,12 +223,12 @@ def test_reconcile_qa_070_payment_method_default_replace_remove_and_ownership():
     parent_b = create_parent("Beta")
 
     first = _post(
-        "/api/academy/parent/payment-methods/sandbox",
+        "/api/cam/parent/payment-methods/sandbox",
         {"card_number": "4242 4242 4242 4242", "exp_month": 12, "exp_year": 2034, "cvc": "123", "make_default": True},
         parent_a,
     )
     second = _post(
-        "/api/academy/parent/payment-methods/sandbox",
+        "/api/cam/parent/payment-methods/sandbox",
         {"card_number": "4000 0000 0000 0341", "exp_month": 11, "exp_year": 2034, "cvc": "321", "make_default": False},
         parent_a,
     )
@@ -237,30 +237,30 @@ def test_reconcile_qa_070_payment_method_default_replace_remove_and_ownership():
 
     # Switch the default to the replacement method.
     set_default = client.put(
-        f"/api/academy/parent/payment-methods/{second['id']}/default",
+        f"/api/cam/parent/payment-methods/{second['id']}/default",
         headers=_auth(parent_a),
     )
     assert set_default.status_code == 200, set_default.text
     assert set_default.json()["is_default"] is True
-    methods = client.get("/api/academy/parent/payment-methods", headers=_auth(parent_a)).json()["payment_methods"]
+    methods = client.get("/api/cam/parent/payment-methods", headers=_auth(parent_a)).json()["payment_methods"]
     by_id = {int(row["id"]): row for row in methods}
     assert by_id[int(second["id"])]["is_default"] is True
     assert by_id[int(first["id"])]["is_default"] is False
 
     # Another parent cannot manipulate this parent's saved methods.
     foreign_default = client.put(
-        f"/api/academy/parent/payment-methods/{first['id']}/default",
+        f"/api/cam/parent/payment-methods/{first['id']}/default",
         headers=_auth(parent_b),
     )
     assert foreign_default.status_code == 404
 
     # Removing the default promotes the remaining active method automatically.
     removed = client.delete(
-        f"/api/academy/parent/payment-methods/{second['id']}",
+        f"/api/cam/parent/payment-methods/{second['id']}",
         headers=_auth(parent_a),
     )
     assert removed.status_code == 204
-    methods_after = client.get("/api/academy/parent/payment-methods", headers=_auth(parent_a)).json()["payment_methods"]
+    methods_after = client.get("/api/cam/parent/payment-methods", headers=_auth(parent_a)).json()["payment_methods"]
     assert len(methods_after) == 1
     assert int(methods_after[0]["id"]) == int(first["id"])
     assert methods_after[0]["is_default"] is True

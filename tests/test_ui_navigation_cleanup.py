@@ -57,11 +57,11 @@ def test_analysis_is_paused_without_video_api_traffic_and_academy_stays_operatio
                 # video, event or biomechanics endpoints. The current C17 Academy
                 # shell is now the only visible navigation surface.
                 page.goto(f"{BASE_URL}/#analysis?id=1", wait_until="domcontentloaded")
-                expect(page).to_have_url(f"{BASE_URL}/#academy", timeout=10000)
+                expect(page).to_have_url(f"{BASE_URL}/#cam", timeout=10000)
 
                 c17_nav = page.locator('.c17-sidebar-nav')
                 expect(c17_nav).to_be_visible(timeout=15000)
-                dashboard_button = c17_nav.locator('[data-c17-target="academy"]')
+                dashboard_button = c17_nav.locator('[data-c17-target="cam"]')
                 expect(dashboard_button).to_be_visible(timeout=10000)
                 expect(dashboard_button).to_have_text("Dashboard")
                 expect(dashboard_button).to_have_class("active")
@@ -69,8 +69,8 @@ def test_analysis_is_paused_without_video_api_traffic_and_academy_stays_operatio
 
                 # The retired horizontal Academy tabs and legacy Academy workspace-nav
                 # button must not be the user-facing navigation contract anymore.
-                expect(page.locator('#academyWorkspace .academy-tabs')).not_to_be_visible(timeout=10000)
-                expect(page.locator('.sidebar .nav > button[data-workspace-nav="academy"]')).to_have_count(0)
+                expect(page.locator('#camWorkspace .cam-tabs')).not_to_be_visible(timeout=10000)
+                expect(page.locator('.sidebar .nav > button[data-workspace-nav="cam"]')).to_have_count(0)
 
                 forbidden_network = [url for url in requests if _is_analysis_network(url)]
                 assert forbidden_network == [], forbidden_network
@@ -80,24 +80,24 @@ def test_analysis_is_paused_without_video_api_traffic_and_academy_stays_operatio
                 for route in ["dashboard", "upload", "analyses", "comparisons", "analysis?id=99"]:
                     before = len(requests)
                     page.evaluate("route => { location.hash = route; }", route)
-                    expect(page).to_have_url(f"{BASE_URL}/#academy", timeout=10000)
+                    expect(page).to_have_url(f"{BASE_URL}/#cam", timeout=10000)
                     page.wait_for_timeout(150)
                     new_requests = requests[before:]
                     assert not any(_is_analysis_network(url) for url in new_requests), new_requests
 
                 # The approved C17 sidebar remains operational after the redirects.
-                reports = c17_nav.locator('[data-c17-target="academy?tab=reports"]')
+                reports = c17_nav.locator('[data-c17-target="cam?tab=reports"]')
                 expect(reports).to_be_visible(timeout=10000)
                 expect(reports).to_have_text("Reports")
                 reports.click()
-                expect(page).to_have_url(f"{BASE_URL}/#academy?tab=reports")
-                expect(page.locator('.academy-reports-shell h1')).to_have_text("Reports", timeout=10000)
+                expect(page).to_have_url(f"{BASE_URL}/#cam?tab=reports")
+                expect(page.locator('.cam-reports-shell h1')).to_have_text("Reports", timeout=10000)
                 expect(reports).to_have_class("active")
                 expect(reports).to_have_attribute("aria-current", "page")
 
                 # Returning to Dashboard must use the C17 Academy overview route.
                 dashboard_button.click()
-                expect(page).to_have_url(f"{BASE_URL}/#academy")
+                expect(page).to_have_url(f"{BASE_URL}/#cam")
                 expect(dashboard_button).to_have_class("active")
             finally:
                 browser.close()

@@ -17,7 +17,7 @@
       children:[['upload','⇧','Upload Video'],['analyses','▣','My Analyses'],['comparisons','⇄','Comparisons']]
     },
     {
-      key:'academy', label:'Academy', icon:'▦', parentRoute:'academy',
+      key:'cam', label:'Academy', icon:'▦', parentRoute:'cam',
       children:[['players','♙','Players']]
     },
     {

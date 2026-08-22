@@ -1,8 +1,0 @@
-/* Tournaments — calendar and team registration. */
-.academy-tournament-list,.academy-tournament-entry-list{display:grid;gap:9px;margin-top:10px}
-.academy-tournament-row,.academy-tournament-entry-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;border:1px solid #e1e9e4;background:#fff;border-radius:12px;padding:12px 13px}
-.academy-tournament-row strong,.academy-tournament-entry-row strong{display:block;color:#183f2c;font-size:9.5px}
-.academy-tournament-row small,.academy-tournament-entry-row small{display:block;color:#7d8981;font-size:7.5px;margin-top:4px;line-height:1.45}
-.academy-tournament-row .academy-program-tags{margin-top:7px}
-.academy-tournament-entry-row .danger{border:1px solid #efd5cf;background:#fff8f6;color:#9b4e3b;border-radius:8px;padding:6px 8px;font-size:7.5px;font-weight:800;cursor:pointer}
-@media(max-width:760px){.academy-tournament-row,.academy-tournament-entry-row{grid-template-columns:1fr}.academy-tournament-row .academy-program-actions,.academy-tournament-entry-row .academy-program-actions{justify-content:flex-start}}
