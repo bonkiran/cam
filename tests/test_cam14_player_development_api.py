@@ -27,17 +27,17 @@ def _put(path, payload):
     return response.json()
 
 
-def _setup_session():
-    _put("/api/academy/profile", {"name": "CAM-14 Test Academy", "timezone": "America/New_York"})
-    program = _post("/api/academy/programs", {"name": "U13 Development", "program_type": "group", "status": "active"})
-    coach = _post("/api/academy/coaches", {"first_name": "Moat", "last_name": "Coach", "status": "active"})
+def _setup_session(tag: str):
+    _put("/api/academy/profile", {"name": f"CAM-14 Test Academy {tag}", "timezone": "America/New_York"})
+    program = _post("/api/academy/programs", {"name": f"U13 Development {tag}", "program_type": "group", "status": "active"})
+    coach = _post("/api/academy/coaches", {"first_name": "Moat", "last_name": f"Coach {tag}", "status": "active"})
     players = [
-        _post("/api/academy/players", {"name": f"CAM14 Player {index}", "status": "active"})
+        _post("/api/academy/players", {"name": f"CAM14 {tag} Player {index}", "status": "active"})
         for index in (1, 2, 3)
     ]
     batch = _post(
         "/api/academy/batches",
-        {"name": "U13 CAM-14", "program_id": program["id"], "capacity": 16, "status": "active"},
+        {"name": f"U13 CAM-14 {tag}", "program_id": program["id"], "capacity": 16, "status": "active"},
     )
     _post(
         f"/api/academy/batch-coach-assignments?batch_id={batch['id']}",
@@ -63,7 +63,7 @@ def _setup_session():
 
 
 def test_cam14_passive_practice_evidence_tracks_focus_and_attendance_without_claiming_improvement():
-    session_id, players = _setup_session()
+    session_id, players = _setup_session("Evidence")
     p1, p2, p3 = players
 
     skills = client.get("/api/academy/development/skills")
@@ -169,7 +169,7 @@ def test_cam14_passive_practice_evidence_tracks_focus_and_attendance_without_cla
 
 
 def test_cam14_rejects_unknown_development_skill():
-    session_id, _players = _setup_session()
+    session_id, _players = _setup_session("Validation")
     response = client.put(
         f"/api/academy/sessions/{session_id}/development-focus",
         json={"skill_keys": ["made_up_skill"]},
