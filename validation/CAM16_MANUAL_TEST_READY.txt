@@ -1,8 +1,0 @@
-PASS
-syntax=success
-guards=success
-sqlite=success
-postgres=success
-browser=success
-Dashboard -> Take Attendance -> exact session -> Today's Development Focus.
-Attendance statuses: Present, Late, Absent only.
