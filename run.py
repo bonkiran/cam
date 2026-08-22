@@ -12,6 +12,7 @@ from app.academy_coaches_api import router as academy_coaches_router
 from app.academy_batches_api import router as academy_batches_router
 from app.academy_batch_roster_lifecycle_api import router as academy_batch_roster_router
 from app.academy_attendance_api import router as academy_attendance_router
+from app.academy_player_development_api import router as academy_player_development_router
 from app.academy_matches_api import router as academy_matches_router
 from app.academy_tournaments_api import router as academy_tournaments_router
 from app.academy_fees_api import router as academy_fees_router
@@ -136,6 +137,9 @@ app.include_router(academy_programs_router)
 app.include_router(academy_coaches_router)
 app.include_router(academy_batch_roster_router)
 app.include_router(academy_batches_router)
+# CAM-14: register the enhanced attendance route first. It keeps the existing
+# attendance contract and adds passive Practiced/Exposed evidence reconciliation.
+app.include_router(academy_player_development_router)
 app.include_router(academy_attendance_router)
 app.include_router(academy_matches_router)
 app.include_router(academy_tournaments_router)
