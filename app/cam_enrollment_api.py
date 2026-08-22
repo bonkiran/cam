@@ -16,7 +16,7 @@ from .database import connection, fetch_all, fetch_one
 
 router = APIRouter(tags=["cam-enrollment"])
 
-PUBLIC_FORM = Path(__file__).resolve().parent / "static" / "academy_enrollment_public_v1.html"
+PUBLIC_FORM = Path(__file__).resolve().parent / "static" / "cam_enrollment_public_v1.html"
 DOCUMENT_ROOT = Path(__file__).resolve().parent / "enrollment_documents"
 ENROLLMENT_LINK_DAYS = 14
 ACTIVE_STATUSES = {"created", "sent", "opened", "in_progress"}

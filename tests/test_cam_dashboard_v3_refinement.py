@@ -4,10 +4,10 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_c17_dashboard_v4_matches_approved_followup():
-    js = (REPO_ROOT / "app" / "static" / "academy_dashboard_v4.js").read_text(encoding="utf-8")
-    css = (REPO_ROOT / "app" / "static" / "academy_dashboard_v4.css").read_text(encoding="utf-8")
-    shell_js = (REPO_ROOT / "app" / "static" / "academy_c17_shell_v1.js").read_text(encoding="utf-8")
-    shell_css = (REPO_ROOT / "app" / "static" / "academy_c17_shell_v1.css").read_text(encoding="utf-8")
+    js = (REPO_ROOT / "app" / "static" / "cam_dashboard_v4.js").read_text(encoding="utf-8")
+    css = (REPO_ROOT / "app" / "static" / "cam_dashboard_v4.css").read_text(encoding="utf-8")
+    shell_js = (REPO_ROOT / "app" / "static" / "cam_c17_shell_v1.js").read_text(encoding="utf-8")
+    shell_css = (REPO_ROOT / "app" / "static" / "cam_c17_shell_v1.css").read_text(encoding="utf-8")
     html = (REPO_ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
     logo = REPO_ROOT / "app" / "static" / "c17_academy_logo.png"
 
@@ -41,13 +41,13 @@ def test_c17_dashboard_v4_matches_approved_followup():
     # Left-side academy nav replaces the horizontal academy tabs.
     assert "cam-tabs{display:none!important}" in shell_css
     assert "c17-sidebar-nav" in shell_js
-    assert "academy_c17_shell_v1.js?v=4" in html
-    assert "academy_dashboard_v4.js?v=1" in html
-    assert "academy_dashboard_v3_refinement_v1.js" not in html
+    assert "cam_c17_shell_v1.js?v=4" in html
+    assert "cam_dashboard_v4.js?v=1" in html
+    assert "cam_dashboard_v3_refinement_v1.js" not in html
 
 
 def test_c17_shell_navigation_contains_all_approved_items():
-    js = (REPO_ROOT / "app" / "static" / "academy_c17_shell_v1.js").read_text(encoding="utf-8")
+    js = (REPO_ROOT / "app" / "static" / "cam_c17_shell_v1.js").read_text(encoding="utf-8")
     for label in ["Dashboard", "Registration", "Players", "Programs", "Coaches", "Finance", "Reports", "Settings", "Insights", "Help & Support"]:
         assert label in js
     assert "label:'Academy'" not in js

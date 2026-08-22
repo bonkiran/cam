@@ -66,8 +66,8 @@ def test_monthly_enrollments_exposes_current_batch_assignment(monkeypatch):
 
 
 def test_dashboard_v4_owns_enrollment_visibility_and_inline_batch_assignment():
-    js = (REPO_ROOT / "app" / "static" / "academy_dashboard_v4.js").read_text(encoding="utf-8")
-    css = (REPO_ROOT / "app" / "static" / "academy_dashboard_v4.css").read_text(encoding="utf-8")
+    js = (REPO_ROOT / "app" / "static" / "cam_dashboard_v4.js").read_text(encoding="utf-8")
+    css = (REPO_ROOT / "app" / "static" / "cam_dashboard_v4.css").read_text(encoding="utf-8")
     html = (REPO_ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
 
     assert "New Enrollment :" in js
@@ -77,26 +77,26 @@ def test_dashboard_v4_owns_enrollment_visibility_and_inline_batch_assignment():
     assert "Confirm" in js
     assert "waitlist_if_full:false" in js
     assert "c17-batch-editor" in css
-    assert "academy_dashboard_v4.css?v=1" in html
-    assert "academy_dashboard_v4.js?v=1" in html
-    assert "academy_dashboard_enrollments_v1.css" not in html
-    assert "academy_dashboard_enrollments_v1.js" not in html
+    assert "cam_dashboard_v4.css?v=1" in html
+    assert "cam_dashboard_v4.js?v=1" in html
+    assert "cam_dashboard_enrollments_v1.css" not in html
+    assert "cam_dashboard_enrollments_v1.js" not in html
 
 
 def test_dashboard_v4_supersedes_legacy_dashboard_assets():
-    readability = (REPO_ROOT / "app" / "static" / "academy_dashboard_readability_v1.css").read_text(encoding="utf-8")
-    dedupe = (REPO_ROOT / "app" / "static" / "academy_dashboard_enrollment_dedupe_v1.js").read_text(encoding="utf-8")
-    v4_css = (REPO_ROOT / "app" / "static" / "academy_dashboard_v4.css").read_text(encoding="utf-8")
-    v4_js = (REPO_ROOT / "app" / "static" / "academy_dashboard_v4.js").read_text(encoding="utf-8")
+    readability = (REPO_ROOT / "app" / "static" / "cam_dashboard_readability_v1.css").read_text(encoding="utf-8")
+    dedupe = (REPO_ROOT / "app" / "static" / "cam_dashboard_enrollment_dedupe_v1.js").read_text(encoding="utf-8")
+    v4_css = (REPO_ROOT / "app" / "static" / "cam_dashboard_v4.css").read_text(encoding="utf-8")
+    v4_js = (REPO_ROOT / "app" / "static" / "cam_dashboard_v4.js").read_text(encoding="utf-8")
     html = (REPO_ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
 
     assert 'data-dashboard-v2="1"' in readability
     assert ".cam-new-player-enrollments" in dedupe
     assert "c17-dashboard" in v4_css
     assert "dashboardMarkup" in v4_js
-    assert "academy_dashboard_v4.css?v=1" in html
-    assert "academy_dashboard_v4.js?v=1" in html
-    assert "academy_dashboard_v3.js" not in html
-    assert "academy_dashboard_v3_refinement_v1.js" not in html
-    assert "academy_dashboard_readability_v1.css?v=1" not in html
-    assert "academy_dashboard_enrollment_dedupe_v1.js?v=1" not in html
+    assert "cam_dashboard_v4.css?v=1" in html
+    assert "cam_dashboard_v4.js?v=1" in html
+    assert "cam_dashboard_v3.js" not in html
+    assert "cam_dashboard_v3_refinement_v1.js" not in html
+    assert "cam_dashboard_readability_v1.css?v=1" not in html
+    assert "cam_dashboard_enrollment_dedupe_v1.js?v=1" not in html

@@ -15,7 +15,7 @@ from .database import connection, fetch_all, fetch_one
 
 router = APIRouter(tags=["cam-registration"])
 
-PUBLIC_FORM = Path(__file__).resolve().parent / "static" / "academy_registration_public_v1.html"
+PUBLIC_FORM = Path(__file__).resolve().parent / "static" / "cam_registration_public_v1.html"
 INVITE_DAYS = 7
 SENDER_ROLES = {"owner", "admin", "coach"}
 ADMIN_ROLES = {"owner", "admin"}

@@ -217,10 +217,10 @@ def test_slice2d_completion_finalizes_enrollment_and_builds_secure_package():
 
 
 def test_slice2d_parent_ui_exposes_explicit_completion_and_secure_package():
-    html = (REPO_ROOT / "app" / "static" / "academy_enrollment_public_v1.html").read_text(encoding="utf-8")
-    js = (REPO_ROOT / "app" / "static" / "academy_enrollment_complete_v1.js").read_text(encoding="utf-8")
+    html = (REPO_ROOT / "app" / "static" / "cam_enrollment_public_v1.html").read_text(encoding="utf-8")
+    js = (REPO_ROOT / "app" / "static" / "cam_enrollment_complete_v1.js").read_text(encoding="utf-8")
 
-    assert "academy_enrollment_complete_v1.js" in html
+    assert "cam_enrollment_complete_v1.js" in html
     assert "Complete Enrollment" in js
     assert "/complete`" in js
     assert "package_url" in js

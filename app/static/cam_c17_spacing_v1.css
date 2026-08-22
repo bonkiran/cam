@@ -1,5 +1,5 @@
 /* C17 layout spacing standard.
-   Source of truth: approved Dashboard spacing in academy_dashboard_v4.css.
+   Source of truth: approved Dashboard spacing in cam_dashboard_v4.css.
    Use the same 12px rhythm between major panels/sections across Academy pages. */
 body.c17-cam-mode #camWorkspace .cam-content{
   --c17-page-gap:12px;

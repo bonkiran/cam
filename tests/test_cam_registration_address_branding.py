@@ -174,8 +174,8 @@ def test_registration_branding_returns_academy_name_for_staff_and_parent():
 
 
 def test_registration_ui_uses_academy_name_in_message_and_form_title():
-    staff_js = (REPO_ROOT / "app" / "static" / "academy_registration_v1.js").read_text(encoding="utf-8")
-    public_js = (REPO_ROOT / "app" / "static" / "academy_registration_phone_validation_v1.js").read_text(encoding="utf-8")
+    staff_js = (REPO_ROOT / "app" / "static" / "cam_registration_v1.js").read_text(encoding="utf-8")
+    public_js = (REPO_ROOT / "app" / "static" / "cam_registration_phone_validation_v1.js").read_text(encoding="utf-8")
 
     assert "/api/cam/registration/branding" in staff_js
     assert "please complete the ${camLabel()} player registration form" in staff_js

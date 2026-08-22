@@ -249,8 +249,8 @@ def test_slice2c_stripe_save_now_charge_later_flow(monkeypatch):
 
 
 def test_slice2c_parent_ui_uses_provider_secure_element_not_raw_card_fields():
-    html = (REPO_ROOT / "app" / "static" / "academy_enrollment_public_v1.html").read_text(encoding="utf-8")
-    js = (REPO_ROOT / "app" / "static" / "academy_enrollment_public_v1.js").read_text(encoding="utf-8")
+    html = (REPO_ROOT / "app" / "static" / "cam_enrollment_public_v1.html").read_text(encoding="utf-8")
+    js = (REPO_ROOT / "app" / "static" / "cam_enrollment_public_v1.js").read_text(encoding="utf-8")
 
     assert "Fees &amp; Payment" in html
     assert "id=\"paymentElement\"" in html

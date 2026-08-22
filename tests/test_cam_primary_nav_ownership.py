@@ -21,12 +21,12 @@ def test_primary_nav_loads_before_legacy_feature_modules():
     # These older feature modules historically injected their own top-level tabs.
     # The single-owner nav must take the .cam-tabs hook before they load.
     for script in (
-        "academy_programs_v1.js",
-        "academy_access_v1.js",
-        "academy_parent_portal_v1.js",
-        "academy_reviews_v1.js",
-        "academy_reports_tab_v1.js",
-        "academy_owner_console_v1.js",
+        "cam_programs_v1.js",
+        "cam_access_v1.js",
+        "cam_parent_portal_v1.js",
+        "cam_reviews_v1.js",
+        "cam_reports_tab_v1.js",
+        "cam_owner_console_v1.js",
     ):
         assert primary < html.index(script), script
 

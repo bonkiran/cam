@@ -36,4 +36,4 @@ Use these classes on new or refactored C17 pages rather than creating page-speci
 - `.c17-type-kpi-label`
 - `.c17-type-kpi-value`
 
-The implementation lives in `app/static/academy_c17_typography_v1.css`. Existing C17 operational pages are normalized there so legacy page-specific CSS does not introduce a different type scale.
+The implementation lives in `app/static/cam_c17_typography_v1.css`. Existing C17 operational pages are normalized there so legacy page-specific CSS does not introduce a different type scale.

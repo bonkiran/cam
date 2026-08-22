@@ -181,12 +181,12 @@ def test_zip_requires_exactly_five_digits_and_preserves_leading_zero():
 
 def test_copy_link_and_public_form_ui_match_current_policy():
     index = (REPO_ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
-    copy_patch = (REPO_ROOT / "app" / "static" / "academy_registration_copy_link_fix_v1.js").read_text(encoding="utf-8")
-    review_patch = (REPO_ROOT / "app" / "static" / "academy_registration_review_policy_v2.js").read_text(encoding="utf-8")
-    public_html = (REPO_ROOT / "app" / "static" / "academy_registration_public_v1.html").read_text(encoding="utf-8")
-    validation = (REPO_ROOT / "app" / "static" / "academy_registration_phone_validation_v1.js").read_text(encoding="utf-8")
+    copy_patch = (REPO_ROOT / "app" / "static" / "cam_registration_copy_link_fix_v1.js").read_text(encoding="utf-8")
+    review_patch = (REPO_ROOT / "app" / "static" / "cam_registration_review_policy_v2.js").read_text(encoding="utf-8")
+    public_html = (REPO_ROOT / "app" / "static" / "cam_registration_public_v1.html").read_text(encoding="utf-8")
+    validation = (REPO_ROOT / "app" / "static" / "cam_registration_phone_validation_v1.js").read_text(encoding="utf-8")
 
-    assert "academy_registration_copy_link_fix_v1.js" in index
+    assert "cam_registration_copy_link_fix_v1.js" in index
     assert "data-share=\"copy\"" in copy_patch
     assert "/sent" not in copy_patch
 
@@ -197,7 +197,7 @@ def test_copy_link_and_public_form_ui_match_current_policy():
 
     assert 'name="parent_phone" type="tel"' in public_html
     assert 'data-contact="phone" type="tel"' in public_html
-    assert "academy_registration_phone_validation_v1.js" in public_html
+    assert "cam_registration_phone_validation_v1.js" in public_html
     assert "digits.length >= 9 && digits.length <= 15" in validation
     assert "Parent state" not in validation  # errors are concise UI messages, not field labels
     assert "STATE_MESSAGE" in validation
@@ -205,6 +205,6 @@ def test_copy_link_and_public_form_ui_match_current_policy():
     assert "^[0-9]{5}$" in validation
     assert "label.remove()" in validation
 
-    assert "academy_registration_review_policy_v2.js" in index
+    assert "cam_registration_review_policy_v2.js" in index
     assert "Emergency Contacts" in review_patch
     assert "Pickup Authorized" not in review_patch

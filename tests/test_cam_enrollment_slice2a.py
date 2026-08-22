@@ -214,9 +214,9 @@ def test_slice2b_test_documents_require_view_and_electronic_acceptance():
 
 
 def test_slice2a_admin_ui_removes_request_information_and_uses_enrollment_action():
-    js = (REPO_ROOT / "app" / "static" / "academy_enrollment_slice2a_v1.js").read_text(encoding="utf-8")
-    html = (REPO_ROOT / "app" / "static" / "academy_enrollment_public_v1.html").read_text(encoding="utf-8")
-    public_js = (REPO_ROOT / "app" / "static" / "academy_enrollment_public_v1.js").read_text(encoding="utf-8")
+    js = (REPO_ROOT / "app" / "static" / "cam_enrollment_slice2a_v1.js").read_text(encoding="utf-8")
+    html = (REPO_ROOT / "app" / "static" / "cam_enrollment_public_v1.html").read_text(encoding="utf-8")
+    public_js = (REPO_ROOT / "app" / "static" / "cam_enrollment_public_v1.js").read_text(encoding="utf-8")
 
     assert "Approve & Send Enrollment Link" in js
     assert "[data-review-action=\"needs_information\"]" in js

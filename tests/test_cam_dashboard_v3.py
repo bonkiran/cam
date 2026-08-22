@@ -51,10 +51,10 @@ def test_new_enrollment_uses_local_month_and_exposes_parent(monkeypatch):
 
 
 def test_dashboard_v4_matches_approved_c17_prototype_contract():
-    js = (REPO_ROOT / "app" / "static" / "academy_dashboard_v4.js").read_text(encoding="utf-8")
-    css = (REPO_ROOT / "app" / "static" / "academy_dashboard_v4.css").read_text(encoding="utf-8")
-    shell_js = (REPO_ROOT / "app" / "static" / "academy_c17_shell_v1.js").read_text(encoding="utf-8")
-    shell_css = (REPO_ROOT / "app" / "static" / "academy_c17_shell_v1.css").read_text(encoding="utf-8")
+    js = (REPO_ROOT / "app" / "static" / "cam_dashboard_v4.js").read_text(encoding="utf-8")
+    css = (REPO_ROOT / "app" / "static" / "cam_dashboard_v4.css").read_text(encoding="utf-8")
+    shell_js = (REPO_ROOT / "app" / "static" / "cam_c17_shell_v1.js").read_text(encoding="utf-8")
+    shell_css = (REPO_ROOT / "app" / "static" / "cam_c17_shell_v1.css").read_text(encoding="utf-8")
     html = (REPO_ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
     run_py = (REPO_ROOT / "run.py").read_text(encoding="utf-8")
 
@@ -96,13 +96,13 @@ def test_dashboard_v4_matches_approved_c17_prototype_contract():
     assert "C17" in shell_js and "CRICKET ACADEMY" in shell_js
     assert "/static/c17_academy_logo.png" in shell_js
 
-    assert "academy_c17_shell_v1.css?v=1" in html
-    assert "academy_dashboard_v4.css?v=1" in html
-    assert "academy_c17_shell_v1.js?v=4" in html
-    assert "academy_dashboard_v4.js?v=1" in html
-    assert "academy_dashboard_v3.js" not in html
-    assert "academy_dashboard_v3_refinement_v1.js" not in html
-    assert "academy_dashboard_enrollments_v1.js" not in html
+    assert "cam_c17_shell_v1.css?v=1" in html
+    assert "cam_dashboard_v4.css?v=1" in html
+    assert "cam_c17_shell_v1.js?v=4" in html
+    assert "cam_dashboard_v4.js?v=1" in html
+    assert "cam_dashboard_v3.js" not in html
+    assert "cam_dashboard_v3_refinement_v1.js" not in html
+    assert "cam_dashboard_enrollments_v1.js" not in html
     assert "academy_dashboard_v3_router" in run_py
     assert ".c17-enrollment-grid" in css
 

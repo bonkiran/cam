@@ -4,7 +4,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_transition_snapshot_never_paints_previous_page_panels():
-    css = (REPO_ROOT / "app" / "static" / "academy_ui_cleanup_v1.css").read_text(encoding="utf-8")
+    css = (REPO_ROOT / "app" / "static" / "cam_ui_cleanup_v1.css").read_text(encoding="utf-8")
     html = (REPO_ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
 
     # The navigation-performance layer still uses a temporary transition snapshot,
@@ -23,4 +23,4 @@ def test_transition_snapshot_never_paints_previous_page_panels():
     assert "camTransitionSnapshot::after" in css
 
     # Cache-bust the CSS so production browsers receive the visual guard immediately.
-    assert "/static/academy_ui_cleanup_v1.css?v=4" in html
+    assert "/static/cam_ui_cleanup_v1.css?v=4" in html

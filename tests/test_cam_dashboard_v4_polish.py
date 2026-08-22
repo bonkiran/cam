@@ -4,8 +4,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_dashboard_v4_polish_matches_approved_prototype_changes():
-    js = (REPO_ROOT / "app" / "static" / "academy_dashboard_v4_polish_v1.js").read_text(encoding="utf-8")
-    css = (REPO_ROOT / "app" / "static" / "academy_dashboard_v4_polish_v1.css").read_text(encoding="utf-8")
+    js = (REPO_ROOT / "app" / "static" / "cam_dashboard_v4_polish_v1.js").read_text(encoding="utf-8")
+    css = (REPO_ROOT / "app" / "static" / "cam_dashboard_v4_polish_v1.css").read_text(encoding="utf-8")
     html = (REPO_ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
 
     # Enrollment links card is removed and the tracker becomes a full-width month-labelled table.
@@ -38,16 +38,16 @@ def test_dashboard_v4_polish_matches_approved_prototype_changes():
     assert "c17-title-svg" in css
 
     # Readability polish is loaded after Dashboard v4 so it wins the cascade.
-    v4_css = html.index('/static/academy_dashboard_v4.css?v=1')
-    polish_css = html.index('/static/academy_dashboard_v4_polish_v1.css?v=1')
-    v4_js = html.index('/static/academy_dashboard_v4.js?v=1')
-    polish_js = html.index('/static/academy_dashboard_v4_polish_v1.js?v=1')
+    v4_css = html.index('/static/cam_dashboard_v4.css?v=1')
+    polish_css = html.index('/static/cam_dashboard_v4_polish_v1.css?v=1')
+    v4_js = html.index('/static/cam_dashboard_v4.js?v=1')
+    polish_js = html.index('/static/cam_dashboard_v4_polish_v1.js?v=1')
     assert polish_css > v4_css
     assert polish_js > v4_js
 
 
 def test_dashboard_v4_polish_has_idempotent_mutation_guards():
-    js = (REPO_ROOT / "app" / "static" / "academy_dashboard_v4_polish_v1.js").read_text(encoding="utf-8")
+    js = (REPO_ROOT / "app" / "static" / "cam_dashboard_v4_polish_v1.js").read_text(encoding="utf-8")
     assert "dataset.prototypeIcon" in js
     assert "if (row) return" in js
     assert "if (scheduled) return" in js
@@ -55,7 +55,7 @@ def test_dashboard_v4_polish_has_idempotent_mutation_guards():
 
 
 def test_c17_left_navigation_is_stable_and_clickable():
-    shell = (REPO_ROOT / "app" / "static" / "academy_c17_shell_v1.js").read_text(encoding="utf-8")
+    shell = (REPO_ROOT / "app" / "static" / "cam_c17_shell_v1.js").read_text(encoding="utf-8")
     html = (REPO_ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
 
     # The shell must not replace all nav buttons on every MutationObserver pass.
@@ -82,4 +82,4 @@ def test_c17_left_navigation_is_stable_and_clickable():
     assert "{label:'Dashboard', icon:'⌂', target:'cam'" in shell
 
     # Cache-bust the repaired navigation script in production.
-    assert '/static/academy_c17_shell_v1.js?v=4' in html
+    assert '/static/cam_c17_shell_v1.js?v=4' in html

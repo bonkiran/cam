@@ -11,7 +11,7 @@
     }
   }
 
-  // academy_tournaments_v1.js predates the explicit internal/external field and
+  // cam_tournaments_v1.js predates the explicit internal/external field and
   // builds a fixed JSON payload from its form. Keep that stable module intact and
   // enrich only tournament writes with the selected classification.
   window.fetch = (input, init = {}) => {

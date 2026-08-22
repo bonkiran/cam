@@ -53,7 +53,7 @@
     if (document.querySelector('link[data-cam-slice2d]')) return;
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = '/static/academy_enrollment_complete_v1.css?v=1';
+    link.href = '/static/cam_enrollment_complete_v1.css?v=1';
     link.dataset.camSlice2d = '1';
     document.head.appendChild(link);
   }

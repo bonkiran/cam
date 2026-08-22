@@ -9,7 +9,7 @@ def test_legacy_academy_overview_is_guarded_before_dashboard_v4_loads():
 
     academy_index = html.index('/static/academy_v3.js?v=3')
     guard_index = html.index('/static/academy_dashboard_transition_guard_v1.js?v=1')
-    dashboard_v4_index = html.index('/static/academy_dashboard_v4.js?v=1')
+    dashboard_v4_index = html.index('/static/cam_dashboard_v4.js?v=1')
 
     # Register the guard after the legacy Academy renderer but before Dashboard v4.
     # academy_v3 is async, so the MutationObserver is active before its old overview can paint.
