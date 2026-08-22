@@ -7,11 +7,11 @@ on:
       - bongonfun/cam-14-moat-01-passive-player-development-evidence-from-session
   pull_request:
     paths:
-      - 'app/academy_player_development_api.py'
-      - 'app/academy_attendance_api.py'
-      - 'app/static/academy_player_development_v1.js'
-      - 'app/static/academy_player_development_v1.css'
-      - 'app/static/academy_attendance_v1.js'
+      - 'app/cam_player_development_api.py'
+      - 'app/cam_attendance_api.py'
+      - 'app/static/cam_player_development_v1.js'
+      - 'app/static/cam_player_development_v1.css'
+      - 'app/static/cam_attendance_v1.js'
       - 'app/static/index.html'
       - 'tests/test_cam14_player_development_api.py'
       - 'tests/test_cam14_player_development_ui.py'
@@ -51,7 +51,7 @@ jobs:
       - name: Compile and JavaScript syntax check
         run: |
           python -m compileall -q app run.py tests/test_cam14_player_development_api.py tests/test_cam14_player_development_ui.py
-          node --check app/static/academy_player_development_v1.js
+          node --check app/static/cam_player_development_v1.js
       - name: CAM-14 API on SQLite
         run: pytest -q tests/test_cam14_player_development_api.py
       - name: CAM-14 API on PostgreSQL
@@ -59,7 +59,7 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_cam14_test
         run: pytest -q tests/test_cam14_player_development_api.py
       - name: Existing attendance API regression on SQLite
-        run: pytest -q tests/test_academy_attendance_api.py
+        run: pytest -q tests/test_cam_attendance_api.py
       - name: CAM-14 Chromium UI on SQLite
         run: pytest -q tests/test_cam14_player_development_ui.py
       - name: Upload browser failure screenshot

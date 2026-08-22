@@ -8,17 +8,17 @@ on:
     branches:
       - main
     paths:
-      - 'app/academy_dashboard_api.py'
-      - 'app/academy_parent_payment_policy_api.py'
-      - 'app/static/academy_dashboard_v2.js'
-      - 'app/static/academy_dashboard_v2.css'
-      - 'app/static/academy_invoice_open_v1.js'
-      - 'app/static/academy_manual_fixes_v1.js'
-      - 'app/static/academy_manual_fixes_v1.css'
+      - 'app/cam_dashboard_api.py'
+      - 'app/cam_parent_payment_policy_api.py'
+      - 'app/static/cam_dashboard_v2.js'
+      - 'app/static/cam_dashboard_v2.css'
+      - 'app/static/cam_invoice_open_v1.js'
+      - 'app/static/cam_manual_fixes_v1.js'
+      - 'app/static/cam_manual_fixes_v1.css'
       - 'app/static/index.html'
       - 'tests/test_post_track_a_manual_fixes_api.py'
       - 'tests/test_post_track_a_manual_fixes_ui.py'
-      - 'tests/test_academy_extended_ui.py'
+      - 'tests/test_cam_extended_ui.py'
       - 'run.py'
       - '.github/workflows/post-track-a-manual-fixes-ci.yml'
 
@@ -46,43 +46,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt pytest httpx playwright
           python -m playwright install chromium
-
       - name: Compile post-Track-A Python surface
-        run: |
-          python -m compileall -q app run.py tests/test_post_track_a_manual_fixes_api.py tests/test_post_track_a_manual_fixes_ui.py tests/test_academy_extended_ui.py
-
+        run: python -m compileall -q app run.py tests/test_post_track_a_manual_fixes_api.py tests/test_post_track_a_manual_fixes_ui.py tests/test_cam_extended_ui.py
       - name: Check post-Track-A JavaScript syntax
         run: |
-          node --check app/static/academy_dashboard_v2.js
-          node --check app/static/academy_invoice_open_v1.js
-          node --check app/static/academy_manual_fixes_v1.js
-          node --check app/static/academy_v3.js
-
+          node --check app/static/cam_dashboard_v2.js
+          node --check app/static/cam_invoice_open_v1.js
+          node --check app/static/cam_manual_fixes_v1.js
       - name: Run post-Track-A API checks on SQLite
         run: pytest -q tests/test_post_track_a_manual_fixes_api.py
-
       - name: Run post-Track-A browser checks on SQLite
         run: pytest -q tests/test_post_track_a_manual_fixes_ui.py
-
-      - name: Run updated Academy Setup regression on SQLite
-        run: pytest -q tests/test_academy_extended_ui.py
-
+      - name: Run updated CAM Setup regression on SQLite
+        run: pytest -q tests/test_cam_extended_ui.py
       - name: Run post-Track-A API checks on PostgreSQL
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
         run: pytest -q tests/test_post_track_a_manual_fixes_api.py
-
       - name: Upload browser failure screenshots
         if: failure()
         uses: actions/upload-artifact@v4

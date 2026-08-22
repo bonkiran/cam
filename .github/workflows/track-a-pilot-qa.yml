@@ -8,9 +8,9 @@ on:
     branches:
       - main
     paths:
-      - 'app/academy_*.py'
-      - 'app/static/academy_batch_roster_lifecycle_v1.js'
-      - 'app/static/academy_tournament_type_v1.js'
+      - 'app/cam_*.py'
+      - 'app/static/cam_batch_roster_lifecycle_v1.js'
+      - 'app/static/cam_tournament_type_v1.js'
       - 'app/static/index.html'
       - 'tests/test_track_a_core_qa.py'
       - 'tests/test_track_a_batches_sessions_qa.py'
@@ -19,14 +19,14 @@ on:
       - 'tests/test_track_a_tournament_type_qa.py'
       - 'tests/test_track_a_tournament_type_ui.py'
       - 'tests/test_track_a_reconciliation_qa.py'
-      - 'tests/test_academy_programs_api.py'
-      - 'tests/test_academy_coaches_api.py'
-      - 'tests/test_academy_batches_api.py'
-      - 'tests/test_academy_matches_api.py'
-      - 'tests/test_academy_tournaments_api.py'
-      - 'tests/test_academy_rbac_enforcement_api.py'
-      - 'tests/test_academy_auth_api.py'
-      - 'tests/test_academy_parent_billing_api.py'
+      - 'tests/test_cam_programs_api.py'
+      - 'tests/test_cam_coaches_api.py'
+      - 'tests/test_cam_batches_api.py'
+      - 'tests/test_cam_matches_api.py'
+      - 'tests/test_cam_tournaments_api.py'
+      - 'tests/test_cam_rbac_enforcement_api.py'
+      - 'tests/test_cam_auth_api.py'
+      - 'tests/test_cam_parent_billing_api.py'
       - '.github/workflows/track-a-pilot-qa.yml'
       - 'run.py'
 
@@ -54,18 +54,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt pytest httpx playwright
           python -m playwright install chromium
-
       - name: Compile Track A test surface
         run: |
           python -m compileall -q app run.py \
@@ -76,26 +73,24 @@ jobs:
             tests/test_track_a_tournament_type_qa.py \
             tests/test_track_a_tournament_type_ui.py \
             tests/test_track_a_reconciliation_qa.py \
-            tests/test_academy_programs_api.py \
-            tests/test_academy_coaches_api.py \
-            tests/test_academy_batches_api.py \
-            tests/test_academy_matches_api.py \
-            tests/test_academy_tournaments_api.py \
-            tests/test_academy_rbac_enforcement_api.py \
-            tests/test_academy_auth_api.py \
-            tests/test_academy_parent_billing_api.py
-          node --check app/static/academy_batch_roster_lifecycle_v1.js
-          node --check app/static/academy_tournament_type_v1.js
-
-      # SQLite: every test module receives its own isolated temporary data dir.
+            tests/test_cam_programs_api.py \
+            tests/test_cam_coaches_api.py \
+            tests/test_cam_batches_api.py \
+            tests/test_cam_matches_api.py \
+            tests/test_cam_tournaments_api.py \
+            tests/test_cam_rbac_enforcement_api.py \
+            tests/test_cam_auth_api.py \
+            tests/test_cam_parent_billing_api.py
+          node --check app/static/cam_batch_roster_lifecycle_v1.js
+          node --check app/static/cam_tournament_type_v1.js
       - name: Track A core permutations on SQLite
         run: pytest -q tests/test_track_a_core_qa.py
       - name: Programs and enrollment lifecycle on SQLite
-        run: pytest -q tests/test_academy_programs_api.py
+        run: pytest -q tests/test_cam_programs_api.py
       - name: Coach lifecycle on SQLite
-        run: pytest -q tests/test_academy_coaches_api.py
+        run: pytest -q tests/test_cam_coaches_api.py
       - name: Existing Batches and Sessions on SQLite
-        run: pytest -q tests/test_academy_batches_api.py
+        run: pytest -q tests/test_cam_batches_api.py
       - name: Track A roster lifecycle on SQLite
         run: pytest -q tests/test_track_a_batches_sessions_qa.py
       - name: Track A roster browser flow on SQLite
@@ -103,9 +98,9 @@ jobs:
       - name: Attendance statuses, corrections, and role boundaries on SQLite
         run: pytest -q tests/test_track_a_attendance_security_qa.py
       - name: Teams and Matches on SQLite
-        run: pytest -q tests/test_academy_matches_api.py
+        run: pytest -q tests/test_cam_matches_api.py
       - name: Tournament lifecycle on SQLite
-        run: pytest -q tests/test_academy_tournaments_api.py
+        run: pytest -q tests/test_cam_tournaments_api.py
       - name: Internal and external Tournament types on SQLite
         run: pytest -q tests/test_track_a_tournament_type_qa.py
       - name: Tournament type Chromium flow on SQLite
@@ -113,71 +108,53 @@ jobs:
       - name: Track A reconciliation permutations on SQLite
         run: pytest -q tests/test_track_a_reconciliation_qa.py
       - name: Generic RBAC boundary on SQLite
-        run: pytest -q tests/test_academy_rbac_enforcement_api.py
+        run: pytest -q tests/test_cam_rbac_enforcement_api.py
       - name: Access lifecycle on SQLite
-        run: pytest -q tests/test_academy_auth_api.py
+        run: pytest -q tests/test_cam_auth_api.py
       - name: Parent family isolation and billing on SQLite
-        run: pytest -q tests/test_academy_parent_billing_api.py
-
-      # PostgreSQL: operational suites run before any test that bootstraps auth.
-      # Track A/security suites explicitly reset shared state when needed.
+        run: pytest -q tests/test_cam_parent_billing_api.py
       - name: Coach lifecycle on PostgreSQL
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
-        run: pytest -q tests/test_academy_coaches_api.py
+        env: {DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test}
+        run: pytest -q tests/test_cam_coaches_api.py
       - name: Existing Batches and Sessions on PostgreSQL
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
-        run: pytest -q tests/test_academy_batches_api.py
+        env: {DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test}
+        run: pytest -q tests/test_cam_batches_api.py
       - name: Programs and enrollment lifecycle on PostgreSQL
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
-        run: pytest -q tests/test_academy_programs_api.py
+        env: {DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test}
+        run: pytest -q tests/test_cam_programs_api.py
       - name: Track A roster lifecycle on PostgreSQL
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        env: {DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test}
         run: pytest -q tests/test_track_a_batches_sessions_qa.py
       - name: Track A roster browser flow on PostgreSQL
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        env: {DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test}
         run: pytest -q tests/test_track_a_batch_roster_ui.py
       - name: Teams and Matches on PostgreSQL
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
-        run: pytest -q tests/test_academy_matches_api.py
+        env: {DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test}
+        run: pytest -q tests/test_cam_matches_api.py
       - name: Tournament lifecycle on PostgreSQL
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
-        run: pytest -q tests/test_academy_tournaments_api.py
+        env: {DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test}
+        run: pytest -q tests/test_cam_tournaments_api.py
       - name: Internal and external Tournament types on PostgreSQL
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        env: {DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test}
         run: pytest -q tests/test_track_a_tournament_type_qa.py
       - name: Tournament type Chromium flow on PostgreSQL
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        env: {DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test}
         run: pytest -q tests/test_track_a_tournament_type_ui.py
       - name: Attendance statuses, corrections, and role boundaries on PostgreSQL
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        env: {DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test}
         run: pytest -q tests/test_track_a_attendance_security_qa.py
       - name: Track A reconciliation permutations on PostgreSQL
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        env: {DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test}
         run: pytest -q tests/test_track_a_reconciliation_qa.py
       - name: Track A core permutations on PostgreSQL
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
+        env: {DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test}
         run: pytest -q tests/test_track_a_core_qa.py
       - name: Generic RBAC boundary on PostgreSQL
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
-        run: pytest -q tests/test_academy_rbac_enforcement_api.py
+        env: {DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test}
+        run: pytest -q tests/test_cam_rbac_enforcement_api.py
       - name: Access lifecycle on PostgreSQL
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
-        run: pytest -q tests/test_academy_auth_api.py
+        env: {DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test}
+        run: pytest -q tests/test_cam_auth_api.py
       - name: Parent family isolation and billing on PostgreSQL
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test
-        run: pytest -q tests/test_academy_parent_billing_api.py
+        env: {DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crickanalysis_test}
+        run: pytest -q tests/test_cam_parent_billing_api.py

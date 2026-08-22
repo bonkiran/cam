@@ -1,4 +1,4 @@
-name: Seed Full Academy Manual-Test Data
+name: Seed Full CAM Manual-Test Data
 
 on:
   push:
@@ -7,17 +7,17 @@ on:
     paths:
       - 'scripts/reset_demo_finance.py'
       - 'scripts/capture_demo_finance_baseline.py'
-      - 'scripts/seed_full_academy_demo.py'
+      - 'scripts/seed_full_cam_demo.py'
       - 'scripts/fix_full_demo_dashboard_data.py'
       - 'scripts/verify_full_demo_dashboard.py'
-      - '.github/workflows/seed-full-academy-demo.yml'
+      - '.github/workflows/seed-full-cam-demo.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  validate-full-academy-seeder:
+  validate-full-cam-seeder:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -31,13 +31,13 @@ jobs:
           python -m py_compile
           scripts/reset_demo_finance.py
           scripts/capture_demo_finance_baseline.py
-          scripts/seed_full_academy_demo.py
+          scripts/seed_full_cam_demo.py
           scripts/fix_full_demo_dashboard_data.py
           scripts/verify_full_demo_dashboard.py
 
-  seed-full-academy-data:
+  seed-full-cam-data:
     if: github.event_name == 'workflow_dispatch'
-    needs: validate-full-academy-seeder
+    needs: validate-full-cam-seeder
     runs-on: ubuntu-latest
     env:
       CRICKANALYSIS_BASE_URL: https://crickanalysis.onrender.com
@@ -53,8 +53,8 @@ jobs:
         run: python scripts/reset_demo_finance.py
       - name: Capture preserved non-DEMO finance baseline
         run: python scripts/capture_demo_finance_baseline.py
-      - name: Seed comprehensive academy manual-test dataset
-        run: python scripts/seed_full_academy_demo.py
+      - name: Seed comprehensive CAM manual-test dataset
+        run: python scripts/seed_full_cam_demo.py
       - name: Correct dashboard registration dates and seed coach salary payments
         run: python scripts/fix_full_demo_dashboard_data.py
       - name: Reconcile DEMO contribution over preserved baseline
