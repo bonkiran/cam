@@ -1,0 +1,39 @@
+name: CAM-15 Naming Migration
+
+on:
+  push:
+    branches:
+      - bongonfun/cam-15-cam-naming-cleanup
+    paths:
+      - 'scripts/cam15_naming_cleanup.py'
+      - '.github/workflows/cam15-naming-migration.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  migrate-technical-namespace:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout cleanup branch
+        uses: actions/checkout@v4
+        with:
+          ref: bongonfun/cam-15-cam-naming-cleanup
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run CAM-15 namespace migration
+        run: python scripts/cam15_naming_cleanup.py
+      - name: Commit generated cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No generated cleanup changes."
+          else
+            git commit -m "CAM-15 normalize technical namespace from Academy to CAM"
+            git push origin HEAD:bongonfun/cam-15-cam-naming-cleanup
+          fi
