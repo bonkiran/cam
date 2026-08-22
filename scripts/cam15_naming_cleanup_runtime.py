@@ -6,20 +6,22 @@ import cam15_naming_cleanup as base
 
 ROOT = Path(__file__).resolve().parents[1]
 _original_candidates = base.rename_candidates
+_original_should_skip = base.should_skip
 
 
 def runtime_candidates():
-    """Run the product/code rename without touching Actions workflow files.
-
-    GitHub's Actions token cannot rename workflow definitions. Those files are
-    handled separately through the GitHub connector after the runtime migration
-    lands, so they cannot block the CAM application cleanup.
-    """
+    """Run the product/code rename without touching Actions workflow files."""
     return [
         (src, dst)
         for src, dst in _original_candidates()
         if ".github/workflows" not in src.as_posix()
     ]
+
+
+def runtime_should_skip(path: Path) -> bool:
+    # GitHub Actions tokens cannot create/update workflow definitions. Keep them
+    # completely out of the generated commit and migrate them separately.
+    return _original_should_skip(path) or ".github/workflows" in path.as_posix()
 
 
 def write_runtime_guard() -> None:
@@ -31,5 +33,6 @@ def write_runtime_guard() -> None:
 
 
 base.rename_candidates = runtime_candidates
+base.should_skip = runtime_should_skip
 base.write_guard_test = write_runtime_guard
 base.main()
