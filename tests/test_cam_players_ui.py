@@ -1,5 +1,4 @@
 import os
-import socket
 import subprocess
 import sys
 import tempfile
@@ -28,7 +27,7 @@ def _wait_for_server(url: str, timeout: float = 20.0) -> None:
     raise RuntimeError(f"CrickAnalysis test server did not become ready: {last_error}")
 
 
-def test_academy_player_ui_end_to_end():
+def test_cam_player_ui_end_to_end():
     data_dir = tempfile.mkdtemp(prefix="crickanalysis-ui-test-")
     env = os.environ.copy()
     env["CRICKANALYSIS_DATA_DIR"] = data_dir
@@ -50,9 +49,10 @@ def test_academy_player_ui_end_to_end():
             browser = playwright.chromium.launch(headless=True)
             page = browser.new_page(viewport={"width": 1440, "height": 1000})
             try:
-                # Open the Academy Players UI directly.
+                # Open the current CAM Players page directly.
                 page.goto(f"{BASE_URL}/#cam?tab=players", wait_until="domcontentloaded")
-                expect(page.get_by_role("heading", name="Academy Players")).to_be_visible(timeout=15000)
+                expect(page.get_by_role("heading", name="Players", exact=True)).to_be_visible(timeout=15000)
+                expect(page.get_by_role("heading", name="Player Records", exact=True)).to_be_visible()
 
                 # TC1: create a player with only the required display name and verify directory presence.
                 player_name = "Automated UI Player"
