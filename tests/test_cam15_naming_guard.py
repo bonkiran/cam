@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -15,16 +16,31 @@ def test_active_cam_namespace_has_no_legacy_academy_technical_references():
         forbidden_filenames.extend(str(p.relative_to(ROOT)) for p in folder.glob(pattern))
     assert not forbidden_filenames, f"Legacy technical filenames remain: {forbidden_filenames}"
 
-    forbidden_patterns = ("/api/academy", "#academy", "academyWorkspace", "academy-content", "academy-route-pending")
+    forbidden_patterns = (
+        "/api/academy",
+        "#academy",
+        "academyWorkspace",
+        "academy-content",
+        "academy-route-pending",
+        "install_academy_management_rbac",
+    )
     checked_roots = [ROOT / "app" / "static", ROOT / "tests", ROOT / "run.py"]
     offenders = []
     for checked in checked_roots:
-        paths = [checked] if checked.is_file() else [p for p in checked.rglob("*") if p.is_file() and p.suffix in {".py", ".js", ".css", ".html"}]
+        paths = [checked] if checked.is_file() else [
+            p for p in checked.rglob("*")
+            if p.is_file() and p.suffix in {".py", ".js", ".css", ".html"}
+        ]
         for file in paths:
             text = file.read_text(encoding="utf-8", errors="ignore")
             for pattern in forbidden_patterns:
                 if pattern in text:
                     offenders.append(f"{file.relative_to(ROOT)} -> {pattern}")
+
+    run_text = (ROOT / "run.py").read_text(encoding="utf-8")
+    for match in re.findall(r"\bacademy(?:_[a-z0-9]+)*_router\b", run_text):
+        offenders.append(f"run.py -> {match}")
+
     assert not offenders, "Legacy active namespace references remain:\n" + "\n".join(offenders[:100])
 
 
@@ -32,5 +48,8 @@ def test_cam_route_and_api_are_present():
     index = (ROOT / "app" / "static" / "index.html").read_text(encoding="utf-8")
     shell_files = list((ROOT / "app" / "static").glob("cam_*shell*.js"))
     assert shell_files, "CAM shell implementation is missing"
-    assert "/api/cam" in "\n".join(p.read_text(encoding="utf-8", errors="ignore") for p in (ROOT / "app" / "static").glob("cam_*.js"))
+    assert "/api/cam" in "\n".join(
+        p.read_text(encoding="utf-8", errors="ignore")
+        for p in (ROOT / "app" / "static").glob("cam_*.js")
+    )
     assert "/static/cam_" in index
